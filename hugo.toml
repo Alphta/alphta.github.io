@@ -2,6 +2,7 @@ baseURL                = "https://essay.alphta.com/"
 title                  = "Alphta 的博客"
 theme                  = "hugo-theme-stack"
 languageCode           = "zh-cn"
+locale                 = "zh-cn"
 defaultContentLanguage = "zh"
 hasCJKLanguage         = true
 enableEmoji            = true

@@ -1,0 +1,18 @@
+{{/* 阅读计数器脚本：文章页加载时向 api.alphta.com 上报并显示阅读数 */}}
+<script>
+document.addEventListener("DOMContentLoaded", function () {
+    var el = document.getElementById("view-count");
+    if (!el) return;
+    el.textContent = "阅读 …";
+    fetch("https://api.alphta.com/hit?path=" + encodeURIComponent(location.pathname))
+        .then(function (r) { return r.json(); })
+        .then(function (d) {
+            if (typeof d.views === "number") {
+                el.textContent = "阅读 " + d.views;
+            } else {
+                el.style.display = "none";
+            }
+        })
+        .catch(function () { el.style.display = "none"; });
+});
+</script>

@@ -1,55 +1,66 @@
-baseURL = "https://essay.alphta.com/"
-title = "Alphta 的博客"
-theme = "PaperMod"
-languageCode = "zh-cn"
+baseURL                = "https://essay.alphta.com/"
+title                  = "Alphta 的博客"
+theme                  = "hugo-theme-stack"
+languageCode           = "zh-cn"
 defaultContentLanguage = "zh"
-hasCJKLanguage = true
-paginate = 10
-enableEmoji = true
+hasCJKLanguage         = true
+enableEmoji            = true
+
+[pagination]
+    pagerSize = 8
+
+[permalinks]
+    page = "/:slug/"
 
 [outputs]
-  home = ["HTML", "RSS", "JSON"]
+    home    = ["HTML", "RSS", "JSON"]
+    section = ["HTML", "RSS"]
 
 [params]
-  env = "production"
-  description = "Alphta 的个人博客"
-  author = "Alphta"
-  defaultTheme = "auto"
-  disableThemeToggle = false
-  ShowReadingTime = true
-  ShowShareButtons = false
-  ShowPostNavLinks = true
-  ShowBreadCrumbs = true
-  ShowCodeCopyButtons = true
-  ShowToc = true
-  TocOpen = false
-  comments = false
+    mainSections   = ["posts"]
+    rssFullContent = true
 
-  [params.homeInfoParams]
-    Title = "你好，我是 Alphta"
-    Content = "欢迎来到我的博客，这里记录我的想法和笔记。"
+    [params.footer]
+        since = 2026
 
-  [params.socialIcons]
-    # 按需添加，例如：
-    # - name = "github"
-    #   url = "https://github.com/Alphta"
+    [params.sidebar]
+        emoji    = "✍️"
+        subtitle = "记录想法与笔记"
 
-[[menu.main]]
-  name = "文章"
-  url = "/posts/"
-  weight = 1
+    [params.article]
+        [params.article.license]
+            enabled = false
 
-[[menu.main]]
-  name = "归档"
-  url = "/archives/"
-  weight = 2
+    [params.widgets]
+        homepage = [
+            { type = "search" },
+            { type = "archives", params = { limit = 5 } },
+            { type = "tag-cloud", params = { limit = 10 } },
+        ]
+        page = [{ type = "toc" }]
 
-[[menu.main]]
-  name = "搜索"
-  url = "/search/"
-  weight = 3
+    [params.comments]
+        enabled = false
 
-[[menu.main]]
-  name = "标签"
-  url = "/tags/"
-  weight = 4
+    [params.colorScheme]
+        toggle  = true
+        default = "auto"
+
+[[menu.social]]
+    identifier = "github"
+    name       = "GitHub"
+    url        = "https://github.com/Alphta"
+
+    [menu.social.params]
+        icon = "brand-github"
+
+[markup]
+    [markup.goldmark]
+        [markup.goldmark.renderer]
+            unsafe = true
+    [markup.tableOfContents]
+        startLevel = 2
+        endLevel   = 4
+        ordered    = true
+    [markup.highlight]
+        noClasses = false

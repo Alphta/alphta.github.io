@@ -1,6 +1,6 @@
 ---
 title: "元旦小聚杂记"
-date: 2018-01-02T21:00:00+08:00
+date: 2011-01-02T21:00:00+08:00
 draft: false
 tags: ["随笔"]
 categories: []

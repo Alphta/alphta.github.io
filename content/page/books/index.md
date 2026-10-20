@@ -5,7 +5,7 @@ slug: "books"
 date: 2026-10-20
 menu:
     main:
-        weight: -80
+        weight: -90
         params:
             icon: book
 ---

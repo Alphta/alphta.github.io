@@ -68,23 +68,19 @@ document.addEventListener("DOMContentLoaded", function () {
     display: block;
 }
 
-/* 桌面端放宽阅读栏：有目录/无目录文章统一为 740px 正文宽，图片随之等宽 */
+/* 桌面端阅读栏：文章页与关于页统一 800px 正文宽，图片随之等宽 */
 @media (min-width: 1280px) {
     .container.extended {
-        max-width: 1400px !important;
+        max-width: 1440px !important;
         --left-sidebar-max-width: 150px !important;
-        --right-sidebar-max-width: 190px !important;
-    }
-    .main-article {
-        max-width: 800px !important;
-        margin-left: auto;
-        margin-right: auto;
+        --right-sidebar-max-width: 150px !important;
     }
 }
 
-@media (min-width: 1024px) and (max-width: 1279px) {
+@media (min-width: 1024px) {
     .main-article {
-        max-width: 800px;
+        max-width: 860px !important;
+        width: 100% !important;
         margin-left: auto;
         margin-right: auto;
     }

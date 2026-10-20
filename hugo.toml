@@ -33,12 +33,18 @@ enableEmoji            = true
             enabled = false
 
     [params.widgets]
+        # 首页：左侧已有搜索图标，右侧不再放搜索框
         homepage = [
-            { type = "search" },
             { type = "archives", params = { limit = 5 } },
             { type = "tag-cloud", params = { limit = 10 } },
         ]
-        page = [{ type = "toc" }]
+        # 文章页：搜索 + 目录 + 归档 + 标签云
+        page = [
+            { type = "search" },
+            { type = "toc" },
+            { type = "archives", params = { limit = 5 } },
+            { type = "tag-cloud", params = { limit = 10 } },
+        ]
 
     [params.comments]
         enabled = false

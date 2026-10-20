@@ -53,6 +53,10 @@ document.addEventListener("DOMContentLoaded", function () {
 }
 
 /* 书单页 */
+/* 书单是列表页，不显示发布日期/阅读时长这类文章元信息 */
+body:has(.book-grid) .article-details .article-meta {
+    display: none;
+}
 .book-summary {
     color: var(--card-text-color-secondary);
     font-size: 1.4rem;

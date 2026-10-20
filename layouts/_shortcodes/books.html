@@ -24,6 +24,10 @@
             {{- with .comment -}}
             <div class="book-comment">{{ . }}</div>
             {{- end -}}
+            {{- if .review_url -}}
+            {{- $rt := .review_title -}}
+            <div class="book-review"><a href="{{ .review_url }}" target="_blank" rel="noopener">书评：{{ $rt }}</a></div>
+            {{- end -}}
         </div>
     </a>
     {{- end -}}

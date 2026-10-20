@@ -15,7 +15,7 @@ import requests
 from bs4 import BeautifulSoup
 
 USER = "niviens"
-SITE = os.path.expanduser("~/.hermes/cache/scratch/blog/site")
+SITE = os.path.expanduser("~/Quant/blog")
 OUT_JSON = os.path.join(SITE, "data", "books.json")
 IMG_DIR = os.path.join(SITE, "static", "images", "books")
 
@@ -61,6 +61,36 @@ def parse_page(html):
     return items
 
 
+def fetch_reviews():
+    """抓「书评」列表（长评），按书目 URL 建索引"""
+    out = {}
+    start = 0
+    while start < 200:
+        url = f"https://www.douban.com/people/{USER}/reviews?start={start}"
+        r = session.get(url, timeout=30)
+        if r.status_code != 200:
+            break
+        soup = BeautifulSoup(r.text, "html.parser")
+        items = soup.select(".review-list .review-item")
+        if not items:
+            break
+        for it in items:
+            a_book = it.select_one("a.subject-img")
+            h = it.select_one("h2 a") or it.select_one(".title a")
+            sc = it.select_one(".short-content, .review-short")
+            if not (a_book and h):
+                continue
+            book_url = a_book.get("href", "").split("?")[0]
+            out[book_url.rstrip("/") + "/"] = {
+                "review_title": h.get_text(strip=True),
+                "review_url": h.get("href", ""),
+                "review_excerpt": sc.get_text(" ", strip=True)[:140] if sc else "",
+            }
+        start += 10
+        time.sleep(1.2)
+    return out
+
+
 def main():
     warmup()
     books, seen = [], set()
@@ -82,6 +112,15 @@ def main():
         if len(page_items) < 15:
             break
         time.sleep(1.5)
+
+    # 书评（长评）：按书目挂到对应条目上
+    reviews = fetch_reviews()
+    for b in books:
+        key = b["url"].split("?")[0].rstrip("/") + "/"
+        rv = reviews.get(key)
+        if rv:
+            b.update(rv)
+    print(f"  书评 {len(reviews)} 条，匹配 {sum(1 for b in books if b.get('review_url'))} 本")
 
     # 下载封面
     os.makedirs(IMG_DIR, exist_ok=True)

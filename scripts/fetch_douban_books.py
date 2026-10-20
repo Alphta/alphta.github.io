@@ -15,7 +15,7 @@ import requests
 from bs4 import BeautifulSoup
 
 USER = "niviens"
-SITE = os.path.expanduser("~/Documents/Github-blog")
+SITE = os.path.expanduser("~/Github-blog")
 OUT_JSON = os.path.join(SITE, "data", "books.json")
 IMG_DIR = os.path.join(SITE, "static", "images", "books")
 

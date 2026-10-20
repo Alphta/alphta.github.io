@@ -1,0 +1,16 @@
+{{/* 页脚：只保留版权行（移除 Hugo / Stack 署名，主题为 MIT 许可，允许不显示署名） */}}
+<footer class="site-footer">
+    <section class="copyright">
+        &copy;
+        {{ if and (.Site.Params.footer.since) (ne .Site.Params.footer.since (int (now.Format "2006"))) }}
+            {{ .Site.Params.footer.since }} -
+        {{ end }}
+        {{ now.Format "2006" }} {{ default .Site.Title .Site.Copyright }}
+    </section>
+
+    {{ with .Site.Params.footer.customText }}
+    <section class="powerby">
+        {{ . | safeHTML }}
+    </section>
+    {{ end }}
+</footer>

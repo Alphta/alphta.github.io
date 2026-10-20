@@ -200,3 +200,14 @@ details.tip-qr summary { list-style: none; }
 details.tip-qr summary::-webkit-details-marker { display: none; }
 .tip-qr img { display: block; width: 190px; margin: 12px auto 0; border-radius: 6px; }
 </style>
+
+<style>
+/* 评论区与正文同宽（giscus 默认撑满主栏） */
+.giscus,
+.giscus-frame {
+    max-width: 800px !important;
+    margin-left: auto !important;
+    margin-right: auto !important;
+}
+.main > .giscus { margin-top: 24px; }
+</style>

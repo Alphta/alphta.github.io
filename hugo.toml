@@ -47,6 +47,15 @@ enableEmoji            = true
         toggle  = true
         default = "auto"
 
+[[menu.main]]
+    identifier = "desk"
+    name       = "净值"
+    url        = "https://essay.alphta.com/desk/"
+    weight     = -75
+
+    [menu.main.params]
+        icon = "chart-line"
+
 [[menu.social]]
     identifier = "github"
     name       = "GitHub"

@@ -6,20 +6,26 @@
 语言：zh-CN
 关于作者：{{ "about" | absURL }}/
 
-## 文章
+{{- range where .Site.Sections "Section" "ne" "page" }}
+{{- $pages := .RegularPages }}
+{{- if $pages }}
 
-{{- range where .Site.RegularPages "Section" "posts" }}
+## {{ .Title }}（{{ len $pages }} 篇）
+
+{{- range $pages }}
 - [{{ .Title }}]({{ .Permalink }}): {{ with .Params.summary }}{{ . }}{{ else }}{{ .Summary | plainify | truncate 120 }}{{ end }}
 {{- end }}
+{{- end }}
+{{- end }}
 
-## 页面
+## 其他页面
 
 {{- range where .Site.RegularPages "Section" "page" }}
-- [{{ .Title }}]({{ .Permalink }}): {{ with .Description }}{{ . }}{{ else }}{{ .Summary | plainify | truncate 100 }}{{ end }}
+- [{{ .Title }}]({{ .Permalink }}): {{ .Description | default "页面" }}
 {{- end }}
 
 ## 说明
 
-- 所有文章为原创，引用请注明出处。
-- 文章列表也可通过 RSS 获取：{{ "index.xml" | absURL }}
+- 所有文章为原创，引用请注明出处与链接。
+- RSS：{{ "index.xml" | absURL }}
 - 站点地图：{{ "sitemap.xml" | absURL }}

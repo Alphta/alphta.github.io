@@ -16,3 +16,31 @@ document.addEventListener("DOMContentLoaded", function () {
         .catch(function () { el.style.display = "none"; });
 });
 </script>
+
+<style>
+/* 正文图片与文字同宽：抵消 Stack 图片容器的出血负边距 */
+.article-content .gallery,
+.article-content figure,
+.article-content a.gallery,
+.article-content .pswp-gallery,
+.article-content .video-wrapper,
+.article-content .table-wrapper {
+    margin-left: 0 !important;
+    margin-right: 0 !important;
+    width: 100% !important;
+    max-width: 100% !important;
+}
+
+.article-content img {
+    max-width: 100% !important;
+    height: auto;
+}
+
+/* 小图不放大、不拉伸出虚边 */
+.article-content .gallery img,
+.article-content a.gallery img {
+    width: auto;
+    max-width: 100%;
+    object-fit: contain;
+}
+</style>

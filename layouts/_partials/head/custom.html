@@ -60,16 +60,13 @@ document.addEventListener("DOMContentLoaded", function () {
         document.cookie = "vid=" + id + "; path=/; max-age=31536000; SameSite=Lax; Secure";
         return id;
     }
-    fetch("https://api.alphta.com/sitehit?vid=" + encodeURIComponent(visitorId()), { mode: "cors" }).catch(function () {});
-    var el = document.getElementById("site-total-views");
-    if (!el) return;
-    fetch("https://api.alphta.com/total", { mode: "cors" })
+    fetch("https://api.alphta.com/sitehit?vid=" + encodeURIComponent(visitorId()), { mode: "cors" })
         .then(function (r) { return r.json(); })
         .then(function (d) {
-            if (typeof d.pv === "number" && d.pv > 0) {
-                el.textContent = "访客 " + (d.uv || 0).toLocaleString("zh-CN") +
-                                 " · 浏览 " + d.pv.toLocaleString("zh-CN");
-            }
+            var el = document.getElementById("site-total-views");
+            if (!el || typeof d.pv !== "number" || d.pv <= 0) return;
+            el.textContent = "访客 " + (d.uv || 0).toLocaleString("zh-CN") +
+                             " · 浏览 " + d.pv.toLocaleString("zh-CN");
         })
         .catch(function () {});
 });

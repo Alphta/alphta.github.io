@@ -1,4 +1,5 @@
 ---
+comments: false
 title: "归档"
 date: 2026-10-19
 layout: "archives"

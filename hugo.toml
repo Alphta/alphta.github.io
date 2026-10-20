@@ -47,7 +47,32 @@ enableEmoji            = true
         ]
 
     [params.comments]
-        enabled = false
+        enabled = true
+        provider = "giscus"
+
+        [params.comments.giscus]
+            repo = "Alphta/alphta.github.io"
+            repoID = "MDEwOlJlcG9zaXRvcnkxMjUzNTgxMDM="
+            category = "Announcements"
+            categoryID = "DIC_kwDOB3jQF84DJFrp"
+            mapping = "pathname"
+            strict = 0
+            reactionsEnabled = 1
+            emitMetadata = 0
+            inputPosition = "top"
+            lightTheme = "light"
+            darkTheme = "dark"
+            lang = "zh-CN"
+            loading = "lazy"
+
+    # 文章底部赞赏（留空则不显示对应渠道）
+    [params.tip]
+        enabled = true
+        title = "觉得这篇文章有用？"
+        note = "你的支持是我继续写下去的动力"
+        afdian = ""
+        wechat_qr = ""
+        alipay_qr = ""
 
     [params.colorScheme]
         toggle  = true

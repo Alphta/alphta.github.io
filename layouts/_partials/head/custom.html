@@ -170,3 +170,33 @@ body:has(.book-grid) .article-details .article-meta {
     }
 }
 </style>
+
+<style>
+/* 文章底部赞赏 */
+.article-tip {
+    margin: 26px 0 6px;
+    padding: 18px 16px;
+    border: 1px dashed var(--card-separator-color);
+    border-radius: 10px;
+    text-align: center;
+}
+.tip-title { font-weight: 600; font-size: 1.5rem; color: var(--card-text-color-main); }
+.tip-note { color: var(--card-text-color-tertiary); font-size: 1.3rem; margin-top: 4px; }
+.tip-actions { margin-top: 14px; display: flex; gap: 10px; justify-content: center; flex-wrap: wrap; }
+.tip-btn {
+    display: inline-block;
+    padding: 7px 15px;
+    border-radius: 20px;
+    background: var(--card-background-selected);
+    color: var(--card-text-color-main);
+    font-size: 1.35rem;
+    cursor: pointer;
+    border: 1px solid var(--card-separator-color);
+    text-decoration: none;
+    transition: color .2s ease, border-color .2s ease;
+}
+.tip-btn:hover { color: var(--accent-color); border-color: var(--accent-color); }
+details.tip-qr summary { list-style: none; }
+details.tip-qr summary::-webkit-details-marker { display: none; }
+.tip-qr img { display: block; width: 190px; margin: 12px auto 0; border-radius: 6px; }
+</style>

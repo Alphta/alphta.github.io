@@ -24,3 +24,31 @@
     </section>
     {{- end -}}
 </footer>
+
+{{/* 赞赏：仅文章页；渠道留空则不显示对应按钮 */}}
+{{- if and .IsPage (eq .Section "posts") .Site.Params.tip.enabled -}}
+{{- $tip := .Site.Params.tip -}}
+{{- if or $tip.afdian $tip.wechat_qr $tip.alipay_qr -}}
+<section class="article-tip">
+    <div class="tip-title">{{ $tip.title }}</div>
+    <div class="tip-note">{{ $tip.note }}</div>
+    <div class="tip-actions">
+        {{- with $tip.afdian -}}
+        <a class="tip-btn" href="{{ . }}" target="_blank" rel="noopener">爱发电 · 请我喝咖啡</a>
+        {{- end -}}
+        {{- with $tip.wechat_qr -}}
+        <details class="tip-qr">
+            <summary class="tip-btn">微信赞赏</summary>
+            <img src="{{ . }}" alt="微信赞赏码" loading="lazy" />
+        </details>
+        {{- end -}}
+        {{- with $tip.alipay_qr -}}
+        <details class="tip-qr">
+            <summary class="tip-btn">支付宝赞赏</summary>
+            <img src="{{ . }}" alt="支付宝赞赏码" loading="lazy" />
+        </details>
+        {{- end -}}
+    </div>
+</section>
+{{- end -}}
+{{- end -}}

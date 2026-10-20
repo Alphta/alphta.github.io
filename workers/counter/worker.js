@@ -57,7 +57,7 @@ export default {
           `<body style="font-family:system-ui;padding:40px">` +
           `<h1>链接不存在</h1><p>短链 <code>${slug}</code> 还没有创建。</p>` +
           `<p><a href="${HOME}">回到博客</a></p></body>`,
-          { status: 404, headers: { "Content-Type": "text/html; charset=utf-8" } }
+          { status: 404, headers: { "Content-Type": "text/html; charset=utf-8", "Cache-Control": "no-store" } }
         );
       }
 
@@ -66,10 +66,22 @@ export default {
       const clicks = (parseInt(await env.VIEWS.get(clickKey)) || 0) + 1;
       await env.VIEWS.put(clickKey, String(clicks));
 
-      return Response.redirect(target, 302);
+      // 302 且禁止缓存，保证改了目标立刻生效
+      return new Response(null, {
+        status: 302,
+        headers: { Location: target, "Cache-Control": "no-store" },
+      });
     }
 
     // ---------- 阅读计数：api.alphta.com ----------
+
+    // 短链点击量查询（先处理，它不需要 path 参数）
+    if (url.pathname === "/clicks") {
+      const slug = url.searchParams.get("slug") || "";
+      const n = parseInt(await env.VIEWS.get("clicks:" + slug)) || 0;
+      return new Response(JSON.stringify({ slug, clicks: n }), { headers: jsonHeaders });
+    }
+
     const path = url.searchParams.get("path") || "";
     if (!/^\/[\w\-./]*$/.test(path) || path.length > 200) {
       return new Response(JSON.stringify({ error: "bad path" }), { status: 400, headers: jsonHeaders });
@@ -86,13 +98,6 @@ export default {
     if (url.pathname === "/get") {
       const n = parseInt(await env.VIEWS.get(key)) || 0;
       return new Response(JSON.stringify({ path, views: n }), { headers: jsonHeaders });
-    }
-
-    // 短链点击量查询
-    if (url.pathname === "/clicks") {
-      const slug = url.searchParams.get("slug") || "";
-      const n = parseInt(await env.VIEWS.get("clicks:" + slug)) || 0;
-      return new Response(JSON.stringify({ slug, clicks: n }), { headers: jsonHeaders });
     }
 
     return new Response(JSON.stringify({ error: "not found" }), { status: 404, headers: jsonHeaders });

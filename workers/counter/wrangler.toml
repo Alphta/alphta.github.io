@@ -1,0 +1,10 @@
+name = "rapid-bush-a207"
+main = "worker.js"
+compatibility_date = "2026-10-01"
+
+# 阅读计数 + 短链数据都存在这个 KV 里
+[[kv_namespaces]]
+binding = "VIEWS"
+id = "8ba601649b08479a92f16f4faf968331"
+
+# 自定义域（api.alphta.com 已绑定，go.alphta.com 由 API 单独挂）

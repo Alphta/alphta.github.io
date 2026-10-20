@@ -51,4 +51,13 @@ document.addEventListener("DOMContentLoaded", function () {
 .article-content figure.gallery-image {
     text-align: center;
 }
+
+/* 统一正文栏宽：有目录/无目录的文章阅读列现在不一致（604 vs 954），锁到同一宽度 */
+@media (min-width: 1024px) {
+    .main-article {
+        max-width: 664px;
+        margin-left: auto;
+        margin-right: auto;
+    }
+}
 </style>

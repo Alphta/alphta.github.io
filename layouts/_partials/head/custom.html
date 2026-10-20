@@ -229,15 +229,18 @@ body:has(.book-grid) .main-article {
 /* 书单：长评链接 */
 .book-review {
     margin-top: 6px;
-    font-size: 1.3rem;
+    font-size: 1.35rem;
     line-height: 1.5;
 }
 .book-review a {
-    color: var(--accent-color);
+    color: var(--card-text-color-secondary);
     text-decoration: none;
-    border-bottom: 1px dashed currentColor;
+    border-bottom: none;
 }
-.book-review a:hover { opacity: .8; }
+.book-review a:hover {
+    color: var(--card-text-color-main);
+    text-decoration: underline;
+}
 </style>
 
 <style>

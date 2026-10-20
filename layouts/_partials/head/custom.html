@@ -211,3 +211,13 @@ details.tip-qr summary::-webkit-details-marker { display: none; }
 }
 .main > .giscus { margin-top: 24px; }
 </style>
+
+<style>
+/* 书单页：不需要右侧栏（搜索/归档/标签云） */
+body:has(.book-grid) .right-sidebar {
+    display: none !important;
+}
+body:has(.book-grid) .main {
+    max-width: 100%;
+}
+</style>

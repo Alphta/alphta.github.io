@@ -1,0 +1,31 @@
+{{/* 书单：读取 data/books.json，由 scripts/fetch_douban_books.py 生成 */}}
+{{- $books := site.Data.books -}}
+{{- if not $books -}}
+<p>还没有书单数据。</p>
+{{- else -}}
+<div class="book-summary">共 {{ len $books }} 本 · 按读完时间倒序 · 数据来自豆瓣</div>
+<div class="book-grid">
+    {{- range $books -}}
+    {{- $title := .title -}}
+    <a class="book-card" href="{{ .url }}" target="_blank" rel="noopener">
+        <div class="book-cover">
+            {{- with .cover_local -}}
+            <img src="{{ . }}" alt="{{ $title }}" loading="lazy" />
+            {{- end -}}
+        </div>
+        <div class="book-info">
+            <div class="book-title">{{ .title }}</div>
+            {{- if gt .rating 0 -}}
+            <div class="book-rating">{{ range seq .rating }}★{{ end }}<span class="book-rating-empty">{{ range seq (sub 5 .rating) }}★{{ end }}</span></div>
+            {{- else -}}
+            <div class="book-rating book-rating-none">未评分</div>
+            {{- end -}}
+            <div class="book-date">{{ .date }}</div>
+            {{- with .comment -}}
+            <div class="book-comment">{{ . }}</div>
+            {{- end -}}
+        </div>
+    </a>
+    {{- end -}}
+</div>
+{{- end -}}

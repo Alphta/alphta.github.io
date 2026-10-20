@@ -52,6 +52,86 @@ document.addEventListener("DOMContentLoaded", function () {
     text-align: center;
 }
 
+/* 书单页 */
+.book-summary {
+    color: var(--card-text-color-secondary);
+    font-size: 1.4rem;
+    margin-bottom: 16px;
+}
+.book-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+    gap: 14px;
+    margin: 8px 0 24px;
+}
+.book-card {
+    display: flex;
+    gap: 12px;
+    padding: 12px;
+    border-radius: 8px;
+    background: var(--card-background);
+    box-shadow: var(--shadow-l1);
+    text-decoration: none;
+    color: inherit;
+    transition: transform 0.15s ease, box-shadow 0.15s ease;
+}
+.book-card:hover {
+    transform: translateY(-2px);
+    box-shadow: var(--shadow-l2);
+}
+.book-cover {
+    flex: 0 0 68px;
+}
+.book-cover img {
+    width: 68px;
+    height: auto;
+    border-radius: 3px;
+    display: block;
+    box-shadow: 0 1px 4px rgba(0, 0, 0, 0.2);
+}
+.book-info {
+    min-width: 0;
+}
+.book-title {
+    font-weight: 600;
+    line-height: 1.35;
+    font-size: 1.45rem;
+    color: var(--card-text-color-main);
+}
+.book-rating {
+    color: #e8a33d;
+    font-size: 1.3rem;
+    letter-spacing: 1px;
+    margin-top: 2px;
+}
+.book-rating-empty {
+    color: var(--card-separator-color);
+}
+.book-rating-none {
+    color: var(--card-text-color-tertiary);
+    font-size: 1.2rem;
+}
+.book-date {
+    color: var(--card-text-color-tertiary);
+    font-size: 1.25rem;
+    margin-top: 2px;
+}
+.book-comment {
+    margin-top: 6px;
+    color: var(--card-text-color-secondary);
+    font-size: 1.35rem;
+    line-height: 1.5;
+    display: -webkit-box;
+    -webkit-line-clamp: 3;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+}
+@media (max-width: 767px) {
+    .book-grid {
+        grid-template-columns: 1fr;
+    }
+}
+
 /* 关于页：邮件图标链接 */
 .about-mail {
     display: inline-flex;

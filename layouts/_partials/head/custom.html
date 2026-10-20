@@ -36,12 +36,14 @@ document.addEventListener("DOMContentLoaded", function () {
     height: auto;
 }
 
-/* 小图不放大、不拉伸出虚边 */
+/* 全部正文图片统一占满文字列宽，高度按原比例 */
 .article-content .gallery img,
-.article-content a.gallery img {
-    width: auto;
-    max-width: 100%;
-    object-fit: contain;
+.article-content a.gallery img,
+.article-content figure.gallery-image img {
+    width: 100% !important;
+    height: auto;
+    display: block;
+    object-fit: cover;
 }
 
 /* 小于正文宽度的图片居中显示 */

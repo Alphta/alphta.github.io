@@ -52,6 +52,22 @@ document.addEventListener("DOMContentLoaded", function () {
     text-align: center;
 }
 
+/* 关于页：邮件图标链接 */
+.about-mail {
+    display: inline-flex;
+    align-items: center;
+    vertical-align: -4px;
+    margin-left: 4px;
+    color: var(--card-text-color-main);
+    transition: color 0.2s ease;
+}
+.about-mail:hover {
+    color: var(--accent-color);
+}
+.about-mail svg {
+    display: block;
+}
+
 /* 桌面端放宽阅读栏：有目录/无目录文章统一为 740px 正文宽，图片随之等宽 */
 @media (min-width: 1280px) {
     .container.extended {

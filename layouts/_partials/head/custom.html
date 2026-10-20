@@ -52,10 +52,23 @@ document.addEventListener("DOMContentLoaded", function () {
     text-align: center;
 }
 
-/* 统一正文栏宽：有目录/无目录的文章阅读列现在不一致（604 vs 954），锁到同一宽度 */
-@media (min-width: 1024px) {
+/* 桌面端放宽阅读栏：有目录/无目录文章统一为 740px 正文宽，图片随之等宽 */
+@media (min-width: 1280px) {
+    .container.extended {
+        max-width: 1400px !important;
+        --left-sidebar-max-width: 150px !important;
+        --right-sidebar-max-width: 190px !important;
+    }
     .main-article {
-        max-width: 664px;
+        max-width: 800px !important;
+        margin-left: auto;
+        margin-right: auto;
+    }
+}
+
+@media (min-width: 1024px) and (max-width: 1279px) {
+    .main-article {
+        max-width: 800px;
         margin-left: auto;
         margin-right: auto;
     }

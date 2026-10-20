@@ -13,4 +13,9 @@
         {{ . | safeHTML }}
     </section>
     {{ end }}
+
+    {{/* 全站总访问量：数值由 api.alphta.com/total 提供 */}}
+    <section class="site-visits">
+        <span id="site-total-views"></span>
+    </section>
 </footer>

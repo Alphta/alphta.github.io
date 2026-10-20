@@ -48,7 +48,33 @@ document.addEventListener("DOMContentLoaded", function () {
 });
 </script>
 
+{{/* 全站总访问量：每次页面加载记一次，页脚展示总数 */}}
+<script>
+document.addEventListener("DOMContentLoaded", function () {
+    fetch("https://api.alphta.com/sitehit", { mode: "cors" }).catch(function () {});
+    var el = document.getElementById("site-total-views");
+    if (!el) return;
+    fetch("https://api.alphta.com/total", { mode: "cors" })
+        .then(function (r) { return r.json(); })
+        .then(function (d) {
+            if (typeof d.total === "number" && d.total > 0) {
+                el.textContent = "总访问量 " + d.total.toLocaleString("zh-CN");
+            }
+        })
+        .catch(function () {});
+});
+</script>
+
 <style>
+/* 页脚总访问量 */
+.site-visits {
+    margin-top: 6px;
+    font-size: 13px;
+    color: var(--card-text-color-tertiary);
+}
+.site-visits:empty { display: none; }
+.site-visits span:empty { display: none; }
+
 /* 正文图片与文字同宽：抵消 Stack 图片容器的出血负边距 */
 .article-content .gallery,
 .article-content figure,

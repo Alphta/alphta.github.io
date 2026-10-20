@@ -113,6 +113,32 @@ export default {
       return new Response(JSON.stringify(out), { headers: jsonHeaders });
     }
 
+    // 全站总访问量：KV 里单独维护一个累加键；首次读取时用各文章计数回填
+    if (url.pathname === "/sitehit") {
+      let t = parseInt(await env.VIEWS.get("site:total"));
+      if (!Number.isFinite(t)) t = 0;
+      t += 1;
+      await env.VIEWS.put("site:total", String(t));
+      return new Response(JSON.stringify({ total: t }), { headers: jsonHeaders });
+    }
+
+    if (url.pathname === "/total") {
+      let total = parseInt(await env.VIEWS.get("site:total"));
+      if (!Number.isFinite(total) || total <= 0) {
+        total = 0;
+        let cursor;
+        do {
+          const list = await env.VIEWS.list({ prefix: "views:", cursor });
+          for (const k of list.keys) {
+            total += parseInt(await env.VIEWS.get(k.name)) || 0;
+          }
+          cursor = list.list_complete ? null : list.cursor;
+        } while (cursor);
+        await env.VIEWS.put("site:total", String(total));
+      }
+      return new Response(JSON.stringify({ total }), { headers: jsonHeaders });
+    }
+
     const path = url.searchParams.get("path") || "";
     if (!/^\/[\w\-./]*$/.test(path) || path.length > 200) {
       return new Response(JSON.stringify({ error: "bad path" }), { status: 400, headers: jsonHeaders });

@@ -7,14 +7,16 @@
 <div class="book-grid">
     {{- range $books -}}
     {{- $title := .title -}}
-    <a class="book-card" href="{{ .url }}" target="_blank" rel="noopener">
-        <div class="book-cover">
+    {{- $url := .url -}}
+    {{/* 卡片用 div，避免 <a> 嵌套 <a>（书名/封面/书评各自是链接） */}}
+    <div class="book-card">
+        <a class="book-cover" href="{{ $url }}" target="_blank" rel="noopener">
             {{- with .cover_local -}}
             <img src="{{ . }}" alt="{{ $title }}" loading="lazy" />
             {{- end -}}
-        </div>
+        </a>
         <div class="book-info">
-            <div class="book-title">{{ .title }}</div>
+            <a class="book-title" href="{{ $url }}" target="_blank" rel="noopener">{{ .title }}</a>
             {{- if gt .rating 0 -}}
             <div class="book-rating">{{ range seq .rating }}★{{ end }}<span class="book-rating-empty">{{ range seq (sub 5 .rating) }}★{{ end }}</span></div>
             {{- else -}}
@@ -29,7 +31,7 @@
             <div class="book-review"><a href="{{ .review_url }}" target="_blank" rel="noopener">书评：{{ $rt }}</a></div>
             {{- end -}}
         </div>
-    </a>
+    </div>
     {{- end -}}
 </div>
 {{- end -}}

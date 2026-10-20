@@ -3,7 +3,7 @@
 {{- if not $books -}}
 <p>还没有书单数据。</p>
 {{- else -}}
-<div class="book-summary">共 {{ len $books }} 本 · 按读完时间倒序 · 数据来自豆瓣</div>
+<div class="book-summary">共 {{ len $books }} 本</div>
 <div class="book-grid">
     {{- range $books -}}
     {{- $title := .title -}}

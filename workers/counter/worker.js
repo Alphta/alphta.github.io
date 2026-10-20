@@ -113,30 +113,44 @@ export default {
       return new Response(JSON.stringify(out), { headers: jsonHeaders });
     }
 
-    // 全站总访问量：KV 里单独维护一个累加键；首次读取时用各文章计数回填
+    // 全站计数：PV 每次 +1；UV 按访客 id 去重（同一浏览器只算一次）
     if (url.pathname === "/sitehit") {
-      let t = parseInt(await env.VIEWS.get("site:total"));
-      if (!Number.isFinite(t)) t = 0;
-      t += 1;
-      await env.VIEWS.put("site:total", String(t));
-      return new Response(JSON.stringify({ total: t }), { headers: jsonHeaders });
+      let pv = parseInt(await env.VIEWS.get("site:total"));
+      if (!Number.isFinite(pv)) pv = 0;
+      pv += 1;
+      await env.VIEWS.put("site:total", String(pv));
+
+      let uv = parseInt(await env.VIEWS.get("site:uv"));
+      if (!Number.isFinite(uv)) uv = 0;
+
+      const vid = (url.searchParams.get("vid") || "").trim();
+      if (/^[\w-]{8,64}$/.test(vid)) {
+        const seen = await env.VIEWS.get("uv:" + vid);
+        if (!seen) {
+          await env.VIEWS.put("uv:" + vid, "1", { expirationTtl: 60 * 60 * 24 * 400 });
+          uv += 1;
+          await env.VIEWS.put("site:uv", String(uv));
+        }
+      }
+      return new Response(JSON.stringify({ pv, uv }), { headers: jsonHeaders });
     }
 
     if (url.pathname === "/total") {
-      let total = parseInt(await env.VIEWS.get("site:total"));
-      if (!Number.isFinite(total) || total <= 0) {
-        total = 0;
+      let pv = parseInt(await env.VIEWS.get("site:total"));
+      if (!Number.isFinite(pv) || pv <= 0) {
+        pv = 0;
         let cursor;
         do {
           const list = await env.VIEWS.list({ prefix: "views:", cursor });
           for (const k of list.keys) {
-            total += parseInt(await env.VIEWS.get(k.name)) || 0;
+            pv += parseInt(await env.VIEWS.get(k.name)) || 0;
           }
           cursor = list.list_complete ? null : list.cursor;
         } while (cursor);
-        await env.VIEWS.put("site:total", String(total));
+        await env.VIEWS.put("site:total", String(pv));
       }
-      return new Response(JSON.stringify({ total }), { headers: jsonHeaders });
+      const uv = parseInt(await env.VIEWS.get("site:uv")) || 0;
+      return new Response(JSON.stringify({ total: pv, pv, uv }), { headers: jsonHeaders });
     }
 
     const path = url.searchParams.get("path") || "";

@@ -14,8 +14,15 @@ enableEmoji            = true
     page = "/:slug/"
 
 [outputs]
-    home    = ["HTML", "RSS", "JSON"]
+    home    = ["HTML", "RSS", "JSON", "llms"]
     section = ["HTML", "RSS"]
+
+# llms.txt：给 AI 抓取器/检索器的站点索引（https://llmstxt.org）
+[outputFormats.llms]
+    mediaType   = "text/plain"
+    baseName    = "llms"
+    isPlainText = true
+    isHTML      = false
 
 [params]
     mainSections   = ["posts"]

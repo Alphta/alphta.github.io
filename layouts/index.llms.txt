@@ -1,0 +1,25 @@
+# {{ .Site.Title }}
+
+> {{ .Site.Params.sidebar.subtitle }} — 记录投资、量化、读书与日常的原创文字。
+
+站点：{{ .Site.BaseURL }}
+语言：zh-CN
+关于作者：{{ "about" | absURL }}/
+
+## 文章
+
+{{- range where .Site.RegularPages "Section" "posts" }}
+- [{{ .Title }}]({{ .Permalink }}): {{ with .Params.summary }}{{ . }}{{ else }}{{ .Summary | plainify | truncate 120 }}{{ end }}
+{{- end }}
+
+## 页面
+
+{{- range where .Site.RegularPages "Section" "page" }}
+- [{{ .Title }}]({{ .Permalink }}): {{ with .Description }}{{ . }}{{ else }}{{ .Summary | plainify | truncate 100 }}{{ end }}
+{{- end }}
+
+## 说明
+
+- 所有文章为原创，引用请注明出处。
+- 文章列表也可通过 RSS 获取：{{ "index.xml" | absURL }}
+- 站点地图：{{ "sitemap.xml" | absURL }}

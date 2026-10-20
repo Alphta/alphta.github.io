@@ -82,6 +82,37 @@ export default {
       return new Response(JSON.stringify({ slug, clicks: n }), { headers: jsonHeaders });
     }
 
+    // ---------- AI / 搜索引擎来源统计 ----------
+    // GET /ref?src=chatgpt.com&page=/posts/xxx/
+    if (url.pathname === "/ref") {
+      const src = (url.searchParams.get("src") || "").toLowerCase().slice(0, 60);
+      const page = (url.searchParams.get("page") || "/").slice(0, 200);
+      if (!/^[a-z0-9.-]+$/.test(src)) {
+        return new Response(JSON.stringify({ error: "bad src" }), { status: 400, headers: jsonHeaders });
+      }
+      const day = new Date().toISOString().slice(0, 10);
+      const k1 = `ref:${day}:${src}`;
+      const k2 = `refpage:${day}:${src}:${page}`;
+      const n1 = (parseInt(await env.VIEWS.get(k1)) || 0) + 1;
+      await env.VIEWS.put(k1, String(n1));
+      const n2 = (parseInt(await env.VIEWS.get(k2)) || 0) + 1;
+      await env.VIEWS.put(k2, String(n2));
+      return new Response(JSON.stringify({ ok: true, src, page, count: n1 }), { headers: jsonHeaders });
+    }
+
+    // GET /refstats?days=7 → 汇总来源
+    if (url.pathname === "/refstats") {
+      const list = await env.VIEWS.list({ prefix: "ref:" });
+      const out = {};
+      for (const k of list.keys) {
+        const [, day, ...rest] = k.name.split(":");
+        const src = rest.join(":");
+        out[src] = out[src] || {};
+        out[src][day] = parseInt(await env.VIEWS.get(k.name)) || 0;
+      }
+      return new Response(JSON.stringify(out), { headers: jsonHeaders });
+    }
+
     const path = url.searchParams.get("path") || "";
     if (!/^\/[\w\-./]*$/.test(path) || path.length > 200) {
       return new Response(JSON.stringify({ error: "bad path" }), { status: 400, headers: jsonHeaders });

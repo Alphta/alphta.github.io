@@ -285,3 +285,22 @@ a.book-title {
 }
 a.book-title:hover { color: var(--accent-color); }
 </style>
+
+<script>
+/* 记录来自 AI / 搜索的访问来源（只上报主机名和路径，不收集个人信息） */
+(function () {
+    var SOURCES = ["chatgpt.com", "chat.openai.com", "perplexity.ai", "claude.ai",
+                   "gemini.google.com", "copilot.microsoft.com", "bing.com",
+                   "you.com", "phind.com", "kagi.com"];
+    var ref = document.referrer;
+    if (!ref) return;
+    var host;
+    try { host = new URL(ref).hostname.replace(/^www\./, ""); } catch (e) { return; }
+    var matched = SOURCES.some(function (d) {
+        return host === d || host.slice(-(d.length + 1)) === "." + d;
+    });
+    if (!matched) return;
+    fetch("https://api.alphta.com/ref?src=" + encodeURIComponent(host) +
+          "&page=" + encodeURIComponent(location.pathname)).catch(function () {});
+})();
+</script>

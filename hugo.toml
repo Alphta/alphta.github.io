@@ -67,7 +67,7 @@ enableEmoji            = true
 
     # 文章底部赞赏（留空则不显示对应渠道）
     [params.tip]
-        enabled = true
+        enabled = false   # 暂时不显示赞赏；以后填好渠道改成 true 即可
         title = "觉得这篇文章有用？"
         note = "你的支持是我继续写下去的动力"
         afdian = ""

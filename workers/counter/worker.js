@@ -1,32 +1,78 @@
-// 博客阅读计数器 - Cloudflare Worker
-// 部署步骤见同目录 README.md
-//
-// API:
-//   GET /hit?path=/posts/xxx/   阅读数 +1 并返回 { path, views }
-//   GET /get?path=/posts/xxx/   只读返回当前数（不增加）
-// 需要绑定 KV 命名空间，变量名必须是 VIEWS
+// 博客工具 Worker：阅读计数 + 短链服务
+// 部署：Cloudflare Dashboard → Workers & Pages → blog-counter → Edit code → 粘贴 → Deploy
+// 绑定：
+//   KV namespace 变量名 VIEWS（存计数和短链）
+//   自定义域 api.alphta.com（计数 API）
+//   自定义域 go.alphta.com（短链跳转）
+// 可选 Secret：ADMIN_TOKEN（用于通过 API 添加短链）
 
 const ALLOWED_ORIGIN = "https://essay.alphta.com";
+const HOME = "https://essay.alphta.com";
+
+const jsonHeaders = {
+  "Access-Control-Allow-Origin": ALLOWED_ORIGIN,
+  "Access-Control-Allow-Methods": "GET, POST, OPTIONS",
+  "Access-Control-Allow-Headers": "Content-Type, x-admin-token",
+  "Content-Type": "application/json; charset=utf-8",
+  "Cache-Control": "no-store",
+};
 
 export default {
   async fetch(request, env) {
     const url = new URL(request.url);
-
-    const headers = {
-      "Access-Control-Allow-Origin": ALLOWED_ORIGIN,
-      "Access-Control-Allow-Methods": "GET, OPTIONS",
-      "Content-Type": "application/json; charset=utf-8",
-      "Cache-Control": "no-store",
-    };
+    const host = url.hostname;
 
     if (request.method === "OPTIONS") {
-      return new Response(null, { headers });
+      return new Response(null, { headers: jsonHeaders });
     }
 
-    // 只统计文章路径，防止乱刷垃圾 key
+    // ---------- 短链：go.alphta.com/<slug> ----------
+    if (host.startsWith("go.")) {
+      const slug = url.pathname.replace(/^\/+|\/+$/g, "");
+
+      // 管理接口：POST /_add  {"slug":"xxx","url":"https://..."}
+      if (slug === "_add" && request.method === "POST") {
+        if (!env.ADMIN_TOKEN || request.headers.get("x-admin-token") !== env.ADMIN_TOKEN) {
+          return new Response(JSON.stringify({ error: "unauthorized" }), { status: 401, headers: jsonHeaders });
+        }
+        const body = await request.json().catch(() => null);
+        if (!body || !body.slug || !body.url) {
+          return new Response(JSON.stringify({ error: "slug and url required" }), { status: 400, headers: jsonHeaders });
+        }
+        if (!/^[\w-]{1,64}$/.test(body.slug) || !/^https?:\/\//.test(body.url)) {
+          return new Response(JSON.stringify({ error: "bad slug or url" }), { status: 400, headers: jsonHeaders });
+        }
+        await env.VIEWS.put("link:" + body.slug, body.url);
+        return new Response(JSON.stringify({ ok: true, slug: body.slug, url: body.url }), { headers: jsonHeaders });
+      }
+
+      if (!slug) {
+        return Response.redirect(HOME, 302);
+      }
+
+      const target = await env.VIEWS.get("link:" + slug);
+      if (!target) {
+        return new Response(
+          `<!doctype html><meta charset="utf-8"><title>链接不存在</title>` +
+          `<body style="font-family:system-ui;padding:40px">` +
+          `<h1>链接不存在</h1><p>短链 <code>${slug}</code> 还没有创建。</p>` +
+          `<p><a href="${HOME}">回到博客</a></p></body>`,
+          { status: 404, headers: { "Content-Type": "text/html; charset=utf-8" } }
+        );
+      }
+
+      // 点击统计（key: clicks:<slug>）
+      const clickKey = "clicks:" + slug;
+      const clicks = (parseInt(await env.VIEWS.get(clickKey)) || 0) + 1;
+      await env.VIEWS.put(clickKey, String(clicks));
+
+      return Response.redirect(target, 302);
+    }
+
+    // ---------- 阅读计数：api.alphta.com ----------
     const path = url.searchParams.get("path") || "";
     if (!/^\/[\w\-./]*$/.test(path) || path.length > 200) {
-      return new Response(JSON.stringify({ error: "bad path" }), { status: 400, headers });
+      return new Response(JSON.stringify({ error: "bad path" }), { status: 400, headers: jsonHeaders });
     }
 
     const key = "views:" + path;
@@ -34,14 +80,21 @@ export default {
     if (url.pathname === "/hit") {
       const n = (parseInt(await env.VIEWS.get(key)) || 0) + 1;
       await env.VIEWS.put(key, String(n));
-      return new Response(JSON.stringify({ path, views: n }), { headers });
+      return new Response(JSON.stringify({ path, views: n }), { headers: jsonHeaders });
     }
 
     if (url.pathname === "/get") {
       const n = parseInt(await env.VIEWS.get(key)) || 0;
-      return new Response(JSON.stringify({ path, views: n }), { headers });
+      return new Response(JSON.stringify({ path, views: n }), { headers: jsonHeaders });
     }
 
-    return new Response(JSON.stringify({ error: "not found" }), { status: 404, headers });
+    // 短链点击量查询
+    if (url.pathname === "/clicks") {
+      const slug = url.searchParams.get("slug") || "";
+      const n = parseInt(await env.VIEWS.get("clicks:" + slug)) || 0;
+      return new Response(JSON.stringify({ slug, clicks: n }), { headers: jsonHeaders });
+    }
+
+    return new Response(JSON.stringify({ error: "not found" }), { status: 404, headers: jsonHeaders });
   },
 };

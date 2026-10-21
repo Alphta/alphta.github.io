@@ -1,5 +1,5 @@
 baseURL                = "https://essay.alphta.com/"
-title                  = "Alphta 的博客"
+title                  = "荒唐镜的人生"
 theme                  = "hugo-theme-stack"
 languageCode           = "zh-cn"
 locale                 = "zh-cn"

@@ -69,6 +69,7 @@ def main():
     ap.add_argument("--paid", action="store_true")
     ap.add_argument("--free", action="store_true")
     ap.add_argument("--code", default="")
+    ap.add_argument("--filename", default="")
     a = ap.parse_args()
 
     if a.paid == a.free:
@@ -98,7 +99,7 @@ def main():
         "size": size,
         "sha256": sha,
         "paid": bool(a.paid),
-        "filename": src.name,
+        "filename": a.filename or src.name,
         "type": mime,
         "added": __import__("datetime").date.today().isoformat(),
     }

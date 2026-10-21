@@ -234,6 +234,10 @@ document.addEventListener("DOMContentLoaded", function () {
 </script>
 
 <style>
+/* 资料页：右侧只留搜索 */
+body:has(.library-page) .widget.archives,
+body:has(.library-page) .widget.tagCloud { display: none !important; }
+
 /* 资料库 */
 .lib-list { display: flex; flex-direction: column; gap: 0; }
 .lib-item {

@@ -234,6 +234,9 @@ document.addEventListener("DOMContentLoaded", function () {
 </script>
 
 <style>
+/* 站点副标题为空时不占位 */
+.site-description:empty { display: none; }
+
 /* 资料页：右侧只留搜索 */
 body:has(.library-page) .widget.archives,
 body:has(.library-page) .widget.tagCloud { display: none !important; }

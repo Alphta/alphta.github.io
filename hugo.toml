@@ -33,7 +33,7 @@ enableEmoji            = true
 
     [params.sidebar]
         emoji    = "✍️"
-        subtitle = "记录想法与笔记"
+        subtitle = ""
 
     [params.article]
         [params.article.license]

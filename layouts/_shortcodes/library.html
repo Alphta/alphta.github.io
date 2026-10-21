@@ -2,7 +2,6 @@
 {{- /* 资料库：读取 data/files.json 渲染；付费项凭访问码下载 */ -}}
 {{- $files := hugo.Data.files -}}
 {{- if not $files -}}
-<p class="lib-empty">还没有上传资料。</p>
 {{- else -}}
 <div class="lib-list">
   {{- range $files }}

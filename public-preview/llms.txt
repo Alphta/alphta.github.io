@@ -6,14 +6,7 @@
 语言：zh-CN
 关于作者：https://blog-preview-bbv.pages.dev/about/
 
-## 文章（23 篇）
-- [到期、即期、远期：三种收益率到底差在哪](https://blog-preview-bbv.pages.dev/posts/shou-yi-lv-san-zhong-lei-xing/): 债券收益率曲线有三种：到期、即期、远期。这篇讲清各自定义、为什么即期要用拔靴法倒推、远期利率又如何从即期曲线算出来。
-- [收益率曲线的四种形态，与背后的三股力量](https://blog-preview-bbv.pages.dev/posts/shou-yi-lv-qu-xian-xing-tai/): 向上、向下、水平、驼峰——曲线形状不是随机出现的。市场预期、风险溢价、凸性偏差三股力量如何把曲线推成不同样子。
-- [骑乘策略：赚的是曲线形状的钱](https://blog-preview-bbv.pages.dev/posts/qi-cheng-ce-lue/): 收益率曲线陡峭时，持有债券随着剩余期限缩短，收益率下行带来额外资本利得。用零息债和附息债两个算例讲清骑乘收益从哪来、什么情况下会失效。
-- [子弹、杠铃、阶梯：同久期下的三种打法](https://blog-preview-bbv.pages.dev/posts/jiu-qi-ce-lue/): 同样久期的组合，可以用子弹、杠铃、阶梯三种方式搭建。收益率平移、陡峭化、平坦化时，哪一种更占优？附完整测算表。
-- [期限利差：牛平、牛陡、熊陡、熊平](https://blog-preview-bbv.pages.dev/posts/qi-xian-li-cha/): 长端看基本面、短端看货币政策，两者不同步就有了期限利差。四象限如何轮动、2008–2009 年那轮完整复盘，以及均值回归怎么用。
-- [信用利差与等级利差：风险是怎么定价的](https://blog-preview-bbv.pages.dev/posts/xin-yong-li-cha/): 信用利差补偿的是违约风险和流动性风险。行业利差三步法怎么建、等级利差为何会出现“熊市收窄、牛市走阔”的反常走势。
-- [国债与国开债：隐含税率里的税收与流动性](https://blog-preview-bbv.pages.dev/posts/guo-zhai-guo-kai-li-cha/): 两者都是无风险利率债，利差来自税收和流动性。隐含税率理论上应稳定在 25%，实际为什么长期低于这个水平。
+## 文章（16 篇）
 - [纪念国米7-6决胜巴萨](https://blog-preview-bbv.pages.dev/posts/ji-nian-guo-mi-7-6-jue-sheng-ba-sa/): 今天凌晨的比赛因为最近太累没有起来看，毕竟年纪大了熬夜熬不动了，早晨醒来的时候发现手机推送4-3淘汰巴萨，我就知道我错过…
 - [2023年回顾](https://blog-preview-bbv.pages.dev/posts/2023-nian-hui-gu/): 今天起晚了，没有按时上课，到了学校以后想着反正都迟到了，那不如逛逛学校算了，等着下课课间再溜进去，也算是“偷得浮生半日闲…
 - [关于真诚与现实](https://blog-preview-bbv.pages.dev/posts/guan-yu-zhen-cheng-yu-xian-shi/): 每年的假期总是给人不一样的感受，譬如去年的五一在南方享受湿润的微风，今年的五一就在北方回味湿润的微风。回忆中风的味道还是…
@@ -32,6 +25,7 @@
 - [元旦小聚杂记](https://blog-preview-bbv.pages.dev/posts/yuan-dan-xiao-ju-za-ji/): 早就说要聚聚，昨天终于抽了一天空见几位中学很好的同学。 不知道是不是长大了，她们都喜欢化妆，涂上眼影、唇彩，染了头发，已…
 
 ## 其他页面
+- [资料](https://blog-preview-bbv.pages.dev/library/): 学术文档与研究报告下载
 - [书单](https://blog-preview-bbv.pages.dev/books/): 读过的书
 - [关于](https://blog-preview-bbv.pages.dev/about/): 关于这个博客和我
 - [归档](https://blog-preview-bbv.pages.dev/archives/): 页面

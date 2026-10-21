@@ -1,3 +1,59 @@
+{{/* 资料库：付费文件凭访问码下载 */}}
+<script>
+document.addEventListener("DOMContentLoaded", function () {
+    document.querySelectorAll(".lib-btn[data-slug]").forEach(function (btn) {
+        btn.addEventListener("click", function () {
+            var cell = btn.parentElement;
+            var slug = btn.dataset.slug;
+            var KEY = "dcode:" + slug;
+            cell.innerHTML =
+                '<div class="lib-unlock">' +
+                '<input class="lib-input" type="text" placeholder="访问码" autocomplete="off">' +
+                '<button class="lib-go" type="button">下载</button>' +
+                '<div class="lib-msg" hidden></div></div>';
+            var input = cell.querySelector(".lib-input");
+            var go = cell.querySelector(".lib-go");
+            var msg = cell.querySelector(".lib-msg");
+            var saved = localStorage.getItem(KEY);
+            if (saved) input.value = saved;
+
+            function fail(t) { msg.textContent = t; msg.hidden = false; }
+
+            function run() {
+                var code = (input.value || "").trim().toUpperCase();
+                if (!code) return fail("请输入访问码");
+                go.disabled = true; msg.hidden = true;
+                fetch("https://api.alphta.com/download", {
+                    method: "POST",
+                    headers: {"Content-Type": "application/json"},
+                    body: JSON.stringify({slug: slug, code: code})
+                }).then(function (r) {
+                    if (!r.ok) {
+                        return r.json().then(function (d) { throw new Error(d.error || "下载失败"); });
+                    }
+                    var cd = r.headers.get("Content-Disposition") || "";
+                    var name = slug + ".pdf";
+                    var m = cd.match(/filename\*=UTF-8''([^;]+)/);
+                    if (m) name = decodeURIComponent(m[1]);
+                    return r.blob().then(function (b) {
+                        var a = document.createElement("a");
+                        a.href = URL.createObjectURL(b);
+                        a.download = name;
+                        document.body.appendChild(a); a.click(); a.remove();
+                        setTimeout(function () { URL.revokeObjectURL(a.href); }, 4000);
+                        localStorage.setItem(KEY, code);
+                    });
+                }).catch(function (e) { fail(e.message || "网络错误"); })
+                  .finally(function () { go.disabled = false; });
+            }
+            go.addEventListener("click", run);
+            input.addEventListener("keydown", function (e) { if (e.key === "Enter") run(); });
+            input.focus();
+        });
+    });
+});
+</script>
+
 {{/* 付费墙：解锁与渲染 */}}
 <script>
 document.addEventListener("DOMContentLoaded", function () {
@@ -178,6 +234,43 @@ document.addEventListener("DOMContentLoaded", function () {
 </script>
 
 <style>
+/* 资料库 */
+.lib-list { display: flex; flex-direction: column; gap: 0; }
+.lib-item {
+    display: flex; gap: 16px; align-items: flex-start;
+    padding: 16px 0; border-bottom: 1px solid var(--card-separator-color, rgba(128,128,128,.25));
+}
+.lib-item:first-child { border-top: 1px solid var(--card-separator-color, rgba(128,128,128,.25)); }
+.lib-main { flex: 1 1 auto; min-width: 0; }
+.lib-title { font-size: 16px; font-weight: 600; color: var(--card-text-color-main); }
+.lib-badge {
+    display: inline-block; margin-left: 8px; padding: 1px 7px;
+    font-size: 11.5px; border-radius: 999px; vertical-align: 1px;
+}
+.lib-paid { background: var(--accent-color, #34495e); color: #fff; }
+.lib-free { background: rgba(128,128,128,.18); color: var(--card-text-color-secondary); }
+.lib-meta { margin-top: 5px; font-size: 13px; color: var(--card-text-color-tertiary); }
+.lib-desc { margin: 6px 0 0; font-size: 14px; color: var(--card-text-color-secondary); }
+.lib-action { flex: 0 0 auto; padding-top: 2px; }
+.lib-btn {
+    display: inline-block; padding: 7px 16px; border-radius: 8px; border: 0; cursor: pointer;
+    font-size: 14px; font-weight: 600; text-decoration: none;
+    background: var(--accent-color, #34495e); color: #fff;
+}
+.lib-btn:hover { opacity: .9; }
+.lib-unlock { display: flex; flex-wrap: wrap; gap: 6px; align-items: center; max-width: 230px; }
+.lib-input {
+    flex: 1 1 110px; min-width: 0; padding: 6px 9px; font-size: 13.5px;
+    border-radius: 7px; border: 1px solid var(--card-separator-color, rgba(128,128,128,.45));
+    background: var(--card-background, transparent); color: var(--card-text-color-main);
+}
+.lib-go {
+    padding: 6px 12px; border: 0; border-radius: 7px; cursor: pointer;
+    font-size: 13.5px; font-weight: 600; background: var(--accent-color, #34495e); color: #fff;
+}
+.lib-msg { flex: 1 1 100%; font-size: 12.5px; color: #d9534f; }
+.lib-empty { color: var(--card-text-color-tertiary); }
+
 /* 付费墙 */
 .paywall { margin: 2rem 0 0; }
 .paywall-lock {

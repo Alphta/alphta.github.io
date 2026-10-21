@@ -169,6 +169,53 @@ export default {
       return new Response(JSON.stringify({ total: pv, pv, uv }), { headers: jsonHeaders });
     }
 
+    // ---------- 文件下载：访问码 → KV 文件流 ----------
+    if (url.pathname === "/download" && request.method === "POST") {
+      const body = await request.json().catch(() => ({}));
+      const slug = String(body.slug || "").trim();
+      const code = String(body.code || "").trim().toUpperCase();
+
+      if (!/^[a-z0-9-]{3,80}$/.test(slug)) {
+        return new Response(JSON.stringify({ error: "bad slug" }), { status: 400, headers: jsonHeaders });
+      }
+
+      const meta = JSON.parse((await env.VIEWS.get("doc:" + slug + ":meta")) || "null");
+      if (!meta) {
+        return new Response(JSON.stringify({ error: "文件不存在" }), { status: 404, headers: jsonHeaders });
+      }
+
+      if (meta.paid) {
+        if (!/^[A-Z0-9-]{6,32}$/.test(code)) {
+          return new Response(JSON.stringify({ error: "请输入访问码" }), { status: 401, headers: jsonHeaders });
+        }
+        const rec = await env.VIEWS.get("code:" + code, { cacheTtl: 60 });
+        if (!rec) {
+          return new Response(JSON.stringify({ error: "访问码无效" }), { status: 403, headers: jsonHeaders });
+        }
+        let allow = ["*"];
+        try { allow = JSON.parse(rec).slugs || ["*"]; } catch (e) { allow = ["*"]; }
+        if (!allow.includes("*") && !allow.includes(slug)) {
+          return new Response(JSON.stringify({ error: "该访问码不适用于这份文件" }), { status: 403, headers: jsonHeaders });
+        }
+      }
+
+      const data = await env.VIEWS.get("file:" + slug, { type: "arrayBuffer" });
+      if (!data) {
+        return new Response(JSON.stringify({ error: "文件不存在" }), { status: 404, headers: jsonHeaders });
+      }
+
+      const fname = meta.filename || slug + ".pdf";
+      const headers = new Headers({
+        "Content-Type": meta.type || "application/pdf",
+        "Content-Length": String(data.byteLength),
+        "Content-Disposition": "attachment; filename*=UTF-8''" + encodeURIComponent(fname),
+        "Cache-Control": "private, max-age=0, no-store",
+        "Access-Control-Allow-Origin": origin,
+        "Access-Control-Expose-Headers": "Content-Disposition",
+      });
+      return new Response(data, { headers });
+    }
+
     // ---------- 付费内容：访问码解锁 ----------
     if (url.pathname === "/unlock" && request.method === "POST") {
       const body = await request.json().catch(() => ({}));

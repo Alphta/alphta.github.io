@@ -1,0 +1,29 @@
+{{- /* 资料库：读取 data/files.json 渲染；付费项凭访问码下载 */ -}}
+{{- $files := hugo.Data.files -}}
+{{- if not $files -}}
+<p class="lib-empty">还没有上传资料。</p>
+{{- else -}}
+<div class="lib-list">
+  {{- range $files }}
+  <div class="lib-item">
+    <div class="lib-main">
+      <span class="lib-title">{{ .title }}</span>
+      {{- if .paid }}<span class="lib-badge lib-paid">付费</span>{{ else }}<span class="lib-badge lib-free">免费</span>{{ end }}
+      <div class="lib-meta">
+        {{- with .authors }}{{ . }} · {{ end -}}
+        {{- with .year }}{{ . }} · {{ end -}}
+        {{- if .size }}{{ if ge .size 1048576 }}{{ printf "%.1f MB" (div (float .size) 1048576.0) }}{{ else }}{{ printf "%.0f KB" (div (float .size) 1024.0) }}{{ end }}{{ end }}
+      </div>
+      {{- with .summary }}<p class="lib-desc">{{ . }}</p>{{ end }}
+    </div>
+    <div class="lib-action">
+      {{- if .paid }}
+      <button class="lib-btn" data-slug="{{ .slug }}" data-title="{{ .title }}">获取</button>
+      {{- else }}
+      <a class="lib-btn" href="{{ .url }}" download>下载</a>
+      {{- end }}
+    </div>
+  </div>
+  {{- end }}
+</div>
+{{- end -}}

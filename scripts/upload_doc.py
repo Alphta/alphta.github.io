@@ -30,14 +30,18 @@ KV_LIMIT = 25 * 1024 * 1024
 def slugify(text):
     ascii_only = re.sub(r"[^a-zA-Z0-9]+", "-", text).strip("-").lower()
     if ascii_only:
-        return ascii_only[:60]
+        if len(ascii_only) > 60:
+            ascii_only = ascii_only[:60].rsplit("-", 1)[0]
+        return ascii_only
     # 中文标题走拼音
     try:
         from pypinyin import lazy_pinyin
         py = "-".join(lazy_pinyin(text))
         py = re.sub(r"[^a-z0-9]+", "-", py.lower()).strip("-")
         if py:
-            return py[:60]
+            if len(py) > 60:
+                py = py[:60].rsplit("-", 1)[0]
+            return py
     except ImportError:
         pass
     return "doc-" + hashlib.md5(text.encode()).hexdigest()[:8]

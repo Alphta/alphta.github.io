@@ -1,6 +1,9 @@
 <div class="library-page">
 {{- /* 资料库：读取 data/files.json 渲染；付费项凭访问码下载 */ -}}
 {{- $files := hugo.Data.files -}}
+{{- if $files -}}
+<p class="lib-intro">这里会放一些我的文章中可能提到的资料，供读者按需下载。</p>
+{{- end -}}
 {{- if not $files -}}
 {{- else -}}
 <div class="lib-list">

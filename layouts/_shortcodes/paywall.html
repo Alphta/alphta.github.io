@@ -1,0 +1,16 @@
+{{- /* 付费墙：正文存于 Cloudflare KV，凭访问码解锁 */ -}}
+<div class="paywall" data-slug="{{ .Get "slug" }}" data-words="{{ .Get "words" }}">
+  <div class="paywall-lock">
+    <div class="paywall-head">
+      <span class="paywall-badge">付费内容</span>
+      <span class="paywall-words">剩余 {{ .Get "words" }} 字</span>
+    </div>
+    <p class="paywall-desc">输入访问码后继续阅读。</p>
+    <div class="paywall-row">
+      <input class="paywall-input" type="text" placeholder="输入访问码" autocomplete="off" spellcheck="false" aria-label="访问码">
+      <button class="paywall-btn" type="button">解锁全文</button>
+    </div>
+    <p class="paywall-msg" hidden></p>
+  </div>
+  <div class="paywall-body" hidden></div>
+</div>

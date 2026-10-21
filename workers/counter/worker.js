@@ -19,6 +19,22 @@ const jsonHeaders = {
 
 export default {
   async fetch(request, env) {
+    // 允许的来源（正式站 + 预览站 + 本地开发）
+    const ALLOWED = [
+      "https://essay.alphta.com",
+      "https://blog-preview-bbv.pages.dev",
+      "http://localhost:1313",
+      "http://127.0.0.1:1313",
+    ];
+    const reqOrigin = request.headers.get("Origin") || "";
+    const origin = ALLOWED.includes(reqOrigin) ? reqOrigin : ALLOWED_ORIGIN;
+    const jsonHeaders = {
+      "Access-Control-Allow-Origin": origin,
+      "Access-Control-Allow-Methods": "GET, POST, OPTIONS",
+      "Access-Control-Allow-Headers": "Content-Type, x-admin-token",
+      "Content-Type": "application/json; charset=utf-8",
+      "Cache-Control": "no-store",
+    };
     const url = new URL(request.url);
     const host = url.hostname;
 
@@ -151,6 +167,36 @@ export default {
       }
       const uv = parseInt(await env.VIEWS.get("site:uv")) || 0;
       return new Response(JSON.stringify({ total: pv, pv, uv }), { headers: jsonHeaders });
+    }
+
+    // ---------- 付费内容：访问码解锁 ----------
+    if (url.pathname === "/unlock" && request.method === "POST") {
+      const body = await request.json().catch(() => ({}));
+      const slug = String(body.slug || "").trim();
+      const code = String(body.code || "").trim().toUpperCase();
+
+      if (!/^[a-z0-9-]{3,80}$/.test(slug)) {
+        return new Response(JSON.stringify({ error: "bad slug" }), { status: 400, headers: jsonHeaders });
+      }
+      if (!/^[A-Z0-9-]{6,32}$/.test(code)) {
+        return new Response(JSON.stringify({ error: "请输入访问码" }), { status: 401, headers: jsonHeaders });
+      }
+
+      const rec = await env.VIEWS.get("code:" + code, { cacheTtl: 60 });
+      if (!rec) {
+        return new Response(JSON.stringify({ error: "访问码无效" }), { status: 403, headers: jsonHeaders });
+      }
+      let allow = ["*"];
+      try { allow = JSON.parse(rec).slugs || ["*"]; } catch (e) { allow = ["*"]; }
+      if (!allow.includes("*") && !allow.includes(slug)) {
+        return new Response(JSON.stringify({ error: "该访问码不适用于这篇文章" }), { status: 403, headers: jsonHeaders });
+      }
+
+      const html = await env.VIEWS.get("paid:" + slug, { cacheTtl: 60 });
+      if (!html) {
+        return new Response(JSON.stringify({ error: "正文暂未上架" }), { status: 404, headers: jsonHeaders });
+      }
+      return new Response(JSON.stringify({ ok: true, html }), { headers: jsonHeaders });
     }
 
     const path = url.searchParams.get("path") || "";

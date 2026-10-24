@@ -1,6 +1,5 @@
 ---
 title: "关于"
-description: "关于这个博客和我"
 slug: "about"
 date: 2026-10-19
 lastmod: 2026-10-20

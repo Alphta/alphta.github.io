@@ -72,7 +72,16 @@ document.addEventListener("DOMContentLoaded", function () {
     }
 
     form.addEventListener("submit", function () { ask(input.value); }, true);
-    form.querySelector("button").addEventListener("click", function () { ask(input.value); });
+    // 主题的搜索脚本会在按钮点击时拦截，这里用委托兜住
+    document.addEventListener("click", function (e) {
+        var t = e.target;
+        if (!t || !t.closest) return;
+        var btn = t.closest(".main .search-form button");
+        if (btn) setTimeout(function () { ask(input.value); }, 0);
+    }, true);
+    input.addEventListener("keydown", function (e) {
+        if (e.key === "Enter") setTimeout(function () { ask(input.value); }, 0);
+    });
 });
 </script>
 

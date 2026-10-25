@@ -169,6 +169,94 @@ export default {
       return new Response(JSON.stringify({ total: pv, pv, uv }), { headers: jsonHeaders });
     }
 
+    // ---------- 站内 AI 问答 ----------
+    if (url.pathname === "/ask" && request.method === "POST") {
+      const body = await request.json().catch(() => ({}));
+      const q = String(body.q || "").trim();
+      if (q.length < 2 || q.length > 200) {
+        return new Response(JSON.stringify({ error: "问题长度需在 2–200 字之间" }), { status: 400, headers: jsonHeaders });
+      }
+
+      // 限流：每 IP 每分钟 8 次
+      const ip = request.headers.get("CF-Connecting-IP") || "unknown";
+      const minute = new Date().toISOString().slice(0, 16);
+      const rlKey = `rl:ask:${ip}:${minute}`;
+      const used = parseInt(await env.VIEWS.get(rlKey)) || 0;
+      if (used >= 8) {
+        return new Response(JSON.stringify({ error: "提问太频繁，请一分钟后再试" }), { status: 429, headers: jsonHeaders });
+      }
+      await env.VIEWS.put(rlKey, String(used + 1), { expirationTtl: 120 });
+
+      // 语料：走站点缓存，1 小时刷新
+      let corpus = [];
+      try {
+        const cr = await fetch("https://essay.alphta.com/ai/corpus.json", { cf: { cacheTtl: 3600 } });
+        corpus = await cr.json();
+      } catch (e) {
+        return new Response(JSON.stringify({ error: "语料加载失败" }), { status: 500, headers: jsonHeaders });
+      }
+
+      // 关键词粗筛：中文按二元组，英文按单词
+      const terms = new Set();
+      for (const w of q.toLowerCase().match(/[a-z0-9]{2,}/g) || []) terms.add(w);
+      const han = q.replace(/[^\u4e00-\u9fa5]/g, "");
+      for (let i = 0; i < han.length - 1; i++) terms.add(han.slice(i, i + 2));
+      const list = [...terms];
+
+      const scored = corpus.map((doc) => {
+        const title = doc.title || "";
+        const text = doc.text || "";
+        let s = 0;
+        for (const t of list) {
+          const inTitle = title.split(t).length - 1;
+          const inText = text.split(t).length - 1;
+          s += inTitle * 5 + Math.min(inText, 20);
+        }
+        return { doc, s };
+      }).sort((a, b) => b.s - a.s);
+
+      const picked = scored.filter((x) => x.s > 0).slice(0, 3).map((x) => x.doc);
+      const use = picked.length ? picked : corpus.slice(0, 2);
+
+      const ctx = use.map((d, i) =>
+        `[${i + 1}] 《${d.title}》(${d.url})\n${(d.text || "").slice(0, 2500)}`
+      ).join("\n\n");
+
+      const prompt = `以下是本站文章片段：\n\n${ctx}\n\n用户问题：${q}`;
+      const system = "你是「荒唐镜的人生」博客的检索助手。只依据提供的文章片段回答，不要使用片段之外的知识。如果片段里没有答案，直接回答「站内文章没有提到这一点」。中文回答，2–4 段，简洁，不要编造，不要加标题。";
+
+      const models = ["gemini-flash-lite-latest", "gemini-3.8-flash"];
+      let answer = "";
+      for (const m of models) {
+        try {
+          const r = await fetch(
+            `https://generativelanguage.googleapis.com/v1beta/models/${m}:generateContent?key=${env.GEMINI_API_KEY}`,
+            {
+              method: "POST",
+              headers: { "Content-Type": "application/json" },
+              body: JSON.stringify({
+                systemInstruction: { parts: [{ text: system }] },
+                contents: [{ role: "user", parts: [{ text: prompt }] }],
+                generationConfig: { temperature: 0.2, maxOutputTokens: 800 },
+              }),
+            }
+          );
+          const j = await r.json();
+          const t = j?.candidates?.[0]?.content?.parts?.map((p) => p.text || "").join("") || "";
+          if (t) { answer = t.trim(); break; }
+        } catch (e) { /* 换下一个模型 */ }
+      }
+
+      if (!answer) {
+        return new Response(JSON.stringify({ error: "AI 暂时不可用，请稍后再试" }), { status: 503, headers: jsonHeaders });
+      }
+
+      return new Response(JSON.stringify({
+        answer,
+        sources: use.map((d) => ({ title: d.title, url: d.url })),
+      }), { headers: jsonHeaders });
+    }
+
     // ---------- 文件下载：访问码 → KV 文件流 ----------
     if (url.pathname === "/download" && request.method === "POST") {
       const body = await request.json().catch(() => ({}));

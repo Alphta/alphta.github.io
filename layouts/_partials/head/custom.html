@@ -5,7 +5,10 @@
 {{/* 站内 AI 问答：与搜索框合并（提交搜索时同时给 AI 回答） */}}
 <script>
 document.addEventListener("DOMContentLoaded", function () {
-    var form = document.querySelector(".search-form");
+    // 右侧栏也有一个搜索控件，优先取正文里的那个（带 data-json）
+    var form = document.querySelector(".main .search-form[data-json]")
+        || document.querySelector(".main .search-form")
+        || document.querySelector(".search-form");
     if (!form) return;
     var input = form.querySelector('input[name="keyword"]');
     if (!input) return;

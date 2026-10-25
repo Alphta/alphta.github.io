@@ -71,7 +71,7 @@ document.addEventListener("DOMContentLoaded", function () {
         panel.innerHTML = html;
     }
 
-    form.addEventListener("submit", function () { ask(input.value); }, true);
+    form.addEventListener("submit", function (e) { e.preventDefault(); ask(input.value); }, true);
     // 主题的搜索脚本会在按钮点击时拦截，这里用委托兜住
     document.addEventListener("click", function (e) {
         var t = e.target;

@@ -2,6 +2,72 @@
 <style>.article-details .article-meta { display: none !important; }</style>
 {{- end -}}
 
+{{/* 站内 AI 问答：仅搜索页 */}}
+<script>
+document.addEventListener("DOMContentLoaded", function () {
+    var form = document.querySelector(".search-form");
+    if (!form) return;
+
+    var box = document.createElement("div");
+    box.className = "ai-ask";
+    box.innerHTML =
+        '<div class="ai-head">问 AI<span class="ai-sub">基于本站文章回答，附出处</span></div>' +
+        '<div class="ai-row">' +
+        '<input class="ai-input" type="text" placeholder="例如：作者怎么看待亏损？" autocomplete="off">' +
+        '<button class="ai-btn" type="button">提问</button>' +
+        '</div>' +
+        '<div class="ai-answer" hidden></div>' +
+        '<div class="ai-sources" hidden></div>';
+    form.parentNode.insertBefore(box, form);
+
+    var input = box.querySelector(".ai-input");
+    var btn = box.querySelector(".ai-btn");
+    var ans = box.querySelector(".ai-answer");
+    var src = box.querySelector(".ai-sources");
+
+    function esc(t) {
+        return t.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
+    }
+
+    function ask() {
+        var q = (input.value || "").trim();
+        if (q.length < 2) return;
+        btn.disabled = true;
+        ans.hidden = false;
+        ans.className = "ai-answer ai-loading";
+        ans.textContent = "思考中…";
+        src.hidden = true;
+
+        fetch("https://api.alphta.com/ask", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ q: q }),
+        }).then(function (r) {
+            return r.json().then(function (d) { return { ok: r.ok, d: d }; });
+        }).then(function (res) {
+            ans.className = "ai-answer";
+            if (!res.ok) {
+                ans.textContent = res.d.error || "出错了，请稍后再试";
+                return;
+            }
+            ans.innerHTML = esc(res.d.answer).replace(/\n/g, "<br>");
+            if (res.d.sources && res.d.sources.length) {
+                src.innerHTML = "参考：" + res.d.sources.map(function (s) {
+                    return '<a href="' + s.url + '">' + esc(s.title) + "</a>";
+                }).join(" · ");
+                src.hidden = false;
+            }
+        }).catch(function () {
+            ans.className = "ai-answer";
+            ans.textContent = "网络错误，请稍后再试";
+        }).finally(function () { btn.disabled = false; });
+    }
+
+    btn.addEventListener("click", ask);
+    input.addEventListener("keydown", function (e) { if (e.key === "Enter") ask(); });
+});
+</script>
+
 {{/* 资料库：付费文件凭访问码下载 */}}
 <script>
 document.addEventListener("DOMContentLoaded", function () {
@@ -238,7 +304,33 @@ document.addEventListener("DOMContentLoaded", function () {
 </script>
 
 <style>
-/* 站点副标题为空时不占位 */
+/* 站内 AI 问答 */
+.ai-ask {
+    border: 1px solid var(--card-separator-color, rgba(128,128,128,.3));
+    border-radius: 10px; padding: 16px 18px; margin: 0 0 20px;
+    background: var(--card-background-separator, rgba(128,128,128,.05));
+}
+.ai-head { font-size: 15px; font-weight: 600; color: var(--card-text-color-main); margin-bottom: 10px; }
+.ai-sub { font-weight: 400; font-size: 12.5px; color: var(--card-text-color-tertiary); margin-left: 8px; }
+.ai-row { display: flex; gap: 8px; }
+.ai-input {
+    flex: 1 1 auto; min-width: 0; padding: 9px 12px; font-size: 14px; border-radius: 8px;
+    border: 1px solid var(--card-separator-color, rgba(128,128,128,.45));
+    background: var(--card-background, transparent); color: var(--card-text-color-main);
+}
+.ai-input:focus { outline: 2px solid var(--accent-color, #34495e); outline-offset: 1px; }
+.ai-btn {
+    padding: 9px 18px; border: 0; border-radius: 8px; cursor: pointer;
+    font-size: 14px; font-weight: 600; background: var(--accent-color, #34495e); color: #fff;
+}
+.ai-btn:disabled { opacity: .6; cursor: default; }
+.ai-answer { margin-top: 12px; font-size: 14.5px; line-height: 1.7; color: var(--card-text-color-main); }
+.ai-loading { color: var(--card-text-color-tertiary); }
+.ai-sources { margin-top: 10px; font-size: 13px; color: var(--card-text-color-tertiary); }
+.ai-sources a { color: var(--accent-color, #34495e); text-decoration: none; }
+.ai-sources a:hover { text-decoration: underline; }
+
+/* 站内 AI 问答 */
 .site-description:empty { display: none; }
 
 /* 资料页：不显示日期与阅读时长 */

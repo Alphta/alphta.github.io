@@ -592,7 +592,6 @@ INDEX_TMPL = """<!doctype html>
 <html lang="zh-cn"><head><meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <title>机构公告速递</title>
-<link rel="alternate" type="application/rss+xml" href="/news/feed.xml" title="机构公告速递">
 <style>
 :root{--fg:#1a1a1a;--dim:#8a8a8a;--line:#ececec;--link:#0a5bd4;--bg:#fff}
 @media (prefers-color-scheme:dark){:root{--fg:#e6e6e6;--dim:#8f8f8f;--line:#2a2a2a;--link:#6aa9ff;--bg:#161616}}
@@ -633,8 +632,7 @@ a.t.read{color:var(--dim);opacity:.62}
 }
 </style></head><body>
 <h1>机构公告速递</h1>
-<p class="sub">央行、监管、交易所与金融基础设施的官方公告聚合 ·
-<a href="/news/feed.xml">RSS 订阅</a> · 共 __COUNT__ 条 · 更新于 __NOW__ (UTC+8)</p>
+<p class="sub">央行、监管、交易所与金融基础设施的官方公告聚合 · 共 __COUNT__ 条 · 更新于 __NOW__ (UTC+8)</p>
 
 <div class="hd">
   <span data-sort="date" class="active">日期<span class="arrow"></span></span>

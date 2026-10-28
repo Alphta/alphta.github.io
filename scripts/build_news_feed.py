@@ -56,7 +56,7 @@ class Source:
 
     def __init__(self, sid, name, url, *, encoding="utf-8", base=None,
                  headers=None, parser=None, kind="html", body=None,
-                 cutoff_days=45, home=None, link_re=None):
+                 cutoff_days=45, home=None, link_re=None, short=None):
         self.id = sid
         self.name = name
         self.url = url
@@ -69,6 +69,7 @@ class Source:
         self.cutoff_days = cutoff_days
         self.home = home or base or url
         self.link_re = link_re
+        self.short = short or name
 
 
 # ---------------------------------------------------------------- 网络
@@ -467,33 +468,40 @@ def build_sources():
     return [
         S("pbc", "中国人民银行",
           "https://www.pbc.gov.cn/goutongjiaoliu/113456/113469/index.html",
-          parser=parse_pbc, home="https://www.pbc.gov.cn/"),
+          parser=parse_pbc, home="https://www.pbc.gov.cn/", short="人民银行"),
         S("nfra", "国家金融监督管理总局",
           "https://www.nfra.gov.cn/cbircweb/DocInfo/SelectDocByItemIdAndChild"
           "?itemId=915&pageSize=18&pageIndex=1",
-          parser=parse_nfra, home="https://www.nfra.gov.cn/"),
+          parser=parse_nfra, home="https://www.nfra.gov.cn/", short="金监总局"),
         S("csrc", "中国证监会",
           "https://www.csrc.gov.cn/searchList/a1a078ee0bc54721ab6b148884c784a8"
           "?_isAgg=true&_isJson=true&_pageSize=20&_template=index"
           "&_rangeTimeGte=&_channelName=&page=1",
-          parser=parse_csrc, home="https://www.csrc.gov.cn/"),
-        S("gov", "中国政府网",
-          "https://www.gov.cn/yaowen/liebiao/YAOWENLIEBIAO.json",
-          parser=parse_gov_json, home="https://www.gov.cn/"),
-        S("govzhengce", "国务院·最新政策",
-          "https://www.gov.cn/zhengce/zuixin/ZUIXINZHENGCE.json",
-          parser=parse_gov_json, home="https://www.gov.cn/zhengce/zuixin/"),
+          parser=parse_csrc, home="https://www.csrc.gov.cn/", short="证监会"),
+        # 中国政府网按需求移除（2026-10-28）
+        # S("gov", "中国政府网",
+        #   "https://www.gov.cn/yaowen/liebiao/YAOWENLIEBIAO.json",
+        #   parser=parse_gov_json, home="https://www.gov.cn/"),
+        # S("govzhengce", "国务院·最新政策",
+        #   "https://www.gov.cn/zhengce/zuixin/ZUIXINZHENGCE.json",
+        #   parser=parse_gov_json, home="https://www.gov.cn/zhengce/zuixin/"),
         S("ndrc", "国家发展改革委", "https://www.ndrc.gov.cn/xwdt/xwfb/",
-          home="https://www.ndrc.gov.cn/"),
+          home="https://www.ndrc.gov.cn/", short="发改委"),
         S("mof", "财政部", "https://www.mof.gov.cn/zhengwuxinxi/caizhengxinwen/",
-          home="https://www.mof.gov.cn/"),
+          home="https://www.mof.gov.cn/", short="财政部"),
+        S("mof_kjs", "财政部会计司（准则发布）",
+          "https://kjs.mof.gov.cn/zhengcefabu/",
+          home="https://kjs.mof.gov.cn/", short="会计司·准则", cutoff_days=200),
+        S("mof_kjs_dt", "财政部会计司（工作动态）",
+          "https://kjs.mof.gov.cn/gongzuodongtai/",
+          home="https://kjs.mof.gov.cn/", short="会计司·动态", cutoff_days=200),
         S("chinatax", "国家税务总局",
           "https://www.chinatax.gov.cn/chinatax/n810219/n810724/common_list_swxw.html",
-          home="https://www.chinatax.gov.cn/"),
+          home="https://www.chinatax.gov.cn/", short="税务总局"),
         S("safe", "国家外汇管理局", "https://www.safe.gov.cn/safe/whxw/index.html",
-          home="https://www.safe.gov.cn/"),
+          home="https://www.safe.gov.cn/", short="外汇局"),
         S("cffex", "中国金融期货交易所", "http://www.cffex.com.cn/cn/jysgg.html",
-          home="http://www.cffex.com.cn/"),
+          home="http://www.cffex.com.cn/", short="中金所"),
         S("shcpe", "上海票据交易所",
           "http://www.shcpe.com.cn/shcpe-cos/article/list",
           headers={"Content-Type": "application/json;charset=utf-8",
@@ -502,11 +510,13 @@ def build_sources():
                            "requestSystem": "shcpe-cos", "requestNo": 1,
                            "pageSize": 50, "pageNum": 1,
                            "typeCode": "news-announce"}, ensure_ascii=False),
-          parser=parse_shcpe, home="http://www.shcpe.com.cn/"),
+          parser=parse_shcpe, home="http://www.shcpe.com.cn/", short="票交所"),
         S("amac", "中国证券投资基金业协会", "https://www.amac.org.cn/xwfb/tzgg/",
-          link_re=r"\./\d{6}/t\d{8}_\d+\.html", home="https://www.amac.org.cn/"),
+          link_re=r"\./\d{6}/t\d{8}_\d+\.html", home="https://www.amac.org.cn/",
+          short="中基协"),
         S("nafmii", "交易商协会", "https://www.nafmii.org.cn/ggtz/tz/",
-          link_re=r"\./\d{6}/t\d{8}_\d+\.html", home="https://www.nafmii.org.cn/"),
+          link_re=r"\./\d{6}/t\d{8}_\d+\.html", home="https://www.nafmii.org.cn/",
+          short="交易商协会"),
         # S("sse", "上海证券交易所",
         # "https://query.sse.com.cn/security/stock/queryCompanyBulletinNew.do"
         # "?jsonCallBack=&isPagination=true&pageHelp.pageSize=25&pageHelp.cacheSize=1"
@@ -525,15 +535,15 @@ def build_sources():
         # "pageSize": 30, "pageNum": 1}),
         # parser=parse_szse, home="https://www.szse.cn/"),
         S("bse", "北京证券交易所", "https://www.bse.cn/info/listse.do",
-          kind="custom", parser=parse_bse, home="https://www.bse.cn/"),
+          kind="custom", parser=parse_bse, home="https://www.bse.cn/", short="北交所"),
         S("shfe", "上海期货交易所", "https://www.shfe.com.cn/api/search/",
           headers={"Content-Type": "application/json"},
           body=json.dumps({"chlid": 1003, "page": 1, "size": 50,
                            "searchword": "docchannel=2384",
                            "orderby": "-docreltime"}),
-          parser=parse_shfe, home="https://www.shfe.com.cn/"),
+          parser=parse_shfe, home="https://www.shfe.com.cn/", short="上期所"),
         S("cffex_tz", "中金所·通知", "http://www.cffex.com.cn/cn/jystz.html",
-          link_re=r"/cn/jystz/\d{8}/\d+\.html", home="http://www.cffex.com.cn/"),
+          link_re=r"/cn/jystz/\d{8}/\d+\.html", home="http://www.cffex.com.cn/", short="中金所通知"),
         # S("chinabond", "中央结算公司（中债登）",
         # "https://www.chinabond.com.cn/cbiw/trs/queryLatestReleaseForIndex",
         # headers={"X-Requested-With": "XMLHttpRequest",
@@ -569,10 +579,10 @@ def build_rss(items, now, self_url, site_url):
             parts.append(f'<guid isPermaLink="true">{escape(it["link"])}</guid>')
         else:
             parts.append(f'<guid isPermaLink="false">{escape(it["source"] + "|" + it["title"])}</guid>')
-        parts.append(f"<category>{escape(it['source'])}</category>")
+        parts.append(f"<category>{escape(it.get('short') or it['source'])}</category>")
         parts.append(f'<source url="{escape(it.get("home", ""))}">{escape(it["source"])}</source>')
         parts.append(f"<pubDate>{fmt(it['date'])}</pubDate>")
-        parts.append(f"<description>{escape(it['source'] + '：' + it['title'])}</description>")
+        parts.append(f"<description>{escape((it.get('short') or it['source']) + '：' + it['title'])}</description>")
         parts.append("</item>")
     parts += ["</channel>", "</rss>"]
     return "\n".join(parts) + "\n"
@@ -594,22 +604,24 @@ p.sub{color:var(--dim);font-size:.88rem;margin:.2rem 0 1.6rem}
 ul{list-style:none;padding:0;margin:0}
 
 /* 表头与行共用同一套栅格：日期 | 主题 | 发文机关 */
-.hd,li{display:grid;grid-template-columns:4.4rem minmax(0,1fr) 8.6rem;
-       column-gap:.9rem;align-items:baseline}
+.hd,li{display:grid;grid-template-columns:4.2rem minmax(0,1fr) 7rem;
+       column-gap:.85rem;align-items:center}
 .hd{padding:.5rem .2rem;border-bottom:2px solid var(--line);
     font-size:.82rem;color:var(--dim);position:sticky;top:0;background:var(--bg);z-index:1}
 .hd [data-sort]{cursor:pointer;user-select:none;white-space:nowrap}
 .hd [data-sort]:hover{color:var(--fg)}
 .hd [data-sort].active{color:var(--fg);font-weight:600}
 .hd .arrow{font-size:.7em}
-.c-title{padding-left:.1rem}
+.hd .c-title,.hd .c-src{text-align:center}
 
 li{padding:.55rem .2rem;border-bottom:1px solid var(--line)}
 li time{color:var(--dim);font-size:.84rem;font-variant-numeric:tabular-nums;white-space:nowrap}
-li .s{color:var(--dim);font-size:.8rem;text-align:right}
+li .s{color:var(--dim);font-size:.78rem;text-align:center;
+     white-space:nowrap;justify-self:center}
 
 /* 标题：换行后自动与首字左对齐（悬挂缩进） */
 a.t{color:var(--link);text-decoration:none;display:block;
+    line-height:1.42;              /* 折行后两行之间收紧 */
     text-indent:0;overflow-wrap:anywhere;text-wrap:pretty;
     transition:color .18s ease,opacity .18s ease}
 a.t:hover{text-decoration:underline}
@@ -706,12 +718,12 @@ def build_index_html(items, now):
         day = it["date"].strftime("%m-%d")
         key = escape(it["link"] or it["title"], {'"': "&quot;"})
         rows.append(
-            f'<li data-date="{stamp}" data-src="{escape(it["source"])}">'
+            f'<li data-date="{stamp}" data-src="{escape(it.get("short") or it["source"])}">'
             f'<time datetime="{it["date"].strftime("%Y-%m-%d")}" '
             f'title="{it["date"].strftime("%Y-%m-%d %H:%M")}">{day}</time>'
             f'<a class="t" href="{escape(it["link"])}" data-k="{key}" '
             f'target="_blank" rel="noopener">{escape(it["title"])}</a>'
-            f'<span class="s">{escape(it["source"])}</span></li>'
+            f'<span class="s">{escape(it.get("short") or it["source"])}</span></li>'
         )
     return (INDEX_TMPL
             .replace("__ROWS__", "\n".join(rows))
@@ -753,13 +765,15 @@ def main():
     merged, seen = [], set()
     dropped = 0
     for src in sources:
+        src_cutoff = now - timedelta(days=src.cutoff_days or 60)
         for it in results.get(src.id, []):
-            if it["date"] < cutoff:
+            if it["date"] < src_cutoff:
                 continue
             if not args.keep_noise and NOISE_RE.search(it["title"]):
                 dropped += 1
                 continue
             it["source"] = src.name
+            it["short"] = src.short
             it["home"] = src.home
             key = re.sub(r"[?#].*$", "", it["link"] or "") or (it["source"] + it["title"])
             if key in seen:

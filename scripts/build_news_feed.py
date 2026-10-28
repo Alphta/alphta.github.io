@@ -677,11 +677,17 @@ __ROWS__
         return;
       }
       ev.preventDefault();
-      var w = window.open(a.href, '_blank', 'noopener');
-      window.focus();                 // 焦点留在本页，新标签在后台打开
+      // 注意：带 'noopener' 特性时 window.open 返回 null，会被误判为被拦截，
+      // 所以这里用普通 window.open，再手动断开 opener。
+      var w = window.open(a.href, '_blank');
+      if (w) {
+        try { w.opener = null; } catch (e) {}
+        window.focus();               // 焦点留在本页，新标签在后台打开
+      } else {
+        location.href = a.href;       // 真正被弹窗拦截才兜底
+      }
       a.classList.add('read');
       try { localStorage.setItem(KEY + a.dataset.k, '1'); } catch(e){}
-      if (!w) { location.href = a.href; }   // 被弹窗拦截时兜底
     });
   });
 

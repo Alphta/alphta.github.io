@@ -599,9 +599,20 @@ a.t.read{color:var(--dim);opacity:.62}
   .hd,li{grid-template-columns:3.4rem minmax(0,1fr)}
   .hd .c-src,li .s{display:none}
 }
+
+/* 翻页器 */
+.pager{display:flex;flex-wrap:wrap;gap:.4rem;align-items:center;
+       margin:1.8rem 0 3rem;font-size:.88rem}
+.pager a,.pager span{border:1px solid var(--line);border-radius:.4rem;
+       padding:.28rem .6rem;text-decoration:none;color:var(--link);
+       min-width:2.1rem;text-align:center}
+.pager a:hover{border-color:var(--link);background:rgba(10,91,212,.06)}
+.pager .cur{background:var(--link);border-color:var(--link);color:#fff;font-weight:600}
+.pager .off{color:var(--dim);border-color:var(--line);pointer-events:none;opacity:.5}
+.pager .gap{border:0;color:var(--dim);min-width:1rem}
 </style></head><body>
 <h1>机构公告速递</h1>
-<p class="sub">央行、监管、交易所与金融基础设施的官方公告聚合 · 共 __COUNT__ 条 · 更新于 __NOW__ (UTC+8)</p>
+<p class="sub">央行、监管、交易所与金融基础设施的官方公告聚合 · 共 __COUNT__ 条 · 第 __PAGE__/__PAGES__ 页 · 更新于 __NOW__ (UTC+8)</p>
 
 <div class="hd">
   <span data-sort="date" class="active">日期<span class="arrow"></span></span>
@@ -611,6 +622,7 @@ a.t.read{color:var(--dim);opacity:.62}
 <ul id="list">
 __ROWS__
 </ul>
+<nav class="pager">__NAV__</nav>
 
 <script>
 (function(){
@@ -677,31 +689,90 @@ __ROWS__
 """
 
 
-def build_index_html(items, now):
-    """给 /news/ 一个人类可读的落地页：表头 + 排序 + 悬挂缩进 + 后台打开。"""
+PER_PAGE = 30
+
+
+def page_url(n: int) -> str:
+    return "/news/" if n == 1 else f"/news/page/{n}/"
+
+
+def _nav(page_no: int, total_pages: int) -> str:
+    """上一页 / 页码 / 下一页。"""
+    if total_pages <= 1:
+        return ""
+    out = []
+    out.append(f'<a href="{page_url(page_no - 1)}">\u2039 \u4e0a\u4e00\u9875</a>' if page_no > 1
+               else '<span class="off">\u2039 \u4e0a\u4e00\u9875</span>')
+    shown = {1, total_pages} | set(range(max(1, page_no - 2), min(total_pages, page_no + 2) + 1))
+    prev = 0
+    for n in sorted(shown):
+        if prev and n - prev > 1:
+            out.append('<span class="gap">\u2026</span>')
+        out.append(f'<span class="cur">{n}</span>' if n == page_no
+                   else f'<a href="{page_url(n)}">{n}</a>')
+        prev = n
+    out.append(f'<a href="{page_url(page_no + 1)}">\u4e0b\u4e00\u9875 \u203a</a>'
+               if page_no < total_pages else '<span class="off">\u4e0b\u4e00\u9875 \u203a</span>')
+    return "".join(out)
+
+
+def paginate(items, per_page: int = PER_PAGE, per_source_cap: int = 12):
+    """轮转合并后切页：每源先截到 per_source_cap 条，保证每页各机关都有份。
+
+    先按轮转顺序把各源的新条目交错排（上期所、票交所这类高频站不会占满一页），
+    再按 per_page 切块，块内按日期倒序，翻到最后一页也还是均衡的。
+    """
+    by_src = {}
+    for it in sorted(items, key=lambda x: x["date"], reverse=True):
+        k = it.get("short") or it["source"]
+        bucket = by_src.setdefault(k, [])
+        if len(bucket) < per_source_cap:
+            bucket.append(it)
+
+    order = sorted(by_src)                      # 固定顺序，翻页结果可复现
+    seq, i = [], 0
+    while any(by_src[k] for k in order):
+        k = order[i % len(order)]
+        if by_src[k]:
+            seq.append(by_src[k].pop(0))
+        i += 1
+
+    pages = [seq[i:i + per_page] for i in range(0, len(seq), per_page)]
+    for pg in pages:
+        pg.sort(key=lambda x: x["date"], reverse=True)
+    return [pg for pg in pages if pg]
+
+
+def build_index_html(items, now, page_no: int = 1, total_pages: int = 1, total_items: int = 0):
+    """单页 HTML：表头 + 排序 + 悬挂缩进 + 后台打开 + 翻页器。"""
     rows = []
     for it in items:
         stamp = it["date"].strftime("%Y-%m-%d %H:%M")
         day = it["date"].strftime("%m-%d")
         key = escape(it["link"] or it["title"], {'"': "&quot;"})
+        short = escape(it.get("short") or it["source"])
         rows.append(
-            f'<li data-date="{stamp}" data-src="{escape(it.get("short") or it["source"])}">'
+            f'<li data-date="{stamp}" data-src="{short}">'
             f'<time datetime="{it["date"].strftime("%Y-%m-%d")}" '
             f'title="{it["date"].strftime("%Y-%m-%d %H:%M")}">{day}</time>'
             f'<a class="t" href="{escape(it["link"])}" data-k="{key}" '
             f'target="_blank" rel="noopener">{escape(it["title"])}</a>'
-            f'<span class="s">{escape(it.get("short") or it["source"])}</span></li>'
+            f'<span class="s">{short}</span></li>'
         )
     return (INDEX_TMPL
             .replace("__ROWS__", "\n".join(rows))
-            .replace("__COUNT__", str(len(items)))
+            .replace("__COUNT__", str(total_items or len(items)))
+            .replace("__PAGE__", str(page_no))
+            .replace("__PAGES__", str(total_pages))
+            .replace("__NAV__", _nav(page_no, total_pages))
             .replace("__NOW__", now.strftime("%Y-%m-%d %H:%M")))
 
 
 def main():
     ap = argparse.ArgumentParser()
     ap.add_argument("--out-dir", default="public/news")
-    ap.add_argument("--limit", type=int, default=50)
+    ap.add_argument("--per-page", type=int, default=30)
+    ap.add_argument("--per-source-cap", type=int, default=12)
     ap.add_argument("--only", default="")
     ap.add_argument("--keep-noise", action="store_true", help="不过滤领导活动/地方局/招聘类条目")
     args = ap.parse_args()
@@ -757,10 +828,8 @@ def main():
     # 轮转分配：每轮每个源取 1 条，避免高频站点（如中国政府网）挤掉低频的交易所
     queues = {name: list(arr) for name, arr in per_source.items()}
     picked = []
-    while len(picked) < args.limit and queues:
+    while queues:
         for name in list(queues):
-            if len(picked) >= args.limit:
-                break
             arr = queues[name]
             if arr:
                 picked.append(arr.pop(0))
@@ -781,11 +850,16 @@ def main():
         print("[error] 没有任何条目，保留旧文件不覆盖")
         return 1
 
+    pages = paginate(merged, args.per_page, args.per_source_cap)
+    total = sum(len(pg) for pg in pages)
     out_dir = Path(args.out_dir)
     out_dir.mkdir(parents=True, exist_ok=True)
-    page = out_dir / "index.html"
-    page.write_text(build_index_html(merged, now), encoding="utf-8")
-    print(f"[ok] -> {page} ({page.stat().st_size} bytes)")
+    for i, pg in enumerate(pages, start=1):
+        target = out_dir / "index.html" if i == 1 else out_dir / "page" / str(i) / "index.html"
+        target.parent.mkdir(parents=True, exist_ok=True)
+        html = build_index_html(pg, now, i, len(pages), total)
+        target.write_text(html, encoding="utf-8")
+    print(f"[ok] {total} 条 -> {len(pages)} 页 -> {out_dir}")
     return 0
 
 

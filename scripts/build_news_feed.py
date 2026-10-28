@@ -499,23 +499,23 @@ def build_sources():
           link_re=r"\./\d{6}/t\d{8}_\d+\.html", home="https://www.amac.org.cn/"),
         S("nafmii", "交易商协会", "https://www.nafmii.org.cn/ggtz/tz/",
           link_re=r"\./\d{6}/t\d{8}_\d+\.html", home="https://www.nafmii.org.cn/"),
-        S("sse", "上海证券交易所",
-          "https://query.sse.com.cn/security/stock/queryCompanyBulletinNew.do"
-          "?jsonCallBack=&isPagination=true&pageHelp.pageSize=25&pageHelp.cacheSize=1"
-          "&pageHelp.pageNo=1&pageHelp.beginPage=1&pageHelp.endPage=1"
-          f"&START_DATE={_D(9)}&END_DATE={_D(0)}"
-          "&SECURITY_CODE=&TITLE=&BULLETIN_TYPE=&stockType=",
-          headers={"Referer": "https://www.sse.com.cn/"},
-          parser=parse_sse, home="https://www.sse.com.cn/"),
-        S("szse", "深圳证券交易所", "https://www.szse.cn/api/disc/announcement/annList",
-          headers={"X-Request-Type": "ajax",
-                   "X-Requested-With": "XMLHttpRequest",
-                   "Content-Type": "application/json;charset=UTF-8",
-                   "Referer": "https://www.szse.cn/disclosure/listed/notice/index.html"},
-          body=json.dumps({"seDate": [_D(9), _D(0)],
-                           "channelCode": ["listedNotice_disc"],
-                           "pageSize": 30, "pageNum": 1}),
-          parser=parse_szse, home="https://www.szse.cn/"),
+        # S("sse", "上海证券交易所",
+        # "https://query.sse.com.cn/security/stock/queryCompanyBulletinNew.do"
+        # "?jsonCallBack=&isPagination=true&pageHelp.pageSize=25&pageHelp.cacheSize=1"
+        # "&pageHelp.pageNo=1&pageHelp.beginPage=1&pageHelp.endPage=1"
+        # f"&START_DATE={_D(9)}&END_DATE={_D(0)}"
+        # "&SECURITY_CODE=&TITLE=&BULLETIN_TYPE=&stockType=",
+        # headers={"Referer": "https://www.sse.com.cn/"},
+        # parser=parse_sse, home="https://www.sse.com.cn/"),
+        # S("szse", "深圳证券交易所", "https://www.szse.cn/api/disc/announcement/annList",
+        # headers={"X-Request-Type": "ajax",
+        # "X-Requested-With": "XMLHttpRequest",
+        # "Content-Type": "application/json;charset=UTF-8",
+        # "Referer": "https://www.szse.cn/disclosure/listed/notice/index.html"},
+        # body=json.dumps({"seDate": [_D(9), _D(0)],
+        # "channelCode": ["listedNotice_disc"],
+        # "pageSize": 30, "pageNum": 1}),
+        # parser=parse_szse, home="https://www.szse.cn/"),
         S("bse", "北京证券交易所", "https://www.bse.cn/info/listse.do",
           kind="custom", parser=parse_bse, home="https://www.bse.cn/"),
         S("shfe", "上海期货交易所", "https://www.shfe.com.cn/api/search/",
@@ -526,13 +526,13 @@ def build_sources():
           parser=parse_shfe, home="https://www.shfe.com.cn/"),
         S("cffex_tz", "中金所·通知", "http://www.cffex.com.cn/cn/jystz.html",
           link_re=r"/cn/jystz/\d{8}/\d+\.html", home="http://www.cffex.com.cn/"),
-        S("chinabond", "中央结算公司（中债登）",
-          "https://www.chinabond.com.cn/cbiw/trs/queryLatestReleaseForIndex",
-          headers={"X-Requested-With": "XMLHttpRequest",
-                   "Content-Type": "application/x-www-form-urlencoded; charset=UTF-8",
-                   "Referer": "https://www.chinabond.com.cn/"},
-          body="siteInfo=CN", parser=parse_chinabond,
-          home="https://www.chinabond.com.cn/"),
+        # S("chinabond", "中央结算公司（中债登）",
+        # "https://www.chinabond.com.cn/cbiw/trs/queryLatestReleaseForIndex",
+        # headers={"X-Requested-With": "XMLHttpRequest",
+        # "Content-Type": "application/x-www-form-urlencoded; charset=UTF-8",
+        # "Referer": "https://www.chinabond.com.cn/"},
+        # body="siteInfo=CN", parser=parse_chinabond,
+        # home="https://www.chinabond.com.cn/"),
         # 待补：customs/shfe/dce/czce/shclearing
     ]
 

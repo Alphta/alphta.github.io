@@ -4,6 +4,8 @@ on:
   push:
     branches: [main]
   workflow_dispatch:
+  schedule:
+    - cron: '7 * * * *'
 
 permissions:
   contents: read
@@ -20,6 +22,10 @@ jobs:
     steps:
       - name: Checkout
         uses: actions/checkout@v4
+      - name: Generate news feed
+        continue-on-error: true
+        timeout-minutes: 8
+        run: python3 scripts/build_news_feed.py --out static/news/feed.xml
       - name: Setup Pages
         id: pages
         uses: actions/configure-pages@v5

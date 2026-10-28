@@ -1,8 +1,9 @@
 /* 站点自定义样式（主题的 style.scss 末尾会 @import "custom"，本文件自动生效） */
 
 /* 站点标题「荒唐镜的人生」放大：
-   主题默认 1.6rem（宽屏 1.8rem）→ 2.2rem（宽屏 2.5rem） */
-.left-sidebar .site-name {
+   主题默认 .left-sidebar header .site-name 1.6rem（宽屏 1.8rem）→ 2.2rem（宽屏 2.5rem）
+   选择器与主题完全一致（高优先级），靠后置引入覆盖 */
+.left-sidebar header .site-name {
     font-size: 2.2rem;
 
     @include respond(2xl) {

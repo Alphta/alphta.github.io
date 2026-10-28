@@ -56,7 +56,7 @@ class Source:
 
     def __init__(self, sid, name, url, *, encoding="utf-8", base=None,
                  headers=None, parser=None, kind="html", body=None,
-                 cutoff_days=45, home=None, link_re=None, short=None):
+                 cutoff_days=45, home=None, link_re=None, short=None, channel=None):
         self.id = sid
         self.name = name
         self.url = url
@@ -70,6 +70,7 @@ class Source:
         self.home = home or base or url
         self.link_re = link_re
         self.short = short or name
+        self.channel = channel
 
 
 # ---------------------------------------------------------------- 网络
@@ -461,101 +462,339 @@ def parse_shfe(text: str, src: "Source", now: datetime):
     return items
 
 
+# ---------------------------------------------------------------- 政策栏目适配器
+
+def _top_level(text: str, tag: str):
+    """返回 text 里所有顶层 <tag> 的内部 HTML（能正确处理嵌套同名标签）。"""
+    out, depth, start = [], 0, None
+    for m in re.finditer(r"(?is)<%s\b[^>]*>|</%s\s*>" % (tag, tag), text):
+        if m.group(0).startswith("</"):
+            depth -= 1
+            if depth == 0 and start is not None:
+                out.append(text[start:m.start()])
+                start = None
+        else:
+            if depth == 0:
+                start = m.end()
+            depth += 1
+    return out
+
+
+def parse_pbc_rule(text: str, src: "Source", now: datetime):
+    """央行法规三栏：newslist_style 切块，标题只能信 title 属性。"""
+    items = []
+    for chunk in re.split(r'(?is)<font class="newslist_style"', text)[1:]:
+        chunk = re.split(r"(?is)</tr>|<li[\s>]", chunk)[0]
+        m = re.search(r'(?is)<a\s[^>]*href="([^"]+)"[^>]*>', chunk)
+        if not m:
+            continue
+        t = re.search(r'\stitle="([^"]+)"', m.group(0))
+        title = html_mod.unescape(t.group(1)) if t else ""
+        d = re.search(r"(20\d{2}-\d{2}-\d{2})", chunk)
+        dt = parse_date(d.group(1), now) if d else None
+        if len(title) < 4 or not dt:
+            continue
+        items.append({"title": title[:180],
+                      "link": urllib.parse.urljoin(src.home or src.url, m.group(1)),
+                      "date": dt})
+    return items
+
+
+MOF_LI = re.compile(
+    r"""(?is)<li>\s*<a[^>]*href="([^"]+)"[^>]*title='([^']*)'[^>]*>.*?</a>\s*"""
+    r"""<span[^>]*>\s*(\d{4}-\d{2}-\d{2})\s*</span>""")
+
+
+MOF_LI2 = re.compile(
+    r"""(?is)<li>\s*<a[^>]*href="([^"]+)"[^>]*title="([^"]*)"[^>]*>.*?</a>\s*"""
+    r"""<span[^>]*>\s*(\d{4}-\d{2}-\d{2})\s*</span>""")
+
+
+def parse_mof_policy(text: str, src: "Source", now: datetime):
+    """财政部：主站 title 用单引号、会计司子站用双引号，两种都认。"""
+    items = []
+    rows = MOF_LI.findall(text) or MOF_LI2.findall(text)
+    for href, title, d in rows:
+        title = re.sub(r"\s+", " ", html_mod.unescape(title)).strip()
+        dt = parse_date(d, now)
+        if len(title) < 4 or not dt:
+            continue
+        items.append({"title": title[:180],
+                      "link": urllib.parse.urljoin(src.home or src.url,
+                                                   html_mod.unescape(href)),
+                      "date": dt})
+    return items
+
+
+def parse_ndrc(text: str, src: "Source", now: datetime):
+    """发改委：列表里每条嵌了 popbox「相关解读」，必须按顶层 <li> 切块。"""
+    h = re.sub(r"(?is)<!--.*?-->", "", text)
+    m = re.search(r'(?is)<ul[^>]*class="u-list"[^>]*>', h)
+    region = h[m.end():] if m else h
+    items = []
+    for block in _top_level(region, "li"):
+        a = re.search(r'(?is)<a\s[^>]*href="([^"]+)"[^>]*>', block)
+        if not a:
+            continue
+        t = re.search(r'\stitle="([^"]*)"', a.group(0))
+        title = html_mod.unescape(t.group(1)) if t else ""
+        title = re.sub(r"\s+", " ", title).strip()
+        d = re.search(r"(20\d{2}/\d{1,2}/\d{1,2})", block)
+        dt = parse_date(d.group(1), now) if d else None
+        if len(title) < 4 or not dt:
+            continue
+        items.append({"title": title[:180],
+                      "link": urllib.parse.urljoin(src.home or src.url, a.group(1)),
+                      "date": dt})
+    return items
+
+
+SAFE_LI = re.compile(
+    r"""(?is)<li>\s*<dt[^>]*>\s*<a\b[^>]*?href="([^"]+)"[^>]*?title="([^"]*)"[^>]*>"""
+    r""".*?</dt>\s*<dd[^>]*>\s*(\d{4}-\d{2}-\d{2})""")
+
+
+def parse_safe_policy(text: str, src: "Source", now: datetime):
+    """外汇局：<li><dt><a title>…</dt><dd>2026-10-27</dd></li>。"""
+    items = []
+    for href, title, d in SAFE_LI.findall(text):
+        title = re.sub(r"\s+", " ", html_mod.unescape(title)).strip()
+        dt = parse_date(d, now)
+        if len(title) < 4 or not dt:
+            continue
+        items.append({"title": title[:180],
+                      "link": urllib.parse.urljoin(src.home or src.url, href),
+                      "date": dt})
+    return items
+
+
+def parse_tax_policy(text: str, src: "Source", now: datetime):
+    """税务总局政策发布：getFileListByCodeId 返回 JSON。"""
+    d = json.loads(text)
+    rows = (((d.get("results") or {}).get("data") or {}).get("results")) or []
+    items = []
+    for r in rows:
+        title = re.sub(r"\s+", " ", str(r.get("title") or "")).strip()
+        dt = parse_date(str(r.get("publishedTimeStr") or "")[:10], now)
+        url = r.get("url") or ""
+        if len(title) < 4 or not dt or not url:
+            continue
+        items.append({"title": title[:180], "link": url, "date": dt})
+    return items
+
+
+def parse_tax_jiedu(text: str, src: "Source", now: datetime):
+    """税务总局政策解读：search5 返回 JSON，标题带 <em> 高亮。"""
+    d = json.loads(text)
+    rows = (d.get("searchResultAll") or {}).get("searchTotal") or []
+    items = []
+    for r in rows:
+        title = html_mod.unescape(re.sub(r"<[^>]+>", "", str(r.get("title") or "")))
+        title = re.sub(r"\s+", " ", title).strip()
+        dt = parse_date(str(r.get("cwrq") or "")[:10], now)
+        url = r.get("url") or ""
+        if len(title) < 4 or not dt or not url:
+            continue
+        items.append({"title": title[:180], "link": url, "date": dt})
+    return items
+
+
+TAX_MS = re.compile(
+    r"""(?is)<li[^>]*>\s*<a[^>]*href="(https?://[^"]+)"[^>]*>(.*?)</a>\s*"""
+    r"""<span[^>]*>\s*\[(\d{4}-\d{2}-\d{2})\]\s*</span>""")
+
+
+def parse_tax_manuscript(text: str, src: "Source", now: datetime):
+    """税务总局 CMS 列表：日期是 [2026-09-01]；只在列表区内匹配，避免抓到导航。"""
+    m = re.search(r'(?is)<ul[^>]*class="list"[^>]*>', text)
+    region = text[m.end():] if m else text
+    items = []
+    for url, raw, d in TAX_MS.findall(region):
+        title = re.sub(r"\s+", " ", html_mod.unescape(re.sub(r"<[^>]+>", "", raw))).strip()
+        dt = parse_date(d, now)
+        if len(title) < 4 or not dt:
+            continue
+        items.append({"title": title[:180], "link": url, "date": dt})
+    return items
+
 # ---------------------------------------------------------------- 源清单
 
 def build_sources():
+    """按用户口径只收政策类栏目：一条栏目 = 一个源，页面上仍显示同一机关简称。"""
     S = Source
+    q = urllib.parse.urlencode
     return [
-        S("pbc", "中国人民银行",
-          "https://www.pbc.gov.cn/goutongjiaoliu/113456/113469/index.html",
-          parser=parse_pbc, home="https://www.pbc.gov.cn/", short="人民银行"),
-        S("nfra", "国家金融监督管理总局",
+        # ---- 人民银行：只要行政法规 / 部门规章 / 规范性文件 ----
+        S("pbc_xzfg", "中国人民银行·行政法规",
+          "https://www.pbc.gov.cn/tiaofasi/144941/144953/index.html",
+          parser=parse_pbc_rule, home="https://www.pbc.gov.cn/",
+          short="人民银行", channel="行政法规", cutoff_days=1500),
+        S("pbc_bmgz", "中国人民银行·部门规章",
+          "https://www.pbc.gov.cn/tiaofasi/144941/144957/index.html",
+          parser=parse_pbc_rule, home="https://www.pbc.gov.cn/",
+          short="人民银行", channel="部门规章", cutoff_days=600),
+        S("pbc_gfxwj", "中国人民银行·规范性文件",
+          "https://www.pbc.gov.cn/tiaofasi/144941/3581332/index.html",
+          parser=parse_pbc_rule, home="https://www.pbc.gov.cn/",
+          short="人民银行", channel="规范性文件", cutoff_days=200),
+
+        # ---- 财政部：政策发布 / 政策解读 / 会计司同两栏 ----
+        S("mof_zcfb", "财政部·政策发布",
+          "https://www.mof.gov.cn/zhengwuxinxi/zhengcefabu/",
+          parser=parse_mof_policy, home="https://www.mof.gov.cn/",
+          short="财政部", channel="政策发布", cutoff_days=200),
+        S("mof_zcjd", "财政部·政策解读",
+          "https://www.mof.gov.cn/zhengwuxinxi/zhengcejiedu/",
+          parser=parse_mof_policy, home="https://www.mof.gov.cn/",
+          short="财政部", channel="政策解读", cutoff_days=200),
+        S("mof_kjs", "财政部会计司·政策发布",
+          "https://kjs.mof.gov.cn/zhengcefabu/",
+          parser=parse_mof_policy, home="https://kjs.mof.gov.cn/",
+          short="会计司", channel="政策发布", cutoff_days=400),
+        S("mof_kjs_jd", "财政部会计司·政策解读",
+          "https://kjs.mof.gov.cn/zhengcejiedu/",
+          parser=parse_mof_policy, home="https://kjs.mof.gov.cn/",
+          short="会计司", channel="政策解读", cutoff_days=400),
+
+        # ---- 金监总局：政策发布 / 政策解读(两栏并集) / 征求意见 ----
+        S("nfra_zcfg", "国家金融监督管理总局·政策发布",
           "https://www.nfra.gov.cn/cbircweb/DocInfo/SelectDocByItemIdAndChild"
-          "?itemId=915&pageSize=18&pageIndex=1",
-          parser=parse_nfra, home="https://www.nfra.gov.cn/", short="金监总局"),
-        S("csrc", "中国证监会",
-          "https://www.csrc.gov.cn/searchList/a1a078ee0bc54721ab6b148884c784a8"
+          "?itemId=928&pageSize=20&pageIndex=1",
+          parser=parse_nfra, encoding="utf-8-sig",
+          home="https://www.nfra.gov.cn/", short="金监总局",
+          channel="政策发布", cutoff_days=300),
+        S("nfra_zcjd_a", "国家金融监督管理总局·政策解读",
+          "https://www.nfra.gov.cn/cbircweb/DocInfo/SelectDocByItemIdAndChild"
+          "?itemId=917&pageSize=20&pageIndex=1",
+          parser=parse_nfra, encoding="utf-8-sig",
+          home="https://www.nfra.gov.cn/", short="金监总局",
+          channel="政策解读", cutoff_days=300),
+        S("nfra_zcjd_b", "国家金融监督管理总局·政策解读(父栏)",
+          "https://www.nfra.gov.cn/cbircweb/DocInfo/SelectDocByItemIdAndChild"
+          "?itemId=916&pageSize=20&pageIndex=1",
+          parser=parse_nfra, encoding="utf-8-sig",
+          home="https://www.nfra.gov.cn/", short="金监总局",
+          channel="政策解读", cutoff_days=300),
+        S("nfra_zqyj", "国家金融监督管理总局·征求意见",
+          "https://www.nfra.gov.cn/cbircweb/DocInfo/SelectDocByItemIdAndChild"
+          "?itemId=951&pageSize=20&pageIndex=1",
+          parser=parse_nfra, encoding="utf-8-sig",
+          home="https://www.nfra.gov.cn/", short="金监总局",
+          channel="征求意见", cutoff_days=400),
+
+        # ---- 证监会：证监会令 / 证监会公告 ----
+        S("csrc_ling", "中国证监会·证监会令",
+          "https://www.csrc.gov.cn/searchList/cd11df89f5894c1eac37ae37cc11e369"
           "?_isAgg=true&_isJson=true&_pageSize=20&_template=index"
           "&_rangeTimeGte=&_channelName=&page=1",
-          parser=parse_csrc, home="https://www.csrc.gov.cn/", short="证监会"),
-        # 中国政府网按需求移除（2026-10-28）
-        # S("gov", "中国政府网",
-        #   "https://www.gov.cn/yaowen/liebiao/YAOWENLIEBIAO.json",
-        #   parser=parse_gov_json, home="https://www.gov.cn/"),
-        # S("govzhengce", "国务院·最新政策",
-        #   "https://www.gov.cn/zhengce/zuixin/ZUIXINZHENGCE.json",
-        #   parser=parse_gov_json, home="https://www.gov.cn/zhengce/zuixin/"),
-        S("ndrc", "国家发展改革委", "https://www.ndrc.gov.cn/xwdt/xwfb/",
-          home="https://www.ndrc.gov.cn/", short="发改委"),
-        S("mof", "财政部", "https://www.mof.gov.cn/zhengwuxinxi/caizhengxinwen/",
-          home="https://www.mof.gov.cn/", short="财政部"),
-        S("mof_kjs", "财政部会计司（准则发布）",
-          "https://kjs.mof.gov.cn/zhengcefabu/",
-          home="https://kjs.mof.gov.cn/", short="会计司·准则", cutoff_days=200),
-        S("mof_kjs_dt", "财政部会计司（工作动态）",
-          "https://kjs.mof.gov.cn/gongzuodongtai/",
-          home="https://kjs.mof.gov.cn/", short="会计司·动态", cutoff_days=200),
-        S("chinatax", "国家税务总局",
-          "https://www.chinatax.gov.cn/chinatax/n810219/n810724/common_list_swxw.html",
-          home="https://www.chinatax.gov.cn/", short="税务总局"),
-        S("safe", "国家外汇管理局", "https://www.safe.gov.cn/safe/whxw/index.html",
-          home="https://www.safe.gov.cn/", short="外汇局"),
-        S("cffex", "中国金融期货交易所", "http://www.cffex.com.cn/cn/jysgg.html",
-          home="http://www.cffex.com.cn/", short="中金所"),
-        S("shcpe", "上海票据交易所",
+          parser=parse_csrc, home="https://www.csrc.gov.cn/",
+          short="证监会", channel="证监会令", cutoff_days=600),
+        S("csrc_gg", "中国证监会·证监会公告",
+          "https://www.csrc.gov.cn/searchList/625a2f95cc104c1d8b646f98d9f87470"
+          "?_isAgg=true&_isJson=true&_pageSize=20&_template=index"
+          "&_rangeTimeGte=&_channelName=&page=1",
+          parser=parse_csrc, home="https://www.csrc.gov.cn/",
+          short="证监会", channel="证监会公告", cutoff_days=200),
+
+        # ---- 票交所：通知公告 / 票据研究 ----
+        S("shcpe_tzgg", "上海票据交易所·通知公告",
           "http://www.shcpe.com.cn/shcpe-cos/article/list",
           headers={"Content-Type": "application/json;charset=utf-8",
                    "Accept": "application/json"},
-          body=json.dumps({"requestTime": "2026-10-28",
-                           "requestSystem": "shcpe-cos", "requestNo": 1,
+          body=json.dumps({"requestTime": "2026-10-28 00:00:00",
+                           "requestSystem": "shcpe-web", "requestNo": "1",
                            "pageSize": 50, "pageNum": 1,
                            "typeCode": "news-announce"}, ensure_ascii=False),
-          parser=parse_shcpe, home="http://www.shcpe.com.cn/", short="票交所"),
+          parser=parse_shcpe, home="http://www.shcpe.com.cn/",
+          short="票交所", channel="通知公告", cutoff_days=300),
+        S("shcpe_pjyj", "上海票据交易所·票据研究",
+          "http://www.shcpe.com.cn/shcpe-cos/article/list",
+          headers={"Content-Type": "application/json;charset=utf-8",
+                   "Accept": "application/json"},
+          body=json.dumps({"requestTime": "2026-10-28 00:00:00",
+                           "requestSystem": "shcpe-web", "requestNo": "2",
+                           "pageSize": 50, "pageNum": 1,
+                           "typeCode": "research-pjyj"}, ensure_ascii=False),
+          parser=parse_shcpe, home="http://www.shcpe.com.cn/",
+          short="票交所", channel="票据研究", cutoff_days=2000),
+
+        # ---- 税务总局：政策发布 / 政策解读 / 意见征集 / 税案通报 ----
+        S("tax_zcfb", "国家税务总局·政策发布",
+          "https://www.chinatax.gov.cn/getFileListByCodeId",
+          headers={"Content-Type": "application/x-www-form-urlencoded; charset=UTF-8",
+                   "X-Requested-With": "XMLHttpRequest"},
+          body="codeId=&channelId=29a88b67e4b149cfa9fac7919dfb08a5&page=1&size=50",
+          parser=parse_tax_policy, home="https://www.chinatax.gov.cn/",
+          short="税务总局", channel="政策发布", cutoff_days=200),
+        S("tax_zcjd", "国家税务总局·政策解读",
+          "https://www.chinatax.gov.cn/search5/search/s?" + q(
+              {"siteCode": "bm29000002", "searchWord": "", "type": "1",
+               "xxgkResolveType": "文字", "pageNum": "0", "pageSize": "10",
+               "cwrqStart": "", "cwrqEnd": "", "column": "政策解读",
+               "likeDoc": "0", "wordPlace": "0", "videoreSolveType": ""}),
+          parser=parse_tax_jiedu, home="https://www.chinatax.gov.cn/",
+          short="税务总局", channel="政策解读", cutoff_days=200),
+        S("tax_yjzj", "国家税务总局·意见征集",
+          "https://www.chinatax.gov.cn/chinatax/manuscriptList/n810961?" + q(
+              {"_isAgg": "0", "_pageSize": "20", "_template": "index",
+               "_channelName": "意见征集", "_keyWH": "wenhao", "page": "1"}),
+          parser=parse_tax_manuscript, home="https://www.chinatax.gov.cn/",
+          short="税务总局", channel="意见征集", cutoff_days=600),
+        S("tax_satb", "国家税务总局·税案通报",
+          "https://www.chinatax.gov.cn/chinatax/manuscriptList/c102025?" + q(
+              {"_isAgg": "0", "_pageSize": "20", "_template": "index",
+               "_channelName": "税案通报", "_keyWH": "wenhao", "page": "1"}),
+          parser=parse_tax_manuscript, home="https://www.chinatax.gov.cn/",
+          short="税务总局", channel="税案通报", cutoff_days=200),
+
+        # ---- 发改委：令 / 规范性文件 / 规划文本 / 公告 / 通知 / 解读 ----
+        S("ndrc_wl", "国家发展改革委·发展改革委令",
+          "https://www.ndrc.gov.cn/xxgk/zcfb/fzggwl/",
+          parser=parse_ndrc, home="https://www.ndrc.gov.cn/",
+          short="发改委", channel="发展改革委令", cutoff_days=400),
+        S("ndrc_gfxwj", "国家发展改革委·规范性文件",
+          "https://www.ndrc.gov.cn/xxgk/zcfb/ghxwj/",
+          parser=parse_ndrc, home="https://www.ndrc.gov.cn/",
+          short="发改委", channel="规范性文件", cutoff_days=600),
+        S("ndrc_ghwb", "国家发展改革委·规划文本",
+          "https://www.ndrc.gov.cn/xxgk/zcfb/ghwb/",
+          parser=parse_ndrc, home="https://www.ndrc.gov.cn/",
+          short="发改委", channel="规划文本", cutoff_days=1500),
+        S("ndrc_gg", "国家发展改革委·公告",
+          "https://www.ndrc.gov.cn/xxgk/zcfb/gg/",
+          parser=parse_ndrc, home="https://www.ndrc.gov.cn/",
+          short="发改委", channel="公告", cutoff_days=400),
+        S("ndrc_tz", "国家发展改革委·通知",
+          "https://www.ndrc.gov.cn/xxgk/zcfb/tz/",
+          parser=parse_ndrc, home="https://www.ndrc.gov.cn/",
+          short="发改委", channel="通知", cutoff_days=200),
+        S("ndrc_jd", "国家发展改革委·解读",
+          "https://www.ndrc.gov.cn/xxgk/jd/jd/",
+          parser=parse_ndrc, home="https://www.ndrc.gov.cn/",
+          short="发改委", channel="解读", cutoff_days=300),
+
+        # ---- 外汇局：政策法规解读 ----
+        S("safe_zcfgjd", "国家外汇管理局·政策法规解读",
+          "https://www.safe.gov.cn/safe/zcfgjd/",
+          parser=parse_safe_policy, home="https://www.safe.gov.cn/",
+          short="外汇局", channel="政策法规解读", cutoff_days=500),
+
+        # ---- 其余机构维持原样 ----
+        S("cffex", "中国金融期货交易所·公告", "http://www.cffex.com.cn/cn/jysgg.html",
+          home="http://www.cffex.com.cn/", short="中金所", channel="公告"),
+        S("cffex_tz", "中国金融期货交易所·通知", "http://www.cffex.com.cn/cn/jystz.html",
+          link_re=r"/cn/jystz/\d{8}/\d+\.html", home="http://www.cffex.com.cn/",
+          short="中金所", channel="通知"),
+        S("bse", "北京证券交易所", "https://www.bse.cn/info/listse.do",
+          kind="custom", parser=parse_bse, home="https://www.bse.cn/", short="北交所"),
         S("amac", "中国证券投资基金业协会", "https://www.amac.org.cn/xwfb/tzgg/",
           link_re=r"\./\d{6}/t\d{8}_\d+\.html", home="https://www.amac.org.cn/",
           short="中基协"),
         S("nafmii", "交易商协会", "https://www.nafmii.org.cn/ggtz/tz/",
           link_re=r"\./\d{6}/t\d{8}_\d+\.html", home="https://www.nafmii.org.cn/",
           short="交易商协会"),
-        # S("sse", "上海证券交易所",
-        # "https://query.sse.com.cn/security/stock/queryCompanyBulletinNew.do"
-        # "?jsonCallBack=&isPagination=true&pageHelp.pageSize=25&pageHelp.cacheSize=1"
-        # "&pageHelp.pageNo=1&pageHelp.beginPage=1&pageHelp.endPage=1"
-        # f"&START_DATE={_D(9)}&END_DATE={_D(0)}"
-        # "&SECURITY_CODE=&TITLE=&BULLETIN_TYPE=&stockType=",
-        # headers={"Referer": "https://www.sse.com.cn/"},
-        # parser=parse_sse, home="https://www.sse.com.cn/"),
-        # S("szse", "深圳证券交易所", "https://www.szse.cn/api/disc/announcement/annList",
-        # headers={"X-Request-Type": "ajax",
-        # "X-Requested-With": "XMLHttpRequest",
-        # "Content-Type": "application/json;charset=UTF-8",
-        # "Referer": "https://www.szse.cn/disclosure/listed/notice/index.html"},
-        # body=json.dumps({"seDate": [_D(9), _D(0)],
-        # "channelCode": ["listedNotice_disc"],
-        # "pageSize": 30, "pageNum": 1}),
-        # parser=parse_szse, home="https://www.szse.cn/"),
-        S("bse", "北京证券交易所", "https://www.bse.cn/info/listse.do",
-          kind="custom", parser=parse_bse, home="https://www.bse.cn/", short="北交所"),
-        S("shfe", "上海期货交易所", "https://www.shfe.com.cn/api/search/",
-          headers={"Content-Type": "application/json"},
-          body=json.dumps({"chlid": 1003, "page": 1, "size": 50,
-                           "searchword": "docchannel=2384",
-                           "orderby": "-docreltime"}),
-          parser=parse_shfe, home="https://www.shfe.com.cn/", short="上期所"),
-        S("cffex_tz", "中金所·通知", "http://www.cffex.com.cn/cn/jystz.html",
-          link_re=r"/cn/jystz/\d{8}/\d+\.html", home="http://www.cffex.com.cn/", short="中金所通知"),
-        # S("chinabond", "中央结算公司（中债登）",
-        # "https://www.chinabond.com.cn/cbiw/trs/queryLatestReleaseForIndex",
-        # headers={"X-Requested-With": "XMLHttpRequest",
-        # "Content-Type": "application/x-www-form-urlencoded; charset=UTF-8",
-        # "Referer": "https://www.chinabond.com.cn/"},
-        # body="siteInfo=CN", parser=parse_chinabond,
-        # home="https://www.chinabond.com.cn/"),
-        # 待补：customs/shfe/dce/czce/shclearing
     ]
 
-
-# ---------------------------------------------------------------- 出口
 
 INDEX_TMPL = """<!doctype html>
 <html lang="zh-cn"><head><meta charset="utf-8">
@@ -572,7 +811,7 @@ p.sub{color:var(--dim);font-size:.88rem;margin:.2rem 0 1.6rem}
 ul{list-style:none;padding:0;margin:0}
 
 /* 表头与行共用同一套栅格：日期 | 主题 | 发文机关 */
-.hd,li{display:grid;grid-template-columns:4.2rem minmax(0,1fr) 7rem;
+.hd,li{display:grid;grid-template-columns:5.6rem minmax(0,1fr) 7rem;
        column-gap:.85rem;align-items:center}
 .hd{padding:.5rem .2rem;border-bottom:2px solid var(--line);
     font-size:.82rem;color:var(--dim);position:sticky;top:0;background:var(--bg);z-index:1}
@@ -596,7 +835,7 @@ a.t:hover{text-decoration:underline}
 a.t.read{color:var(--dim);opacity:.62}
 
 @media (max-width:560px){
-  .hd,li{grid-template-columns:3.4rem minmax(0,1fr)}
+  .hd,li{grid-template-columns:5.2rem minmax(0,1fr)}
   .hd .c-src,li .s{display:none}
 }
 
@@ -716,7 +955,7 @@ def _nav(page_no: int, total_pages: int) -> str:
     return "".join(out)
 
 
-def paginate(items, per_page: int = PER_PAGE, per_source_cap: int = 12):
+def paginate(items, per_page: int = PER_PAGE, per_source_cap: int = 12, now=None):
     """轮转合并后切页：每源先截到 per_source_cap 条，保证每页各机关都有份。
 
     先按轮转顺序把各源的新条目交错排（上期所、票交所这类高频站不会占满一页），
@@ -724,7 +963,7 @@ def paginate(items, per_page: int = PER_PAGE, per_source_cap: int = 12):
     """
     by_src = {}
     for it in sorted(items, key=lambda x: x["date"], reverse=True):
-        k = it.get("short") or it["source"]
+        k = it.get("sid") or it.get("short") or it["source"]
         bucket = by_src.setdefault(k, [])
         if len(bucket) < per_source_cap:
             bucket.append(it)
@@ -737,6 +976,13 @@ def paginate(items, per_page: int = PER_PAGE, per_source_cap: int = 12):
             seq.append(by_src[k].pop(0))
         i += 1
 
+    if now is not None:                      # 半年前的条目统一压到最后
+        cut = now - timedelta(days=180)
+        fresh = [x for x in seq if x["date"] >= cut]
+        stale = [x for x in seq if x["date"] < cut]
+        stale.sort(key=lambda x: x["date"], reverse=True)
+        seq = fresh + stale
+
     pages = [seq[i:i + per_page] for i in range(0, len(seq), per_page)]
     for pg in pages:
         pg.sort(key=lambda x: x["date"], reverse=True)
@@ -748,7 +994,7 @@ def build_index_html(items, now, page_no: int = 1, total_pages: int = 1, total_i
     rows = []
     for it in items:
         stamp = it["date"].strftime("%Y-%m-%d %H:%M")
-        day = it["date"].strftime("%m-%d")
+        day = it["date"].strftime("%Y-%m-%d")
         key = escape(it["link"] or it["title"], {'"': "&quot;"})
         short = escape(it.get("short") or it["source"])
         rows.append(
@@ -812,6 +1058,8 @@ def main():
                 continue
             it["source"] = src.name
             it["short"] = src.short
+            it["sid"] = src.id
+            it["channel"] = src.channel
             it["home"] = src.home
             key = re.sub(r"[?#].*$", "", it["link"] or "") or (it["source"] + it["title"])
             if key in seen:
@@ -850,7 +1098,7 @@ def main():
         print("[error] 没有任何条目，保留旧文件不覆盖")
         return 1
 
-    pages = paginate(merged, args.per_page, args.per_source_cap)
+    pages = paginate(merged, args.per_page, args.per_source_cap, now)
     total = sum(len(pg) for pg in pages)
     out_dir = Path(args.out_dir)
     out_dir.mkdir(parents=True, exist_ok=True)

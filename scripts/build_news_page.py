@@ -807,6 +807,10 @@ INDEX_TMPL = """<!doctype html>
 body{font:16px/1.75 -apple-system,BlinkMacSystemFont,"Noto Sans SC","PingFang SC",sans-serif;
      max-width:52rem;margin:3rem auto;padding:0 1.2rem;color:var(--fg);background:var(--bg)}
 h1{font-size:1.45rem;margin:0 0 1.6rem}
+.topbar{display:flex;align-items:center;justify-content:space-between;margin-bottom:.45rem}
+.back{font-family:-apple-system,BlinkMacSystemFont,"PingFang SC","Segoe UI",sans-serif;
+      font-size:13px;color:#6b7280;text-decoration:none}
+@media (prefers-color-scheme:dark){.back{color:#8b95a3}}
 ul{list-style:none;padding:0;margin:0}
 .hd,li{display:grid;grid-template-columns:5.6rem minmax(0,1fr) 7rem;
        column-gap:.85rem;align-items:center}
@@ -848,6 +852,7 @@ a.t.read{color:var(--dim);opacity:.62}
   .hd .c-src,li .s{display:none}
 }
 </style></head><body>
+<div class="topbar"><a class="back" href="/">← 返回首页</a></div>
 <h1>机构公告速递</h1>
 
 <div class="hd">

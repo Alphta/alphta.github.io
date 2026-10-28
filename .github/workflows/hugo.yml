@@ -5,6 +5,7 @@ on:
     branches: [main]
   workflow_dispatch:
   schedule:
+    - cron: '*/5 * * * *'   # 临时诊断：验证 GitHub 定时器是否会派发
     - cron: '7 * * * *'
 
 permissions:

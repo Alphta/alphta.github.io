@@ -435,6 +435,23 @@ def parse_bse(text: str, src: "Source", now: datetime):
     return items
 
 
+def parse_shfe(text: str, src: "Source", now: datetime):
+    """上期所：/api/search/ 必须带 Content-Type: application/json，否则 200 但 code=500。"""
+    d = json.loads(text)
+    rows = (d.get("data") or {}).get("content") or []
+    items = []
+    for r in rows:
+        title = re.sub(r"\s+", " ", str(r.get("doctitle") or "")).strip()
+        dt = parse_date(str(r.get("docreltime") or ""), now)
+        url = str(r.get("docpuburl") or "")
+        if len(title) < 4 or not dt or not url:
+            continue
+        items.append({"title": title[:180],
+                      "link": urllib.parse.urljoin("https://www.shfe.com.cn", url),
+                      "date": dt})
+    return items
+
+
 # ---------------------------------------------------------------- 源清单
 
 def build_sources():
@@ -501,6 +518,14 @@ def build_sources():
           parser=parse_szse, home="https://www.szse.cn/"),
         S("bse", "北京证券交易所", "https://www.bse.cn/info/listse.do",
           kind="custom", parser=parse_bse, home="https://www.bse.cn/"),
+        S("shfe", "上海期货交易所", "https://www.shfe.com.cn/api/search/",
+          headers={"Content-Type": "application/json"},
+          body=json.dumps({"chlid": 1003, "page": 1, "size": 50,
+                           "searchword": "docchannel=2384",
+                           "orderby": "-docreltime"}),
+          parser=parse_shfe, home="https://www.shfe.com.cn/"),
+        S("cffex_tz", "中金所·通知", "http://www.cffex.com.cn/cn/jystz.html",
+          link_re=r"/cn/jystz/\d{8}/\d+\.html", home="http://www.cffex.com.cn/"),
         S("chinabond", "中央结算公司（中债登）",
           "https://www.chinabond.com.cn/cbiw/trs/queryLatestReleaseForIndex",
           headers={"X-Requested-With": "XMLHttpRequest",
@@ -543,6 +568,39 @@ def build_rss(items, now, self_url, site_url):
         parts.append("</item>")
     parts += ["</channel>", "</rss>"]
     return "\n".join(parts) + "\n"
+
+
+def build_index_html(items, now):
+    """给 /news/ 一个人类可读的落地页。"""
+    rows = "\n".join(
+        f'<li><time datetime="{it["date"].strftime("%Y-%m-%d")}">'
+        f'{it["date"].strftime("%m-%d")}</time> '
+        f'<a href="{escape(it["link"])}" target="_blank" rel="noopener">{escape(it["title"])}</a> '
+        f'<span class="src">{escape(it["source"])}</span></li>'
+        for it in items
+    )
+    return f"""<!doctype html>
+<html lang="zh-cn"><head><meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>机构公告速递</title>
+<link rel="alternate" type="application/rss+xml" href="/news/feed.xml" title="机构公告速递">
+<style>
+body{{font:16px/1.7 -apple-system,BlinkMacSystemFont,"Noto Sans SC",sans-serif;max-width:46rem;margin:3rem auto;padding:0 1.2rem;color:#1a1a1a}}
+h1{{font-size:1.5rem;margin-bottom:.2rem}}
+p.sub{{color:#666;font-size:.9rem;margin-top:0}}
+ul{{list-style:none;padding:0}}
+li{{padding:.55rem 0;border-bottom:1px solid #eee}}
+time{{color:#888;font-variant-numeric:tabular-nums;margin-right:.4rem;font-size:.85rem}}
+.src{{color:#999;font-size:.8rem;margin-left:.4rem}}
+a{{color:#0a5bd4;text-decoration:none}}a:hover{{text-decoration:underline}}
+</style></head><body>
+<h1>机构公告速递</h1>
+<p class="sub">央行、监管、交易所与金融基础设施的官方公告聚合 ·
+<a href="/news/feed.xml">RSS 订阅</a> · 更新于 {now.strftime("%Y-%m-%d %H:%M")} (UTC+8)</p>
+<ul>
+{rows}
+</ul></body></html>
+"""
 
 
 def main():
@@ -630,6 +688,7 @@ def main():
         encoding="utf-8",
     )
     print(f"[ok] -> {out} ({out.stat().st_size} bytes)")
+    (out.parent / "index.html").write_text(build_index_html(merged, now), encoding="utf-8")
     return 0
 
 

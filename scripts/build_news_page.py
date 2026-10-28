@@ -843,16 +843,9 @@ a.t.read{color:var(--dim);opacity:.62}
       padding:.12rem .5rem;margin-left:.4rem;cursor:pointer}
 .foot button:hover{border-color:var(--link)}
 .foot .hint{opacity:.75;font-size:.8rem}
-.foot details{margin-top:.5rem}
-.foot summary{cursor:pointer;color:var(--link);font-size:.85rem}
-.foot label{display:block;margin:.45rem 0}
-.foot input{font:inherit;width:22rem;max-width:70%;padding:.15rem .4rem;
-      border:1px solid var(--line);border-radius:.3rem;background:var(--bg);color:var(--fg)}
-#syncmsg{margin-left:.5rem}
 @media (max-width:560px){
   .hd,li{grid-template-columns:5.2rem minmax(0,1fr)}
   .hd .c-src,li .s{display:none}
-  .foot input{width:100%;max-width:100%}
 }
 </style></head><body>
 <h1>机构公告速递</h1>
@@ -869,30 +862,10 @@ __ROWS__
 
 <footer class="foot">
   <p>央行、监管、交易所与金融基础设施的官方公告聚合 · 共 __COUNT__ 条 · 第 __PAGE__/__PAGES__ 页 · 更新于 __NOW__ (UTC+8)</p>
-  <p>兴趣学习：<b id="hits">0</b> 次点击 · 覆盖 <b id="kinds">0</b> 项机关/栏目/主题 · 最后记录 <b id="last">—</b> · 同步 <b id="syncstate">仅本机</b>
+  <p>兴趣学习：<b id="hits">0</b> 次点击 · 覆盖 <b id="kinds">0</b> 项机关/栏目/主题 · 最后记录 <b id="last">—</b>
      <button id="mode" type="button">按时间</button>
-     <button id="exp" type="button">导出</button>
-     <button id="imp" type="button">导入</button>
      <button id="reset" type="button">重置</button></p>
-
-  <details id="syncbox">
-    <summary>跨设备同步设置（GitHub 私有 Gist）</summary>
-    <p class="hint">一次配置，笔记本和公司电脑共用同一份记录。步骤：
-      ① 在 GitHub 新建一个 <b>secret gist</b>，文件名 <code>nf.json</code>，内容写 <code>{}</code>，保存后从地址栏拿到 Gist ID（用户名后面那串）；
-      ② 生成一个 fine-grained token，只勾选 <b>Gists: Read and write</b>；
-      ③ 两台设备都在这里填入同一个 Gist ID 和 token，点保存。
-      数据只在你自己的私有 Gist 里，本站不经手。</p>
-    <label>Gist ID <input id="gist" type="text" spellcheck="false" placeholder="例如 3f2a1b..."></label>
-    <label>Token <input id="token" type="password" spellcheck="false" placeholder="github_pat_... 只存在本机"></label>
-    <button id="syncsave" type="button">保存</button>
-    <button id="syncnow" type="button">立即同步</button>
-    <button id="syncoff" type="button">断开</button>
-    <span id="syncmsg"></span>
-  </details>
-
-  <p class="hint">记录同时写入 localStorage、IndexedDB 和 Cookie，清缓存只清掉其中一层时不会丢；
-     没配置同步时，换设备用「导出」拿到 JSON 再到新设备「导入」即可。</p>
-  <input type="file" id="file" accept="application/json" hidden>
+  <p class="hint">记录只存在这台电脑的浏览器里（localStorage / IndexedDB / Cookie 各存一份，清缓存只清掉一层不会丢），不上传任何地方。</p>
 </footer>
 
 <script>window.NF={page:__PAGE__,per:__PER__,pages:__PAGES__,data:__DATA__};</script>
@@ -914,7 +887,7 @@ __ROWS__
   var DEV = lsGet('devid', null);
   if (!DEV) { DEV = 'd' + Math.random().toString(36).slice(2, 9) + Date.now().toString(36).slice(-4); lsSet('devid', DEV); }
 
-  /* ---------- 存储层 ---------- */
+  /* ---------- IndexedDB / Cookie 兜底 ---------- */
   var idb = (function(){
     var db = null, ready = false, queue = [];
     try {
@@ -969,7 +942,7 @@ __ROWS__
       }
       return {v:2, devices:o.devices};
     }
-    if (o.src || o.ch || o.topic) {          // v1 迁移
+    if (o.src || o.ch || o.topic) {
       return {v:2, devices:{legacy:{ts:o.ts || 0, src:o.src || {}, ch:o.ch || {}, topic:o.topic || {}}}};
     }
     return null;
@@ -984,7 +957,7 @@ __ROWS__
       dst.ts = Math.max(dst.ts || 0, src.ts || 0);
       ['src','ch','topic'].forEach(function(kind){
         var s = src[kind] || {}, t = dst[kind] || (dst[kind] = {});
-        for (var k in s) t[k] = Math.max(t[k] || 0, s[k]);   // 取大值，避免重复同步越滚越大
+        for (var k in s) t[k] = Math.max(t[k] || 0, s[k]);
       });
     }
     return a;
@@ -1040,12 +1013,9 @@ __ROWS__
     if (k) k.textContent = String(kinds());
     var l = document.getElementById('last');
     if (l) l.textContent = mine().ts ? new Date(mine().ts).toLocaleString('zh-CN', {hour12:false}) : '—';
-    var s = document.getElementById('syncstate');
-    if (s) s.textContent = cfg().gist ? '已连接 Gist' : '仅本机';
   }
 
   /* ---------- 学习 ---------- */
-  var pushTimer = null;
   function learn(a){
     var s = a.dataset.src || '', c = a.dataset.ch || '', t = a.textContent || '';
     var me = mine();
@@ -1056,8 +1026,6 @@ __ROWS__
     me.ts = Date.now();
     persist();
     paint();
-    if (pushTimer) clearTimeout(pushTimer);
-    pushTimer = setTimeout(function(){ syncPush(); }, 4000);   // 攒一下再上传
   }
 
   /* ---------- 渲染 ---------- */
@@ -1144,44 +1112,6 @@ __ROWS__
     markHead();
   })();
 
-  /* ---------- Gist 同步 ---------- */
-  function cfg(){ return lsGet('sync', {gist:'', token:''}); }
-  function setMsg(s){ var m = document.getElementById('syncmsg'); if (m) m.textContent = s ? '· ' + s : ''; }
-  function ghHdr(){ return {'Authorization':'Bearer ' + cfg().token,
-                           'Accept':'application/vnd.github+json'}; }
-
-  function syncPull(done){
-    var c = cfg();
-    if (!c.gist || !c.token) { setMsg('未配置'); return done && done(false); }
-    setMsg('拉取中…');
-    fetch('https://api.github.com/gists/' + c.gist + '?t=' + Date.now(),
-          {headers: ghHdr(), cache:'no-store'})
-      .then(function(r){ if (!r.ok) throw new Error('HTTP ' + r.status); return r.json(); })
-      .then(function(j){
-        var f = j.files && j.files['nf.json'];
-        var remote = f ? JSON.parse(f.content || '{}') : null;
-        mergeDB(db, remote);
-        if (!db.devices[DEV]) db.devices[DEV] = blankDev();
-        persist();
-        setMsg('已拉取');
-        if (done) done(true);
-      })
-      .catch(function(e){ setMsg('拉取失败：' + e.message); if (done) done(false); });
-  }
-
-  function syncPush(done){
-    var c = cfg();
-    if (!c.gist || !c.token) return done && done(false);
-    fetch('https://api.github.com/gists/' + c.gist, {
-      method:'PATCH',
-      headers: Object.assign(ghHdr(), {'Content-Type':'application/json'}),
-      body: JSON.stringify({files:{'nf.json':{content:JSON.stringify(db)}}})
-    }).then(function(r){ if (!r.ok) throw new Error('HTTP ' + r.status);
-        setMsg('已同步 ' + new Date().toLocaleTimeString('zh-CN', {hour12:false}));
-        if (done) done(true); })
-      .catch(function(e){ setMsg('上传失败：' + e.message); if (done) done(false); });
-  }
-
   /* ---------- 按钮 ---------- */
   var btnMode = document.getElementById('mode');
   if (btnMode) btnMode.addEventListener('click', function(){
@@ -1190,64 +1120,14 @@ __ROWS__
     if (mode === 'time') location.reload(); else render();
   });
 
-  var btnExp = document.getElementById('exp');
-  if (btnExp) btnExp.addEventListener('click', function(){
-    var blob = new Blob([JSON.stringify(db, null, 2)], {type:'application/json'});
-    var a = document.createElement('a');
-    a.href = URL.createObjectURL(blob);
-    a.download = 'nf-affinity-' + new Date().toISOString().slice(0, 10) + '.json';
-    document.body.appendChild(a); a.click();
-    setTimeout(function(){ URL.revokeObjectURL(a.href); a.remove(); }, 1000);
-  });
-
-  var fileInput = document.getElementById('file');
-  var btnImp = document.getElementById('imp');
-  if (btnImp && fileInput) {
-    btnImp.addEventListener('click', function(){ fileInput.click(); });
-    fileInput.addEventListener('change', function(){
-      var f = fileInput.files && fileInput.files[0];
-      if (!f) return;
-      var fr = new FileReader();
-      fr.onload = function(){
-        try {
-          mergeDB(db, JSON.parse(fr.result));
-          persist(); syncPush(); location.reload();
-        } catch(e){ alert('这个文件读不出来，需要本页「导出」出来的 JSON。'); }
-      };
-      fr.readAsText(f);
-    });
-  }
-
   var btnReset = document.getElementById('reset');
   if (btnReset) btnReset.addEventListener('click', function(){
-    if (!confirm('清空本机的点击记录？（云端 Gist 里其它设备的记录不受影响）')) return;
+    if (!confirm('清空这台电脑记住的点击记录？')) return;
     delete db.devices[DEV];
     db.devices[DEV] = blankDev();
     read = {};
     try { localStorage.removeItem('nf_read'); } catch(e){}
     persist(); location.reload();
-  });
-
-  /* ---------- 同步设置 ---------- */
-  var gistInput = document.getElementById('gist'), tokenInput = document.getElementById('token');
-  if (gistInput) gistInput.value = cfg().gist || '';
-  if (tokenInput) tokenInput.value = cfg().token || '';
-  var btnSave = document.getElementById('syncsave');
-  if (btnSave) btnSave.addEventListener('click', function(){
-    lsSet('sync', {gist: (gistInput.value || '').trim(), token: (tokenInput.value || '').trim()});
-    paint(); setMsg('已保存，正在同步…');
-    syncPull(function(ok){ if (ok) syncPush(); });
-  });
-  var btnNow = document.getElementById('syncnow');
-  if (btnNow) btnNow.addEventListener('click', function(){
-    syncPull(function(ok){ if (ok) syncPush(); });
-  });
-  var btnOff = document.getElementById('syncoff');
-  if (btnOff) btnOff.addEventListener('click', function(){
-    lsSet('sync', {gist:'', token:''});
-    if (gistInput) gistInput.value = '';
-    if (tokenInput) tokenInput.value = '';
-    paint(); setMsg('已断开');
   });
 
   /* ---------- 启动 ---------- */
@@ -1265,7 +1145,6 @@ __ROWS__
     idb.get('read', function(r){
       if (r && Object.keys(r).length > Object.keys(read).length) read = r;
       boot();
-      if (cfg().gist) syncPull(function(){ if (mode === 'interest') render(); });
     });
   });
   setTimeout(boot, 600);   // IndexedDB 被禁用时也能启动

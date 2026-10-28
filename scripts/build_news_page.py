@@ -821,7 +821,7 @@ li{padding:.55rem .2rem;border-bottom:1px solid var(--line)}
 li time{color:var(--dim);font-size:.82rem;font-variant-numeric:tabular-nums;white-space:nowrap}
 li .s{color:var(--dim);font-size:.78rem;text-align:center;white-space:nowrap;justify-self:center}
 a.t{color:var(--link);text-decoration:none;display:block;line-height:1.42;
-    text-indent:0;overflow-wrap:anywhere;text-wrap:pretty;
+    text-indent:0;overflow-wrap:anywhere;text-wrap:wrap;
     transition:color .18s ease,opacity .18s ease}
 a.t:hover{text-decoration:underline}
 a.t.read{color:var(--dim);opacity:.62}

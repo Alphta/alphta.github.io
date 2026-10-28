@@ -1,0 +1,7 @@
+name = "news-cron"
+main = "worker.js"
+compatibility_date = "2026-10-01"
+
+# 每小时第 7 分钟触发一次（UTC；对“每小时”来说时区不影响频率）
+[triggers]
+crons = ["7 * * * *"]

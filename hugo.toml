@@ -86,6 +86,15 @@ enableEmoji            = true
         default = "auto"
 
 [[menu.main]]
+    identifier = "news"
+    name       = "新闻"
+    url        = "/news/"
+    weight     = -75
+
+    [menu.main.params]
+        icon = "news"
+
+[[menu.main]]
     identifier = "desk"
     name       = "净值"
     url        = "https://essay.alphta.com/desk/"

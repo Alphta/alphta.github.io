@@ -842,10 +842,17 @@ a.t.read{color:var(--dim);opacity:.62}
       border:1px solid var(--line);border-radius:.35rem;
       padding:.12rem .5rem;margin-left:.4rem;cursor:pointer}
 .foot button:hover{border-color:var(--link)}
-.foot .hint{opacity:.75}
+.foot .hint{opacity:.75;font-size:.8rem}
+.foot details{margin-top:.5rem}
+.foot summary{cursor:pointer;color:var(--link);font-size:.85rem}
+.foot label{display:block;margin:.45rem 0}
+.foot input{font:inherit;width:22rem;max-width:70%;padding:.15rem .4rem;
+      border:1px solid var(--line);border-radius:.3rem;background:var(--bg);color:var(--fg)}
+#syncmsg{margin-left:.5rem}
 @media (max-width:560px){
   .hd,li{grid-template-columns:5.2rem minmax(0,1fr)}
   .hd .c-src,li .s{display:none}
+  .foot input{width:100%;max-width:100%}
 }
 </style></head><body>
 <h1>机构公告速递</h1>
@@ -862,13 +869,29 @@ __ROWS__
 
 <footer class="foot">
   <p>央行、监管、交易所与金融基础设施的官方公告聚合 · 共 __COUNT__ 条 · 第 __PAGE__/__PAGES__ 页 · 更新于 __NOW__ (UTC+8)</p>
-  <p>兴趣学习：<b id="hits">0</b> 次点击 · 覆盖 <b id="kinds">0</b> 项机关/栏目/主题 · 最后记录 <b id="last">—</b>
+  <p>兴趣学习：<b id="hits">0</b> 次点击 · 覆盖 <b id="kinds">0</b> 项机关/栏目/主题 · 最后记录 <b id="last">—</b> · 同步 <b id="syncstate">仅本机</b>
      <button id="mode" type="button">按时间</button>
      <button id="exp" type="button">导出</button>
      <button id="imp" type="button">导入</button>
      <button id="reset" type="button">重置</button></p>
+
+  <details id="syncbox">
+    <summary>跨设备同步设置（GitHub 私有 Gist）</summary>
+    <p class="hint">一次配置，笔记本和公司电脑共用同一份记录。步骤：
+      ① 在 GitHub 新建一个 <b>secret gist</b>，文件名 <code>nf.json</code>，内容写 <code>{}</code>，保存后从地址栏拿到 Gist ID（用户名后面那串）；
+      ② 生成一个 fine-grained token，只勾选 <b>Gists: Read and write</b>；
+      ③ 两台设备都在这里填入同一个 Gist ID 和 token，点保存。
+      数据只在你自己的私有 Gist 里，本站不经手。</p>
+    <label>Gist ID <input id="gist" type="text" spellcheck="false" placeholder="例如 3f2a1b..."></label>
+    <label>Token <input id="token" type="password" spellcheck="false" placeholder="github_pat_... 只存在本机"></label>
+    <button id="syncsave" type="button">保存</button>
+    <button id="syncnow" type="button">立即同步</button>
+    <button id="syncoff" type="button">断开</button>
+    <span id="syncmsg"></span>
+  </details>
+
   <p class="hint">记录同时写入 localStorage、IndexedDB 和 Cookie，清缓存只清掉其中一层时不会丢；
-     换电脑/换浏览器用「导出」拿到 JSON，再到新设备「导入」即可接着学。</p>
+     没配置同步时，换设备用「导出」拿到 JSON 再到新设备「导入」即可。</p>
   <input type="file" id="file" accept="application/json" hidden>
 </footer>
 
@@ -887,7 +910,11 @@ __ROWS__
   function lsGet(k, d){ try{ var v = localStorage.getItem('nf_' + k); return v ? JSON.parse(v) : d; }catch(e){ return d; } }
   function lsSet(k, v){ try{ localStorage.setItem('nf_' + k, JSON.stringify(v)); }catch(e){} }
 
-  /* ---------- IndexedDB：比 localStorage 更耐清缓存 ---------- */
+  /* ---------- 设备标识 ---------- */
+  var DEV = lsGet('devid', null);
+  if (!DEV) { DEV = 'd' + Math.random().toString(36).slice(2, 9) + Date.now().toString(36).slice(-4); lsSet('devid', DEV); }
+
+  /* ---------- 存储层 ---------- */
   var idb = (function(){
     var db = null, ready = false, queue = [];
     try {
@@ -917,33 +944,66 @@ __ROWS__
     };
   })();
 
-  /* ---------- Cookie：第三层兜底（只放兴趣，体积小） ---------- */
   function cookieGet(){
     try {
-      var m = document.cookie.match(/(?:^|;\\s*)nf_aff=([^;]+)/);
+      var m = document.cookie.match(/(?:^|;\\s*)nf_db=([^;]+)/);
       return m ? JSON.parse(decodeURIComponent(m[1])) : null;
     } catch(e){ return null; }
   }
-  function cookieSet(p){
+  function cookieSet(v){
     try {
-      var s = JSON.stringify(p);
-      if (s.length < 3500) document.cookie = 'nf_aff=' + encodeURIComponent(s)
+      var s = JSON.stringify(v);
+      if (s.length < 3600) document.cookie = 'nf_db=' + encodeURIComponent(s)
         + ';path=/;max-age=31536000;SameSite=Lax';
     } catch(e){}
   }
 
-  var aff  = lsGet('aff', null);
+  /* ---------- 数据：{v:2, devices:{<id>:{ts,src,ch,topic}}} ---------- */
+  function blankDev(){ return {ts:0, src:{}, ch:{}, topic:{}}; }
+  function normalize(o){
+    if (!o || typeof o !== 'object') return null;
+    if (o.devices) {
+      for (var id in o.devices){
+        var d = o.devices[id] || {};
+        d.src = d.src || {}; d.ch = d.ch || {}; d.topic = d.topic || {}; d.ts = d.ts || 0;
+      }
+      return {v:2, devices:o.devices};
+    }
+    if (o.src || o.ch || o.topic) {          // v1 迁移
+      return {v:2, devices:{legacy:{ts:o.ts || 0, src:o.src || {}, ch:o.ch || {}, topic:o.topic || {}}}};
+    }
+    return null;
+  }
+  function mergeDB(a, b){
+    a = a || {v:2, devices:{}};
+    b = normalize(b);
+    if (!b) return a;
+    for (var id in b.devices){
+      var src = b.devices[id], dst = a.devices[id];
+      if (!dst) { a.devices[id] = src; continue; }
+      dst.ts = Math.max(dst.ts || 0, src.ts || 0);
+      ['src','ch','topic'].forEach(function(kind){
+        var s = src[kind] || {}, t = dst[kind] || (dst[kind] = {});
+        for (var k in s) t[k] = Math.max(t[k] || 0, s[k]);   // 取大值，避免重复同步越滚越大
+      });
+    }
+    return a;
+  }
+
+  var db = normalize(lsGet('db', null)) || normalize(cookieGet()) || {v:2, devices:{}};
+  if (!db.devices[DEV]) db.devices[DEV] = blankDev();
   var read = lsGet('read', null) || {};
-
-  function blank(){ return {src:{}, ch:{}, topic:{}, ts:0}; }
-  function newer(a, b){ return ((b && b.ts) || 0) > ((a && a.ts) || 0) ? b : a; }
-
-  aff = newer(aff, cookieGet()) || blank();
-  if (!aff.src) aff.src = {};
-  if (!aff.ch) aff.ch = {};
-  if (!aff.topic) aff.topic = {};
-
   var mode = lsGet('mode', 'time');
+
+  function mine(){ return db.devices[DEV]; }
+  function agg(kind){
+    var out = {}, id, k, d;
+    for (id in db.devices){
+      d = db.devices[id][kind] || {};
+      for (k in d) out[k] = (out[k] || 0) + d[k];
+    }
+    return out;
+  }
 
   function topicsOf(t){
     var out = [];
@@ -951,37 +1011,27 @@ __ROWS__
     return out;
   }
   function w(n){ return n > 0 ? Math.log(1 + n) : 0; }
-  function score(it){
-    var s = 3 * w(aff.src[it.s] || 0) + 2 * w(aff.ch[it.s + '|' + it.c] || 0);
+  function score(it, A){
+    var s = 3 * w(A.src[it.s] || 0) + 2 * w(A.ch[it.s + '|' + it.c] || 0);
     var tp = topicsOf(it.t);
-    for (var i = 0; i < tp.length; i++) s += 2 * w(aff.topic[tp[i]] || 0);
+    for (var i = 0; i < tp.length; i++) s += 2 * w(A.topic[tp[i]] || 0);
     var days = (Date.now() - Date.parse(it.d)) / 86400000;
     if (days >= 0 && days < 60) s += (60 - days) / 60 * 2.5;
     return s;
   }
-  function hits(){
-    var n = 0, k;
-    for (k in aff.src) n += aff.src[k];
-    return n;
-  }
+  function hits(){ var A = agg('src'), n = 0, k; for (k in A) n += A[k]; return n; }
   function kinds(){
-    return Object.keys(aff.src).length + Object.keys(aff.ch).length
-         + Object.keys(aff.topic).length;
+    return Object.keys(agg('src')).length + Object.keys(agg('ch')).length
+         + Object.keys(agg('topic')).length;
   }
 
-  /* ---------- 持久化：一次写三层 ---------- */
-  function pack(){
-    aff.ts = Date.now();
-    return {v:1, ts:aff.ts, src:aff.src, ch:aff.ch, topic:aff.topic};
-  }
-  function save(){
-    var p = pack();
-    lsSet('aff', p);
-    cookieSet(p);
-    idb.set('aff', p);
+  /* ---------- 持久化 ---------- */
+  function persist(){
+    lsSet('db', db);
+    cookieSet(db);
+    idb.set('db', db);
     lsSet('read', read);
     idb.set('read', read);
-    paint();
   }
   function paint(){
     var h = document.getElementById('hits');
@@ -989,17 +1039,25 @@ __ROWS__
     var k = document.getElementById('kinds');
     if (k) k.textContent = String(kinds());
     var l = document.getElementById('last');
-    if (l) l.textContent = aff.ts ? new Date(aff.ts).toLocaleString('zh-CN', {hour12:false}) : '—';
+    if (l) l.textContent = mine().ts ? new Date(mine().ts).toLocaleString('zh-CN', {hour12:false}) : '—';
+    var s = document.getElementById('syncstate');
+    if (s) s.textContent = cfg().gist ? '已连接 Gist' : '仅本机';
   }
 
   /* ---------- 学习 ---------- */
+  var pushTimer = null;
   function learn(a){
     var s = a.dataset.src || '', c = a.dataset.ch || '', t = a.textContent || '';
-    if (s) aff.src[s] = (aff.src[s] || 0) + 1;
-    if (s && c) aff.ch[s + '|' + c] = (aff.ch[s + '|' + c] || 0) + 1;
+    var me = mine();
+    if (s) me.src[s] = (me.src[s] || 0) + 1;
+    if (s && c) me.ch[s + '|' + c] = (me.ch[s + '|' + c] || 0) + 1;
     var tp = topicsOf(t);
-    for (var i = 0; i < tp.length; i++) aff.topic[tp[i]] = (aff.topic[tp[i]] || 0) + 1;
-    save();
+    for (var i = 0; i < tp.length; i++) me.topic[tp[i]] = (me.topic[tp[i]] || 0) + 1;
+    me.ts = Date.now();
+    persist();
+    paint();
+    if (pushTimer) clearTimeout(pushTimer);
+    pushTimer = setTimeout(function(){ syncPush(); }, 4000);   // 攒一下再上传
   }
 
   /* ---------- 渲染 ---------- */
@@ -1023,8 +1081,8 @@ __ROWS__
       a.addEventListener('click', function(ev){
         if (ev.metaKey || ev.ctrlKey || ev.shiftKey || ev.button === 1) { learn(a); return; }
         ev.preventDefault();
-        var w = window.open(a.href, '_blank');
-        if (w) { try { w.opener = null; } catch(e){} window.focus(); } else { location.href = a.href; }
+        var w2 = window.open(a.href, '_blank');
+        if (w2) { try { w2.opener = null; } catch(e){} window.focus(); } else { location.href = a.href; }
         a.classList.add('read');
         read[k] = 1;
         learn(a);
@@ -1037,8 +1095,9 @@ __ROWS__
     if (!list) return;
     var items = data.slice();
     if (mode === 'interest') {
+      var A = {src:agg('src'), ch:agg('ch'), topic:agg('topic')};
       items.sort(function(a, b){
-        var d = score(b) - score(a);
+        var d = score(b, A) - score(a, A);
         if (d) return d;
         return a.d < b.d ? 1 : (a.d > b.d ? -1 : 0);
       });
@@ -1051,7 +1110,7 @@ __ROWS__
     paint();
   }
 
-  /* ---------- 表头排序（只作用于当前页 DOM） ---------- */
+  /* ---------- 表头排序 ---------- */
   var sortState = {key:'date', dir:'desc'};
   function markHead(){
     var hs = document.querySelectorAll('[data-sort]');
@@ -1085,6 +1144,44 @@ __ROWS__
     markHead();
   })();
 
+  /* ---------- Gist 同步 ---------- */
+  function cfg(){ return lsGet('sync', {gist:'', token:''}); }
+  function setMsg(s){ var m = document.getElementById('syncmsg'); if (m) m.textContent = s ? '· ' + s : ''; }
+  function ghHdr(){ return {'Authorization':'Bearer ' + cfg().token,
+                           'Accept':'application/vnd.github+json'}; }
+
+  function syncPull(done){
+    var c = cfg();
+    if (!c.gist || !c.token) { setMsg('未配置'); return done && done(false); }
+    setMsg('拉取中…');
+    fetch('https://api.github.com/gists/' + c.gist + '?t=' + Date.now(),
+          {headers: ghHdr(), cache:'no-store'})
+      .then(function(r){ if (!r.ok) throw new Error('HTTP ' + r.status); return r.json(); })
+      .then(function(j){
+        var f = j.files && j.files['nf.json'];
+        var remote = f ? JSON.parse(f.content || '{}') : null;
+        mergeDB(db, remote);
+        if (!db.devices[DEV]) db.devices[DEV] = blankDev();
+        persist();
+        setMsg('已拉取');
+        if (done) done(true);
+      })
+      .catch(function(e){ setMsg('拉取失败：' + e.message); if (done) done(false); });
+  }
+
+  function syncPush(done){
+    var c = cfg();
+    if (!c.gist || !c.token) return done && done(false);
+    fetch('https://api.github.com/gists/' + c.gist, {
+      method:'PATCH',
+      headers: Object.assign(ghHdr(), {'Content-Type':'application/json'}),
+      body: JSON.stringify({files:{'nf.json':{content:JSON.stringify(db)}}})
+    }).then(function(r){ if (!r.ok) throw new Error('HTTP ' + r.status);
+        setMsg('已同步 ' + new Date().toLocaleTimeString('zh-CN', {hour12:false}));
+        if (done) done(true); })
+      .catch(function(e){ setMsg('上传失败：' + e.message); if (done) done(false); });
+  }
+
   /* ---------- 按钮 ---------- */
   var btnMode = document.getElementById('mode');
   if (btnMode) btnMode.addEventListener('click', function(){
@@ -1095,7 +1192,7 @@ __ROWS__
 
   var btnExp = document.getElementById('exp');
   if (btnExp) btnExp.addEventListener('click', function(){
-    var blob = new Blob([JSON.stringify(pack(), null, 2)], {type:'application/json'});
+    var blob = new Blob([JSON.stringify(db, null, 2)], {type:'application/json'});
     var a = document.createElement('a');
     a.href = URL.createObjectURL(blob);
     a.download = 'nf-affinity-' + new Date().toISOString().slice(0, 10) + '.json';
@@ -1113,13 +1210,8 @@ __ROWS__
       var fr = new FileReader();
       fr.onload = function(){
         try {
-          var o = JSON.parse(fr.result);
-          ['src','ch','topic'].forEach(function(k){
-            var src = o[k] || {}, dst = aff[k];
-            for (var key in src) dst[key] = (dst[key] || 0) + src[key];   // 合并而不是覆盖
-          });
-          save();
-          location.reload();
+          mergeDB(db, JSON.parse(fr.result));
+          persist(); syncPush(); location.reload();
         } catch(e){ alert('这个文件读不出来，需要本页「导出」出来的 JSON。'); }
       };
       fr.readAsText(f);
@@ -1128,16 +1220,37 @@ __ROWS__
 
   var btnReset = document.getElementById('reset');
   if (btnReset) btnReset.addEventListener('click', function(){
-    if (!confirm('清空本机记住的点击记录？导出过的 JSON 不受影响。')) return;
-    aff = blank(); read = {};
-    try { localStorage.removeItem('nf_aff'); localStorage.removeItem('nf_mode');
-          localStorage.removeItem('nf_read'); } catch(e){}
-    try { document.cookie = 'nf_aff=;path=/;max-age=0'; } catch(e){}
-    try { idb.set('aff', null); idb.set('read', null); } catch(e){}
-    location.reload();
+    if (!confirm('清空本机的点击记录？（云端 Gist 里其它设备的记录不受影响）')) return;
+    delete db.devices[DEV];
+    db.devices[DEV] = blankDev();
+    read = {};
+    try { localStorage.removeItem('nf_read'); } catch(e){}
+    persist(); location.reload();
   });
 
-  /* ---------- 启动：以时间戳最新的那份为准 ---------- */
+  /* ---------- 同步设置 ---------- */
+  var gistInput = document.getElementById('gist'), tokenInput = document.getElementById('token');
+  if (gistInput) gistInput.value = cfg().gist || '';
+  if (tokenInput) tokenInput.value = cfg().token || '';
+  var btnSave = document.getElementById('syncsave');
+  if (btnSave) btnSave.addEventListener('click', function(){
+    lsSet('sync', {gist: (gistInput.value || '').trim(), token: (tokenInput.value || '').trim()});
+    paint(); setMsg('已保存，正在同步…');
+    syncPull(function(ok){ if (ok) syncPush(); });
+  });
+  var btnNow = document.getElementById('syncnow');
+  if (btnNow) btnNow.addEventListener('click', function(){
+    syncPull(function(ok){ if (ok) syncPush(); });
+  });
+  var btnOff = document.getElementById('syncoff');
+  if (btnOff) btnOff.addEventListener('click', function(){
+    lsSet('sync', {gist:'', token:''});
+    if (gistInput) gistInput.value = '';
+    if (tokenInput) tokenInput.value = '';
+    paint(); setMsg('已断开');
+  });
+
+  /* ---------- 启动 ---------- */
   var booted = false;
   function boot(){
     if (booted) return;
@@ -1145,20 +1258,17 @@ __ROWS__
     paint();
     if (mode === 'interest') render(); else bind();
   }
-  idb.get('aff', function(v){
-    var best = newer(aff, v);
-    if (best && best !== aff) {
-      aff = best;
-      if (!aff.src) aff.src = {};
-      if (!aff.ch) aff.ch = {};
-      if (!aff.topic) aff.topic = {};
-    }
+  idb.get('db', function(v){
+    var n = normalize(v);
+    if (n) mergeDB(db, n);
+    if (!db.devices[DEV]) db.devices[DEV] = blankDev();
     idb.get('read', function(r){
       if (r && Object.keys(r).length > Object.keys(read).length) read = r;
       boot();
+      if (cfg().gist) syncPull(function(){ if (mode === 'interest') render(); });
     });
   });
-  setTimeout(boot, 600);   // 浏览器禁用 IndexedDB 时也能正常启动
+  setTimeout(boot, 600);   // IndexedDB 被禁用时也能启动
 })();
 </script>
 </body></html>

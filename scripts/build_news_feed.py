@@ -42,6 +42,14 @@ DATE_FULL = re.compile(r"(20\d{2})\s*[-/.年]\s*(\d{1,2})\s*[-/.月]\s*(\d{1,2})
 # 列表里只写 10-27 的情况
 DATE_SHORT = re.compile(r"(?<!\d)(\d{1,2})\s*[-/月]\s*(\d{1,2})(?!\d)")
 
+# 噪声过滤：领导活动 / 地方派出机构 / 人事招聘。
+# 只作用于标题，命中就不进 feed，可用 --keep-noise 关闭。
+NOISE_RE = re.compile(
+    r"会见|会谈|座谈|拜访|拜会|调研|考察|走访|出席|致辞|讲话|批示|慰问|参观|访问"
+    r"|(?:监管局|监管分局|特派办|专员办|证监局|银保监分局|财政厅|税务局|分局|办事处)\s*[：:]"
+    r"|招聘|遴选|招考|报考|录用|选调|笔试|面试|拟聘"
+)
+
 
 class Source:
     """一个抓取源。parser 为 None 时用通用 HTML 列表解析。"""
@@ -570,44 +578,147 @@ def build_rss(items, now, self_url, site_url):
     return "\n".join(parts) + "\n"
 
 
-def build_index_html(items, now):
-    """给 /news/ 一个人类可读的落地页。"""
-    rows = "\n".join(
-        f'<li><time datetime="{it["date"].strftime("%Y-%m-%d")}">'
-        f'{it["date"].strftime("%m-%d")}</time> '
-        f'<a href="{escape(it["link"])}" target="_blank" rel="noopener">{escape(it["title"])}</a> '
-        f'<span class="src">{escape(it["source"])}</span></li>'
-        for it in items
-    )
-    return f"""<!doctype html>
+INDEX_TMPL = """<!doctype html>
 <html lang="zh-cn"><head><meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <title>机构公告速递</title>
 <link rel="alternate" type="application/rss+xml" href="/news/feed.xml" title="机构公告速递">
 <style>
-body{{font:16px/1.7 -apple-system,BlinkMacSystemFont,"Noto Sans SC",sans-serif;max-width:46rem;margin:3rem auto;padding:0 1.2rem;color:#1a1a1a}}
-h1{{font-size:1.5rem;margin-bottom:.2rem}}
-p.sub{{color:#666;font-size:.9rem;margin-top:0}}
-ul{{list-style:none;padding:0}}
-li{{padding:.55rem 0;border-bottom:1px solid #eee}}
-time{{color:#888;font-variant-numeric:tabular-nums;margin-right:.4rem;font-size:.85rem}}
-.src{{color:#999;font-size:.8rem;margin-left:.4rem}}
-a{{color:#0a5bd4;text-decoration:none}}a:hover{{text-decoration:underline}}
+:root{--fg:#1a1a1a;--dim:#8a8a8a;--line:#ececec;--link:#0a5bd4;--bg:#fff}
+@media (prefers-color-scheme:dark){:root{--fg:#e6e6e6;--dim:#8f8f8f;--line:#2a2a2a;--link:#6aa9ff;--bg:#161616}}
+*{box-sizing:border-box}
+body{font:16px/1.75 -apple-system,BlinkMacSystemFont,"Noto Sans SC","PingFang SC",sans-serif;
+     max-width:52rem;margin:3rem auto;padding:0 1.2rem;color:var(--fg);background:var(--bg)}
+h1{font-size:1.45rem;margin:0 0 .25rem}
+p.sub{color:var(--dim);font-size:.88rem;margin:.2rem 0 1.6rem}
+ul{list-style:none;padding:0;margin:0}
+
+/* 表头与行共用同一套栅格：日期 | 主题 | 发文机关 */
+.hd,li{display:grid;grid-template-columns:4.4rem minmax(0,1fr) 8.6rem;
+       column-gap:.9rem;align-items:baseline}
+.hd{padding:.5rem .2rem;border-bottom:2px solid var(--line);
+    font-size:.82rem;color:var(--dim);position:sticky;top:0;background:var(--bg);z-index:1}
+.hd [data-sort]{cursor:pointer;user-select:none;white-space:nowrap}
+.hd [data-sort]:hover{color:var(--fg)}
+.hd [data-sort].active{color:var(--fg);font-weight:600}
+.hd .arrow{font-size:.7em}
+.c-title{padding-left:.1rem}
+
+li{padding:.55rem .2rem;border-bottom:1px solid var(--line)}
+li time{color:var(--dim);font-size:.84rem;font-variant-numeric:tabular-nums;white-space:nowrap}
+li .s{color:var(--dim);font-size:.8rem;text-align:right}
+
+/* 标题：换行后自动与首字左对齐（悬挂缩进） */
+a.t{color:var(--link);text-decoration:none;display:block;
+    text-indent:0;overflow-wrap:anywhere;text-wrap:pretty;
+    transition:color .18s ease,opacity .18s ease}
+a.t:hover{text-decoration:underline}
+a.t.read{color:var(--dim);opacity:.62}
+
+@media (max-width:560px){
+  .hd,li{grid-template-columns:3.4rem minmax(0,1fr)}
+  .hd .c-src,li .s{display:none}
+}
 </style></head><body>
 <h1>机构公告速递</h1>
 <p class="sub">央行、监管、交易所与金融基础设施的官方公告聚合 ·
-<a href="/news/feed.xml">RSS 订阅</a> · 更新于 {now.strftime("%Y-%m-%d %H:%M")} (UTC+8)</p>
-<ul>
-{rows}
-</ul></body></html>
+<a href="/news/feed.xml">RSS 订阅</a> · 共 __COUNT__ 条 · 更新于 __NOW__ (UTC+8)</p>
+
+<div class="hd">
+  <span data-sort="date" class="active">日期<span class="arrow"></span></span>
+  <span class="c-title">主题</span>
+  <span data-sort="src" class="c-src">发文机关<span class="arrow"></span></span>
+</div>
+<ul id="list">
+__ROWS__
+</ul>
+
+<script>
+(function(){
+  var ul = document.getElementById('list');
+  var heads = document.querySelectorAll('[data-sort]');
+  var state = {key:'date', dir:'desc'};
+
+  function fmtDir(el, key){
+    var arrow = el.querySelector('.arrow');
+    arrow.textContent = (state.key === key) ? (state.dir === 'asc' ? ' ▲' : ' ▼') : '';
+    el.classList.toggle('active', state.key === key);
+  }
+
+  function applySort(key){
+    if (state.key === key) { state.dir = state.dir === 'asc' ? 'desc' : 'asc'; }
+    else { state.key = key; state.dir = key === 'date' ? 'desc' : 'asc'; }
+    var items = Array.prototype.slice.call(ul.children);
+    items.sort(function(a, b){
+      var x = key === 'date' ? a.dataset.date : a.dataset.src;
+      var y = key === 'date' ? b.dataset.date : b.dataset.src;
+      var r = key === 'date' ? (x < y ? -1 : x > y ? 1 : 0)
+                             : x.localeCompare(y, 'zh-Hans-CN');
+      return state.dir === 'asc' ? r : -r;
+    });
+    items.forEach(function(el){ ul.appendChild(el); });
+    heads.forEach(function(el){ fmtDir(el, el.dataset.sort); });
+  }
+
+  heads.forEach(function(el){
+    el.addEventListener('click', function(){ applySort(el.dataset.sort); });
+  });
+
+  // 已读：点击后变淡，并记住
+  var KEY = 'nf_read_';
+  var links = document.querySelectorAll('a.t');
+  links.forEach(function(a){
+    try { if (localStorage.getItem(KEY + a.dataset.k)) a.classList.add('read'); } catch(e){}
+    a.addEventListener('click', function(ev){
+      // 保留 cmd/ctrl/中键的原生行为
+      if (ev.metaKey || ev.ctrlKey || ev.shiftKey || ev.button === 1) {
+        a.classList.add('read');
+        try { localStorage.setItem(KEY + a.dataset.k, '1'); } catch(e){}
+        return;
+      }
+      ev.preventDefault();
+      var w = window.open(a.href, '_blank', 'noopener');
+      window.focus();                 // 焦点留在本页，新标签在后台打开
+      a.classList.add('read');
+      try { localStorage.setItem(KEY + a.dataset.k, '1'); } catch(e){}
+      if (!w) { location.href = a.href; }   // 被弹窗拦截时兜底
+    });
+  });
+
+  heads.forEach(function(el){ fmtDir(el, el.dataset.sort); });
+})();
+</script>
+</body></html>
 """
+
+
+def build_index_html(items, now):
+    """给 /news/ 一个人类可读的落地页：表头 + 排序 + 悬挂缩进 + 后台打开。"""
+    rows = []
+    for it in items:
+        stamp = it["date"].strftime("%Y-%m-%d %H:%M")
+        day = it["date"].strftime("%m-%d")
+        key = escape(it["link"] or it["title"], {'"': "&quot;"})
+        rows.append(
+            f'<li data-date="{stamp}" data-src="{escape(it["source"])}">'
+            f'<time datetime="{it["date"].strftime("%Y-%m-%d")}" '
+            f'title="{it["date"].strftime("%Y-%m-%d %H:%M")}">{day}</time>'
+            f'<a class="t" href="{escape(it["link"])}" data-k="{key}" '
+            f'target="_blank" rel="noopener">{escape(it["title"])}</a>'
+            f'<span class="s">{escape(it["source"])}</span></li>'
+        )
+    return (INDEX_TMPL
+            .replace("__ROWS__", "\n".join(rows))
+            .replace("__COUNT__", str(len(items)))
+            .replace("__NOW__", now.strftime("%Y-%m-%d %H:%M")))
 
 
 def main():
     ap = argparse.ArgumentParser()
     ap.add_argument("--out", default="public/news/feed.xml")
-    ap.add_argument("--limit", type=int, default=30)
+    ap.add_argument("--limit", type=int, default=50)
     ap.add_argument("--only", default="")
+    ap.add_argument("--keep-noise", action="store_true", help="不过滤领导活动/地方局/招聘类条目")
     args = ap.parse_args()
 
     now = datetime.now(CN_TZ)
@@ -634,9 +745,13 @@ def main():
 
     cutoff = now - timedelta(days=60)
     merged, seen = [], set()
+    dropped = 0
     for src in sources:
         for it in results.get(src.id, []):
             if it["date"] < cutoff:
+                continue
+            if not args.keep_noise and NOISE_RE.search(it["title"]):
+                dropped += 1
                 continue
             it["source"] = src.name
             it["home"] = src.home

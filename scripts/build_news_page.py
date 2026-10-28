@@ -808,8 +808,6 @@ body{font:16px/1.75 -apple-system,BlinkMacSystemFont,"Noto Sans SC","PingFang SC
      max-width:52rem;margin:3rem auto;padding:0 1.2rem;color:var(--fg);background:var(--bg)}
 h1{font-size:1.45rem;margin:0 0 1.6rem}
 ul{list-style:none;padding:0;margin:0}
-
-/* 表头与行共用同一套栅格：日期 | 主题 | 发文机关 */
 .hd,li{display:grid;grid-template-columns:5.6rem minmax(0,1fr) 7rem;
        column-gap:.85rem;align-items:center}
 .hd{padding:.5rem .2rem;border-bottom:2px solid var(--line);
@@ -819,21 +817,14 @@ ul{list-style:none;padding:0;margin:0}
 .hd [data-sort].active{color:var(--fg);font-weight:600}
 .hd .arrow{font-size:.7em}
 .hd .c-title,.hd .c-src{text-align:center}
-
 li{padding:.55rem .2rem;border-bottom:1px solid var(--line)}
 li time{color:var(--dim);font-size:.82rem;font-variant-numeric:tabular-nums;white-space:nowrap}
-li .s{color:var(--dim);font-size:.78rem;text-align:center;
-     white-space:nowrap;justify-self:center}
-
-/* 标题：换行后自动与首字左对齐（悬挂缩进） */
-a.t{color:var(--link);text-decoration:none;display:block;
-    line-height:1.42;              /* 折行后两行之间收紧 */
+li .s{color:var(--dim);font-size:.78rem;text-align:center;white-space:nowrap;justify-self:center}
+a.t{color:var(--link);text-decoration:none;display:block;line-height:1.42;
     text-indent:0;overflow-wrap:anywhere;text-wrap:pretty;
     transition:color .18s ease,opacity .18s ease}
 a.t:hover{text-decoration:underline}
 a.t.read{color:var(--dim);opacity:.62}
-
-/* 翻页器 */
 .pager{display:flex;flex-wrap:wrap;gap:.4rem;align-items:center;
        margin:1.8rem 0 1.4rem;font-size:.88rem}
 .pager a,.pager span{border:1px solid var(--line);border-radius:.4rem;
@@ -843,10 +834,8 @@ a.t.read{color:var(--dim);opacity:.62}
 .pager .cur{background:var(--link);border-color:var(--link);color:#fff;font-weight:600}
 .pager .off{color:var(--dim);border-color:var(--line);pointer-events:none;opacity:.5}
 .pager .gap{border:0;color:var(--dim);min-width:1rem}
-
-/* 页脚：计数 + 兴趣学习 */
 .foot{border-top:1px solid var(--line);padding-top:.9rem;margin:0 0 3rem;
-      color:var(--dim);font-size:.85rem;line-height:1.9}
+      color:var(--dim);font-size:.85rem;line-height:1.95}
 .foot p{margin:.15rem 0}
 .foot b{color:var(--fg);font-weight:600}
 .foot button{font:inherit;color:var(--link);background:none;
@@ -854,7 +843,6 @@ a.t.read{color:var(--dim);opacity:.62}
       padding:.12rem .5rem;margin-left:.4rem;cursor:pointer}
 .foot button:hover{border-color:var(--link)}
 .foot .hint{opacity:.75}
-
 @media (max-width:560px){
   .hd,li{grid-template-columns:5.2rem minmax(0,1fr)}
   .hd .c-src,li .s{display:none}
@@ -874,10 +862,14 @@ __ROWS__
 
 <footer class="foot">
   <p>央行、监管、交易所与金融基础设施的官方公告聚合 · 共 __COUNT__ 条 · 第 __PAGE__/__PAGES__ 页 · 更新于 __NOW__ (UTC+8)</p>
-  <p>兴趣学习：已记录 <b id="hits">0</b> 次点击，点击越多的机关/栏目/主题会越靠前。
+  <p>兴趣学习：<b id="hits">0</b> 次点击 · 覆盖 <b id="kinds">0</b> 项机关/栏目/主题 · 最后记录 <b id="last">—</b>
      <button id="mode" type="button">按时间</button>
+     <button id="exp" type="button">导出</button>
+     <button id="imp" type="button">导入</button>
      <button id="reset" type="button">重置</button></p>
-  <p class="hint">学习结果只存在这台设备的浏览器里，不上传；换设备或清缓存会重新开始。</p>
+  <p class="hint">记录同时写入 localStorage、IndexedDB 和 Cookie，清缓存只清掉其中一层时不会丢；
+     换电脑/换浏览器用「导出」拿到 JSON，再到新设备「导入」即可接着学。</p>
+  <input type="file" id="file" accept="application/json" hidden>
 </footer>
 
 <script>window.NF={page:__PAGE__,per:__PER__,pages:__PAGES__,data:__DATA__};</script>
@@ -890,14 +882,68 @@ __ROWS__
     '公司治理','数据','绿色','普惠','房地产','地方债','评级','信托','理财','托管','清算',
     '结算','交易规则','适当性','监管','资本','风险'];
 
-  function lsGet(k, d){ try{ var v = localStorage.getItem('nf_' + k); return v ? JSON.parse(v) : d; }catch(e){ return d; } }
-  function lsSet(k, v){ try{ localStorage.setItem('nf_' + k, JSON.stringify(v)); }catch(e){} }
   function esc(s){ return String(s == null ? '' : s).replace(/&/g,'&amp;').replace(/</g,'&lt;')
                      .replace(/>/g,'&gt;').replace(/"/g,'&quot;'); }
+  function lsGet(k, d){ try{ var v = localStorage.getItem('nf_' + k); return v ? JSON.parse(v) : d; }catch(e){ return d; } }
+  function lsSet(k, v){ try{ localStorage.setItem('nf_' + k, JSON.stringify(v)); }catch(e){} }
 
-  var aff   = lsGet('aff', {src:{}, ch:{}, topic:{}});
-  var read  = lsGet('read', {});
-  var mode  = lsGet('mode', 'time');
+  /* ---------- IndexedDB：比 localStorage 更耐清缓存 ---------- */
+  var idb = (function(){
+    var db = null, ready = false, queue = [];
+    try {
+      var req = window.indexedDB && indexedDB.open('nf_store', 1);
+      if (req) {
+        req.onupgradeneeded = function(e){ e.target.result.createObjectStore('kv'); };
+        req.onsuccess = function(e){
+          db = e.target.result; ready = true;
+          for (var i = 0; i < queue.length; i++) queue[i]();
+          queue = [];
+        };
+        req.onerror = function(){ ready = false; };
+      }
+    } catch(e){}
+    function tx(mode){ return db.transaction('kv', mode).objectStore('kv'); }
+    return {
+      get: function(k, cb){
+        function run(){ try{ var r = tx('readonly').get(k);
+          r.onsuccess = function(){ cb(r.result || null); }; r.onerror = function(){ cb(null); };
+        }catch(e){ cb(null); } }
+        if (ready) run(); else queue.push(run);
+      },
+      set: function(k, v){
+        function run(){ try{ tx('readwrite').put(v, k); }catch(e){} }
+        if (ready) run(); else queue.push(run);
+      }
+    };
+  })();
+
+  /* ---------- Cookie：第三层兜底（只放兴趣，体积小） ---------- */
+  function cookieGet(){
+    try {
+      var m = document.cookie.match(/(?:^|;\\s*)nf_aff=([^;]+)/);
+      return m ? JSON.parse(decodeURIComponent(m[1])) : null;
+    } catch(e){ return null; }
+  }
+  function cookieSet(p){
+    try {
+      var s = JSON.stringify(p);
+      if (s.length < 3500) document.cookie = 'nf_aff=' + encodeURIComponent(s)
+        + ';path=/;max-age=31536000;SameSite=Lax';
+    } catch(e){}
+  }
+
+  var aff  = lsGet('aff', null);
+  var read = lsGet('read', null) || {};
+
+  function blank(){ return {src:{}, ch:{}, topic:{}, ts:0}; }
+  function newer(a, b){ return ((b && b.ts) || 0) > ((a && a.ts) || 0) ? b : a; }
+
+  aff = newer(aff, cookieGet()) || blank();
+  if (!aff.src) aff.src = {};
+  if (!aff.ch) aff.ch = {};
+  if (!aff.topic) aff.topic = {};
+
+  var mode = lsGet('mode', 'time');
 
   function topicsOf(t){
     var out = [];
@@ -906,20 +952,57 @@ __ROWS__
   }
   function w(n){ return n > 0 ? Math.log(1 + n) : 0; }
   function score(it){
-    // 对数衰减：点 1 次和点 20 次不会差 20 倍，避免一个机关霸屏
     var s = 3 * w(aff.src[it.s] || 0) + 2 * w(aff.ch[it.s + '|' + it.c] || 0);
     var tp = topicsOf(it.t);
     for (var i = 0; i < tp.length; i++) s += 2 * w(aff.topic[tp[i]] || 0);
     var days = (Date.now() - Date.parse(it.d)) / 86400000;
-    if (days >= 0 && days < 60) s += (60 - days) / 60 * 2.5;   // 轻微新鲜度
+    if (days >= 0 && days < 60) s += (60 - days) / 60 * 2.5;
     return s;
   }
-  function totalHits(){
+  function hits(){
     var n = 0, k;
     for (k in aff.src) n += aff.src[k];
     return n;
   }
+  function kinds(){
+    return Object.keys(aff.src).length + Object.keys(aff.ch).length
+         + Object.keys(aff.topic).length;
+  }
 
+  /* ---------- 持久化：一次写三层 ---------- */
+  function pack(){
+    aff.ts = Date.now();
+    return {v:1, ts:aff.ts, src:aff.src, ch:aff.ch, topic:aff.topic};
+  }
+  function save(){
+    var p = pack();
+    lsSet('aff', p);
+    cookieSet(p);
+    idb.set('aff', p);
+    lsSet('read', read);
+    idb.set('read', read);
+    paint();
+  }
+  function paint(){
+    var h = document.getElementById('hits');
+    if (h) h.textContent = String(hits());
+    var k = document.getElementById('kinds');
+    if (k) k.textContent = String(kinds());
+    var l = document.getElementById('last');
+    if (l) l.textContent = aff.ts ? new Date(aff.ts).toLocaleString('zh-CN', {hour12:false}) : '—';
+  }
+
+  /* ---------- 学习 ---------- */
+  function learn(a){
+    var s = a.dataset.src || '', c = a.dataset.ch || '', t = a.textContent || '';
+    if (s) aff.src[s] = (aff.src[s] || 0) + 1;
+    if (s && c) aff.ch[s + '|' + c] = (aff.ch[s + '|' + c] || 0) + 1;
+    var tp = topicsOf(t);
+    for (var i = 0; i < tp.length; i++) aff.topic[tp[i]] = (aff.topic[tp[i]] || 0) + 1;
+    save();
+  }
+
+  /* ---------- 渲染 ---------- */
   function liHTML(it){
     var k = it.u || it.t;
     var cls = 't' + (read[k] ? ' read' : '');
@@ -930,17 +1013,6 @@ __ROWS__
          + ' data-src="' + esc(it.s) + '" data-ch="' + esc(it.c || '') + '"'
          + ' target="_blank" rel="noopener">' + esc(it.t) + '</a>'
          + '<span class="s" title="' + esc(tip) + '">' + esc(it.s) + '</span></li>';
-  }
-
-  function learn(a){
-    var s = a.dataset.src || '', c = a.dataset.ch || '', t = a.textContent || '';
-    if (s) aff.src[s] = (aff.src[s] || 0) + 1;
-    if (s && c) aff.ch[s + '|' + c] = (aff.ch[s + '|' + c] || 0) + 1;
-    var tp = topicsOf(t);
-    for (var i = 0; i < tp.length; i++) aff.topic[tp[i]] = (aff.topic[tp[i]] || 0) + 1;
-    lsSet('aff', aff);
-    var h = document.getElementById('hits');
-    if (h) h.textContent = String(totalHits());
   }
 
   function bind(){
@@ -954,7 +1026,7 @@ __ROWS__
         var w = window.open(a.href, '_blank');
         if (w) { try { w.opener = null; } catch(e){} window.focus(); } else { location.href = a.href; }
         a.classList.add('read');
-        read[k] = 1; lsSet('read', read);
+        read[k] = 1;
         learn(a);
       });
     })(links[i]);
@@ -976,18 +1048,17 @@ __ROWS__
     bind();
     var btn = document.getElementById('mode');
     if (btn) btn.textContent = mode === 'interest' ? '按兴趣' : '按时间';
-    var h = document.getElementById('hits');
-    if (h) h.textContent = String(totalHits());
+    paint();
   }
 
-  // 表头排序（只作用于当前页 DOM）
+  /* ---------- 表头排序（只作用于当前页 DOM） ---------- */
   var sortState = {key:'date', dir:'desc'};
   function markHead(){
     var hs = document.querySelectorAll('[data-sort]');
     for (var i = 0; i < hs.length; i++){
       var ar = hs[i].querySelector('.arrow');
       if (ar) ar.textContent = (hs[i].dataset.sort === sortState.key)
-        ? (sortState.dir === 'asc' ? ' \u25b2' : ' \u25bc') : '';
+        ? (sortState.dir === 'asc' ? ' \\u25b2' : ' \\u25bc') : '';
       hs[i].classList.toggle('active', hs[i].dataset.sort === sortState.key);
     }
   }
@@ -1014,20 +1085,80 @@ __ROWS__
     markHead();
   })();
 
+  /* ---------- 按钮 ---------- */
   var btnMode = document.getElementById('mode');
   if (btnMode) btnMode.addEventListener('click', function(){
     mode = mode === 'interest' ? 'time' : 'interest';
     lsSet('mode', mode);
     if (mode === 'time') location.reload(); else render();
   });
+
+  var btnExp = document.getElementById('exp');
+  if (btnExp) btnExp.addEventListener('click', function(){
+    var blob = new Blob([JSON.stringify(pack(), null, 2)], {type:'application/json'});
+    var a = document.createElement('a');
+    a.href = URL.createObjectURL(blob);
+    a.download = 'nf-affinity-' + new Date().toISOString().slice(0, 10) + '.json';
+    document.body.appendChild(a); a.click();
+    setTimeout(function(){ URL.revokeObjectURL(a.href); a.remove(); }, 1000);
+  });
+
+  var fileInput = document.getElementById('file');
+  var btnImp = document.getElementById('imp');
+  if (btnImp && fileInput) {
+    btnImp.addEventListener('click', function(){ fileInput.click(); });
+    fileInput.addEventListener('change', function(){
+      var f = fileInput.files && fileInput.files[0];
+      if (!f) return;
+      var fr = new FileReader();
+      fr.onload = function(){
+        try {
+          var o = JSON.parse(fr.result);
+          ['src','ch','topic'].forEach(function(k){
+            var src = o[k] || {}, dst = aff[k];
+            for (var key in src) dst[key] = (dst[key] || 0) + src[key];   // 合并而不是覆盖
+          });
+          save();
+          location.reload();
+        } catch(e){ alert('这个文件读不出来，需要本页「导出」出来的 JSON。'); }
+      };
+      fr.readAsText(f);
+    });
+  }
+
   var btnReset = document.getElementById('reset');
   if (btnReset) btnReset.addEventListener('click', function(){
-    try { localStorage.removeItem('nf_aff'); localStorage.removeItem('nf_mode'); } catch(e){}
+    if (!confirm('清空本机记住的点击记录？导出过的 JSON 不受影响。')) return;
+    aff = blank(); read = {};
+    try { localStorage.removeItem('nf_aff'); localStorage.removeItem('nf_mode');
+          localStorage.removeItem('nf_read'); } catch(e){}
+    try { document.cookie = 'nf_aff=;path=/;max-age=0'; } catch(e){}
+    try { idb.set('aff', null); idb.set('read', null); } catch(e){}
     location.reload();
   });
 
-  // 时间模式用服务端已渲染好的行，只有「按兴趣」才重排
-  if (mode === 'interest') render(); else bind();
+  /* ---------- 启动：以时间戳最新的那份为准 ---------- */
+  var booted = false;
+  function boot(){
+    if (booted) return;
+    booted = true;
+    paint();
+    if (mode === 'interest') render(); else bind();
+  }
+  idb.get('aff', function(v){
+    var best = newer(aff, v);
+    if (best && best !== aff) {
+      aff = best;
+      if (!aff.src) aff.src = {};
+      if (!aff.ch) aff.ch = {};
+      if (!aff.topic) aff.topic = {};
+    }
+    idb.get('read', function(r){
+      if (r && Object.keys(r).length > Object.keys(read).length) read = r;
+      boot();
+    });
+  });
+  setTimeout(boot, 600);   // 浏览器禁用 IndexedDB 时也能正常启动
 })();
 </script>
 </body></html>

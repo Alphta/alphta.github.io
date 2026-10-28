@@ -806,8 +806,7 @@ INDEX_TMPL = """<!doctype html>
 *{box-sizing:border-box}
 body{font:16px/1.75 -apple-system,BlinkMacSystemFont,"Noto Sans SC","PingFang SC",sans-serif;
      max-width:52rem;margin:3rem auto;padding:0 1.2rem;color:var(--fg);background:var(--bg)}
-h1{font-size:1.45rem;margin:0 0 .25rem}
-p.sub{color:var(--dim);font-size:.88rem;margin:.2rem 0 1.6rem}
+h1{font-size:1.45rem;margin:0 0 1.6rem}
 ul{list-style:none;padding:0;margin:0}
 
 /* 表头与行共用同一套栅格：日期 | 主题 | 发文机关 */
@@ -822,7 +821,7 @@ ul{list-style:none;padding:0;margin:0}
 .hd .c-title,.hd .c-src{text-align:center}
 
 li{padding:.55rem .2rem;border-bottom:1px solid var(--line)}
-li time{color:var(--dim);font-size:.84rem;font-variant-numeric:tabular-nums;white-space:nowrap}
+li time{color:var(--dim);font-size:.82rem;font-variant-numeric:tabular-nums;white-space:nowrap}
 li .s{color:var(--dim);font-size:.78rem;text-align:center;
      white-space:nowrap;justify-self:center}
 
@@ -834,14 +833,9 @@ a.t{color:var(--link);text-decoration:none;display:block;
 a.t:hover{text-decoration:underline}
 a.t.read{color:var(--dim);opacity:.62}
 
-@media (max-width:560px){
-  .hd,li{grid-template-columns:5.2rem minmax(0,1fr)}
-  .hd .c-src,li .s{display:none}
-}
-
 /* 翻页器 */
 .pager{display:flex;flex-wrap:wrap;gap:.4rem;align-items:center;
-       margin:1.8rem 0 3rem;font-size:.88rem}
+       margin:1.8rem 0 1.4rem;font-size:.88rem}
 .pager a,.pager span{border:1px solid var(--line);border-radius:.4rem;
        padding:.28rem .6rem;text-decoration:none;color:var(--link);
        min-width:2.1rem;text-align:center}
@@ -849,9 +843,24 @@ a.t.read{color:var(--dim);opacity:.62}
 .pager .cur{background:var(--link);border-color:var(--link);color:#fff;font-weight:600}
 .pager .off{color:var(--dim);border-color:var(--line);pointer-events:none;opacity:.5}
 .pager .gap{border:0;color:var(--dim);min-width:1rem}
+
+/* 页脚：计数 + 兴趣学习 */
+.foot{border-top:1px solid var(--line);padding-top:.9rem;margin:0 0 3rem;
+      color:var(--dim);font-size:.85rem;line-height:1.9}
+.foot p{margin:.15rem 0}
+.foot b{color:var(--fg);font-weight:600}
+.foot button{font:inherit;color:var(--link);background:none;
+      border:1px solid var(--line);border-radius:.35rem;
+      padding:.12rem .5rem;margin-left:.4rem;cursor:pointer}
+.foot button:hover{border-color:var(--link)}
+.foot .hint{opacity:.75}
+
+@media (max-width:560px){
+  .hd,li{grid-template-columns:5.2rem minmax(0,1fr)}
+  .hd .c-src,li .s{display:none}
+}
 </style></head><body>
 <h1>机构公告速递</h1>
-<p class="sub">央行、监管、交易所与金融基础设施的官方公告聚合 · 共 __COUNT__ 条 · 第 __PAGE__/__PAGES__ 页 · 更新于 __NOW__ (UTC+8)</p>
 
 <div class="hd">
   <span data-sort="date" class="active">日期<span class="arrow"></span></span>
@@ -863,70 +872,166 @@ __ROWS__
 </ul>
 <nav class="pager">__NAV__</nav>
 
+<footer class="foot">
+  <p>央行、监管、交易所与金融基础设施的官方公告聚合 · 共 __COUNT__ 条 · 第 __PAGE__/__PAGES__ 页 · 更新于 __NOW__ (UTC+8)</p>
+  <p>兴趣学习：已记录 <b id="hits">0</b> 次点击，点击越多的机关/栏目/主题会越靠前。
+     <button id="mode" type="button">按时间</button>
+     <button id="reset" type="button">重置</button></p>
+  <p class="hint">学习结果只存在这台设备的浏览器里，不上传；换设备或清缓存会重新开始。</p>
+</footer>
+
+<script>window.NF={page:__PAGE__,per:__PER__,pages:__PAGES__,data:__DATA__};</script>
 <script>
 (function(){
-  var ul = document.getElementById('list');
-  var heads = document.querySelectorAll('[data-sort]');
-  var state = {key:'date', dir:'desc'};
+  var NF = window.NF || {data:[]};
+  var data = NF.data || [], PAGE = NF.page || 1, PER = NF.per || 30;
+  var TOPICS = ['会计准则','会计','税务','税收','处罚','征求意见','债券','票据','期货','期权',
+    '私募','基金','保险','银行','支付','反洗钱','跨境','外汇','退市','上市','信息披露',
+    '公司治理','数据','绿色','普惠','房地产','地方债','评级','信托','理财','托管','清算',
+    '结算','交易规则','适当性','监管','资本','风险'];
 
-  function fmtDir(el, key){
-    var arrow = el.querySelector('.arrow');
-    arrow.textContent = (state.key === key) ? (state.dir === 'asc' ? ' ▲' : ' ▼') : '';
-    el.classList.toggle('active', state.key === key);
+  function lsGet(k, d){ try{ var v = localStorage.getItem('nf_' + k); return v ? JSON.parse(v) : d; }catch(e){ return d; } }
+  function lsSet(k, v){ try{ localStorage.setItem('nf_' + k, JSON.stringify(v)); }catch(e){} }
+  function esc(s){ return String(s == null ? '' : s).replace(/&/g,'&amp;').replace(/</g,'&lt;')
+                     .replace(/>/g,'&gt;').replace(/"/g,'&quot;'); }
+
+  var aff   = lsGet('aff', {src:{}, ch:{}, topic:{}});
+  var read  = lsGet('read', {});
+  var mode  = lsGet('mode', 'time');
+
+  function topicsOf(t){
+    var out = [];
+    for (var i = 0; i < TOPICS.length; i++) if (t.indexOf(TOPICS[i]) >= 0) out.push(TOPICS[i]);
+    return out;
+  }
+  function w(n){ return n > 0 ? Math.log(1 + n) : 0; }
+  function score(it){
+    // 对数衰减：点 1 次和点 20 次不会差 20 倍，避免一个机关霸屏
+    var s = 3 * w(aff.src[it.s] || 0) + 2 * w(aff.ch[it.s + '|' + it.c] || 0);
+    var tp = topicsOf(it.t);
+    for (var i = 0; i < tp.length; i++) s += 2 * w(aff.topic[tp[i]] || 0);
+    var days = (Date.now() - Date.parse(it.d)) / 86400000;
+    if (days >= 0 && days < 60) s += (60 - days) / 60 * 2.5;   // 轻微新鲜度
+    return s;
+  }
+  function totalHits(){
+    var n = 0, k;
+    for (k in aff.src) n += aff.src[k];
+    return n;
   }
 
-  function applySort(key){
-    if (state.key === key) { state.dir = state.dir === 'asc' ? 'desc' : 'asc'; }
-    else { state.key = key; state.dir = key === 'date' ? 'desc' : 'asc'; }
-    var items = Array.prototype.slice.call(ul.children);
-    items.sort(function(a, b){
-      var x = key === 'date' ? a.dataset.date : a.dataset.src;
-      var y = key === 'date' ? b.dataset.date : b.dataset.src;
-      var r = key === 'date' ? (x < y ? -1 : x > y ? 1 : 0)
-                             : x.localeCompare(y, 'zh-Hans-CN');
-      return state.dir === 'asc' ? r : -r;
-    });
-    items.forEach(function(el){ ul.appendChild(el); });
-    heads.forEach(function(el){ fmtDir(el, el.dataset.sort); });
+  function liHTML(it){
+    var k = it.u || it.t;
+    var cls = 't' + (read[k] ? ' read' : '');
+    var tip = it.s + (it.c ? '·' + it.c : '');
+    return '<li data-date="' + it.d + ' 00:00" data-src="' + esc(it.s) + '">'
+         + '<time datetime="' + it.d + '" title="' + it.d + '">' + it.d + '</time>'
+         + '<a class="' + cls + '" href="' + esc(it.u) + '" data-k="' + esc(k) + '"'
+         + ' data-src="' + esc(it.s) + '" data-ch="' + esc(it.c || '') + '"'
+         + ' target="_blank" rel="noopener">' + esc(it.t) + '</a>'
+         + '<span class="s" title="' + esc(tip) + '">' + esc(it.s) + '</span></li>';
   }
 
-  heads.forEach(function(el){
-    el.addEventListener('click', function(){ applySort(el.dataset.sort); });
-  });
+  function learn(a){
+    var s = a.dataset.src || '', c = a.dataset.ch || '', t = a.textContent || '';
+    if (s) aff.src[s] = (aff.src[s] || 0) + 1;
+    if (s && c) aff.ch[s + '|' + c] = (aff.ch[s + '|' + c] || 0) + 1;
+    var tp = topicsOf(t);
+    for (var i = 0; i < tp.length; i++) aff.topic[tp[i]] = (aff.topic[tp[i]] || 0) + 1;
+    lsSet('aff', aff);
+    var h = document.getElementById('hits');
+    if (h) h.textContent = String(totalHits());
+  }
 
-  // 已读：点击后变淡，并记住
-  var KEY = 'nf_read_';
-  var links = document.querySelectorAll('a.t');
-  links.forEach(function(a){
-    try { if (localStorage.getItem(KEY + a.dataset.k)) a.classList.add('read'); } catch(e){}
-    a.addEventListener('click', function(ev){
-      // 保留 cmd/ctrl/中键的原生行为
-      if (ev.metaKey || ev.ctrlKey || ev.shiftKey || ev.button === 1) {
+  function bind(){
+    var links = document.querySelectorAll('#list a.t');
+    for (var i = 0; i < links.length; i++) (function(a){
+      var k = a.dataset.k;
+      if (read[k]) a.classList.add('read');
+      a.addEventListener('click', function(ev){
+        if (ev.metaKey || ev.ctrlKey || ev.shiftKey || ev.button === 1) { learn(a); return; }
+        ev.preventDefault();
+        var w = window.open(a.href, '_blank');
+        if (w) { try { w.opener = null; } catch(e){} window.focus(); } else { location.href = a.href; }
         a.classList.add('read');
-        try { localStorage.setItem(KEY + a.dataset.k, '1'); } catch(e){}
-        return;
-      }
-      ev.preventDefault();
-      // 注意：带 'noopener' 特性时 window.open 返回 null，会被误判为被拦截，
-      // 所以这里用普通 window.open，再手动断开 opener。
-      var w = window.open(a.href, '_blank');
-      if (w) {
-        try { w.opener = null; } catch (e) {}
-        window.focus();               // 焦点留在本页，新标签在后台打开
-      } else {
-        location.href = a.href;       // 真正被弹窗拦截才兜底
-      }
-      a.classList.add('read');
-      try { localStorage.setItem(KEY + a.dataset.k, '1'); } catch(e){}
+        read[k] = 1; lsSet('read', read);
+        learn(a);
+      });
+    })(links[i]);
+  }
+
+  function render(){
+    var list = document.getElementById('list');
+    if (!list) return;
+    var items = data.slice();
+    if (mode === 'interest') {
+      items.sort(function(a, b){
+        var d = score(b) - score(a);
+        if (d) return d;
+        return a.d < b.d ? 1 : (a.d > b.d ? -1 : 0);
+      });
+    }
+    var from = (PAGE - 1) * PER;
+    list.innerHTML = items.slice(from, from + PER).map(liHTML).join('');
+    bind();
+    var btn = document.getElementById('mode');
+    if (btn) btn.textContent = mode === 'interest' ? '按兴趣' : '按时间';
+    var h = document.getElementById('hits');
+    if (h) h.textContent = String(totalHits());
+  }
+
+  // 表头排序（只作用于当前页 DOM）
+  var sortState = {key:'date', dir:'desc'};
+  function markHead(){
+    var hs = document.querySelectorAll('[data-sort]');
+    for (var i = 0; i < hs.length; i++){
+      var ar = hs[i].querySelector('.arrow');
+      if (ar) ar.textContent = (hs[i].dataset.sort === sortState.key)
+        ? (sortState.dir === 'asc' ? ' \u25b2' : ' \u25bc') : '';
+      hs[i].classList.toggle('active', hs[i].dataset.sort === sortState.key);
+    }
+  }
+  function applySort(key){
+    var list = document.getElementById('list');
+    if (!list) return;
+    if (sortState.key === key) sortState.dir = sortState.dir === 'asc' ? 'desc' : 'asc';
+    else { sortState.key = key; sortState.dir = key === 'date' ? 'desc' : 'asc'; }
+    var items = Array.prototype.slice.call(list.children);
+    items.sort(function(a, b){
+      var x = key === 'date' ? a.dataset.date : (a.dataset.src || '');
+      var y = key === 'date' ? b.dataset.date : (b.dataset.src || '');
+      var r = key === 'date' ? (x < y ? -1 : x > y ? 1 : 0) : x.localeCompare(y, 'zh-Hans-CN');
+      return sortState.dir === 'asc' ? r : -r;
     });
+    for (var i = 0; i < items.length; i++) list.appendChild(items[i]);
+    markHead();
+  }
+  (function(){
+    var hs = document.querySelectorAll('[data-sort]');
+    for (var i = 0; i < hs.length; i++) (function(el){
+      el.addEventListener('click', function(){ applySort(el.dataset.sort); });
+    })(hs[i]);
+    markHead();
+  })();
+
+  var btnMode = document.getElementById('mode');
+  if (btnMode) btnMode.addEventListener('click', function(){
+    mode = mode === 'interest' ? 'time' : 'interest';
+    lsSet('mode', mode);
+    if (mode === 'time') location.reload(); else render();
+  });
+  var btnReset = document.getElementById('reset');
+  if (btnReset) btnReset.addEventListener('click', function(){
+    try { localStorage.removeItem('nf_aff'); localStorage.removeItem('nf_mode'); } catch(e){}
+    location.reload();
   });
 
-  heads.forEach(function(el){ fmtDir(el, el.dataset.sort); });
+  // 时间模式用服务端已渲染好的行，只有「按兴趣」才重排
+  if (mode === 'interest') render(); else bind();
 })();
 </script>
 </body></html>
 """
-
 
 PER_PAGE = 30
 
@@ -989,28 +1094,46 @@ def paginate(items, per_page: int = PER_PAGE, per_source_cap: int = 12, now=None
     return [pg for pg in pages if pg]
 
 
-def build_index_html(items, now, page_no: int = 1, total_pages: int = 1, total_items: int = 0):
-    """单页 HTML：表头 + 排序 + 悬挂缩进 + 后台打开 + 翻页器。"""
-    rows = []
-    for it in items:
-        stamp = it["date"].strftime("%Y-%m-%d %H:%M")
-        day = it["date"].strftime("%Y-%m-%d")
-        key = escape(it["link"] or it["title"], {'"': "&quot;"})
-        short = escape(it.get("short") or it["source"])
-        rows.append(
-            f'<li data-date="{stamp}" data-src="{short}">'
-            f'<time datetime="{it["date"].strftime("%Y-%m-%d")}" '
-            f'title="{it["date"].strftime("%Y-%m-%d %H:%M")}">{day}</time>'
-            f'<a class="t" href="{escape(it["link"])}" data-k="{key}" '
-            f'target="_blank" rel="noopener">{escape(it["title"])}</a>'
-            f'<span class="s">{short}</span></li>'
-        )
+def _li_html(it) -> str:
+    stamp = it["date"].strftime("%Y-%m-%d")
+    key = escape(it["link"] or it["title"], {'"': "&quot;"})
+    short = escape(it.get("short") or it["source"])
+    ch = escape(it.get("channel") or "")
+    tip = escape((it.get("short") or it["source"])
+                 + (("·" + it["channel"]) if it.get("channel") else ""))
+    return (
+        f'<li data-date="{stamp} 00:00" data-src="{short}">'
+        f'<time datetime="{stamp}" title="{stamp}">{stamp}</time>'
+        f'<a class="t" href="{escape(it["link"])}" data-k="{key}"'
+        f' data-src="{short}" data-ch="{ch}" target="_blank" rel="noopener">'
+        f'{escape(it["title"])}</a>'
+        f'<span class="s" title="{tip}">{short}</span></li>'
+    )
+
+
+def build_index_html(items_all, now, page_no: int = 1, total_pages: int = 1,
+                     total_items: int = 0):
+    """每页都内嵌全量数据，供「按兴趣」在前端重排后取本页切片。"""
+    per = PER_PAGE
+    start = (page_no - 1) * per
+    rows = [_li_html(it) for it in items_all[start:start + per]]
+
+    payload = [{"d": it["date"].strftime("%Y-%m-%d"),
+                "t": it["title"],
+                "u": it["link"],
+                "s": it.get("short") or it["source"],
+                "c": it.get("channel") or ""} for it in items_all]
+    data_json = (json.dumps(payload, ensure_ascii=False,
+                            separators=(",", ":")).replace("</", "<\\/"))
+
     return (INDEX_TMPL
             .replace("__ROWS__", "\n".join(rows))
-            .replace("__COUNT__", str(total_items or len(items)))
-            .replace("__PAGE__", str(page_no))
-            .replace("__PAGES__", str(total_pages))
             .replace("__NAV__", _nav(page_no, total_pages))
+            .replace("__PAGES__", str(total_pages))
+            .replace("__PAGE__", str(page_no))
+            .replace("__PER__", str(per))
+            .replace("__COUNT__", str(total_items or len(items_all)))
+            .replace("__DATA__", data_json)
             .replace("__NOW__", now.strftime("%Y-%m-%d %H:%M")))
 
 
@@ -1100,12 +1223,13 @@ def main():
 
     pages = paginate(merged, args.per_page, args.per_source_cap, now)
     total = sum(len(pg) for pg in pages)
+    flat = [it for pg in pages for it in pg]     # 与静态分页严格同序，供前端重排
     out_dir = Path(args.out_dir)
     out_dir.mkdir(parents=True, exist_ok=True)
     for i, pg in enumerate(pages, start=1):
         target = out_dir / "index.html" if i == 1 else out_dir / "page" / str(i) / "index.html"
         target.parent.mkdir(parents=True, exist_ok=True)
-        html = build_index_html(pg, now, i, len(pages), total)
+        html = build_index_html(flat, now, i, len(pages), total)
         target.write_text(html, encoding="utf-8")
     print(f"[ok] {total} 条 -> {len(pages)} 页 -> {out_dir}")
     return 0

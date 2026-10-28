@@ -807,7 +807,7 @@ INDEX_TMPL = """<!doctype html>
 body{font:16px/1.75 -apple-system,BlinkMacSystemFont,"Noto Sans SC","PingFang SC",sans-serif;
      max-width:52rem;margin:3rem auto;padding:0 1.2rem;color:var(--fg);background:var(--bg)}
 h1{font-size:1.45rem;margin:0 0 1.6rem}
-.topbar{display:flex;align-items:center;justify-content:space-between;margin-bottom:.45rem}
+.topbar{display:flex;align-items:center;justify-content:space-between;margin-bottom:10px}
 .back{font-family:-apple-system,BlinkMacSystemFont,"PingFang SC","Segoe UI",sans-serif;
       font-size:13px;color:#6b7280;text-decoration:none}
 @media (prefers-color-scheme:dark){.back{color:#8b95a3}}

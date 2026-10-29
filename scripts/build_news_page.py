@@ -7,6 +7,7 @@
 from __future__ import annotations
 
 import argparse
+import hashlib
 import html as html_mod
 import json
 import re
@@ -22,6 +23,28 @@ from pathlib import Path
 from xml.sax.saxutils import escape
 
 CN_TZ = timezone(timedelta(hours=8))
+REPO_ROOT = Path(__file__).resolve().parents[1]
+MACRO_ASSETS = (
+    (REPO_ROOT / "assets" / "macro" / "macro-events.js", "macro-events.js"),
+    (REPO_ROOT / "assets" / "macro" / "macro-calendar.js", "macro-calendar.js"),
+    (REPO_ROOT / "assets" / "scss" / "macro.scss", "macro-calendar.css"),
+)
+
+
+def _macro_asset_version() -> str:
+    """给新闻页的共享日历资源加内容版本，避免部署后命中旧缓存。"""
+    digest = hashlib.sha256()
+    for source, _output_name in MACRO_ASSETS:
+        digest.update(source.read_bytes())
+    return digest.hexdigest()[:12]
+
+
+def install_macro_assets(out_dir: Path):
+    """把日历资源发布到 /news/macro/；事件数据仍只维护 assets/macro/ 中的一份。"""
+    target_dir = out_dir / "macro"
+    target_dir.mkdir(parents=True, exist_ok=True)
+    for source, output_name in MACRO_ASSETS:
+        (target_dir / output_name).write_bytes(source.read_bytes())
 
 
 def _D(days_ago=0):
@@ -799,7 +822,7 @@ def build_sources():
 INDEX_TMPL = """<!doctype html>
 <html lang="zh-cn"><head><meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
-<title>机构公告速递</title>
+<title>新闻聚合与宏观日历</title>
 <script>
 // 与博客/净值页共用配色偏好（Stack 主题存在 localStorage 的 StackColorScheme）
 (function(){
@@ -871,14 +894,34 @@ a.t.read{color:var(--dim);opacity:.62}
       padding:.12rem .5rem;margin-left:.4rem;cursor:pointer}
 .foot button:hover{border-color:var(--link)}
 .foot .hint{opacity:.75;font-size:.8rem}
+[hidden]{display:none!important}
+.page-tabs{display:inline-flex;gap:3px;padding:3px;margin:0 0 1.4rem;
+       border:1px solid var(--line);border-radius:9px;background:var(--bg)}
+.page-tab{appearance:none;border:0;border-radius:6px;background:transparent;color:var(--dim);
+       padding:.35rem .9rem;font-family:inherit;font-size:13px;font-weight:600;cursor:pointer;
+       transition:background .15s ease,color .15s ease}
+.page-tab:hover{color:var(--fg)}
+.page-tab.is-active{background:var(--link);color:#fff}
+.page-tab:focus-visible{outline:2px solid var(--link);outline-offset:2px}
+.macro-page-note{color:var(--dim);font-size:.85rem;line-height:1.8;margin:0 0 1rem}
+.macro-page-note--disclaimer{margin:1.2rem 0 3rem;padding-top:.9rem;border-top:1px solid var(--line)}
 @media (max-width:560px){
   .hd,li{grid-template-columns:5.2rem minmax(0,1fr) 1.6rem}
   .hd .c-src,li .s{display:none}
 }
-</style></head><body>
+</style>
+<link rel="stylesheet" href="/news/macro/macro-calendar.css?v=__MACRO_VERSION__">
+</head><body>
 <div class="topbar"><a class="back" href="/">← 返回首页</a><span class="tools"><button class="favview" id="favview" type="button" title="只看收藏">★ 收藏 <span id="favn">0</span></button><button class="theme-btn" id="theme-btn" aria-label="切换明暗"></button></span></div>
-<h1>机构公告速递</h1>
+<h1>新闻与宏观日历</h1>
+<div class="page-tabs" role="tablist" aria-label="新闻页面内容">
+  <button class="page-tab is-active" id="news-tab" type="button" role="tab" data-page-tab="news"
+          aria-controls="news-panel" aria-selected="true" tabindex="0">新闻聚合</button>
+  <button class="page-tab" id="macro-tab" type="button" role="tab" data-page-tab="macro"
+          aria-controls="macro-panel" aria-selected="false" tabindex="-1">宏观日历</button>
+</div>
 
+<section id="news-panel" role="tabpanel" aria-labelledby="news-tab">
 <div class="hd">
   <span data-sort="date" class="active">日期<span class="arrow"></span></span>
   <span class="c-title">主题</span>
@@ -896,7 +939,52 @@ __ROWS__
      <button id="reset" type="button">重置</button></p>
   <p class="hint">点击记录和 ★ 收藏只存在这台电脑的浏览器里（localStorage / IndexedDB / Cookie 各存一份，清缓存只清掉一层不会丢），不上传任何地方。收藏的条目永久保留，不随后续更新被冲掉。</p>
 </footer>
+</section>
 
+<section id="macro-panel" role="tabpanel" aria-labelledby="macro-tab" hidden>
+  <p class="macro-page-note">全年宏观数据发布与政策会议节奏一览，覆盖中国、美国、欧元区与全球关键节点。点击任意事件可查看通常窗口、频率、推算日期与口径备注。</p>
+  <div data-macro-calendar></div>
+  <p class="macro-page-note macro-page-note--disclaimer"><strong>口径声明：</strong>所有日期均为通常发布窗口的推算值，不是官方排期。实际发布日可能因周末、节假日或官方安排调整；FOMC、欧央行等会议日期以官方公告为准。本页不构成投资建议。</p>
+</section>
+
+<script>
+/* 新闻聚合 / 宏观日历：外层标签保留现有新闻页全部功能，支持 #macro 直达。 */
+(function(){
+  var tabs = Array.prototype.slice.call(document.querySelectorAll('[data-page-tab]'));
+  var fav = document.getElementById('favview');
+  function activate(name, updateHash){
+    if (name !== 'macro') name = 'news';
+    tabs.forEach(function(tab){
+      var on = tab.getAttribute('data-page-tab') === name;
+      tab.classList.toggle('is-active', on);
+      tab.setAttribute('aria-selected', on ? 'true' : 'false');
+      tab.setAttribute('tabindex', on ? '0' : '-1');
+      document.getElementById(tab.getAttribute('aria-controls')).hidden = !on;
+    });
+    if (fav) fav.hidden = name !== 'news';
+    if (updateHash) {
+      try { history.replaceState(null, '', name === 'macro' ? '#macro' : '#news'); } catch(e) {}
+    }
+  }
+  tabs.forEach(function(tab, index){
+    tab.addEventListener('click', function(){ activate(tab.getAttribute('data-page-tab'), true); });
+    tab.addEventListener('keydown', function(e){
+      if (['ArrowLeft','ArrowRight','Home','End'].indexOf(e.key) === -1) return;
+      e.preventDefault();
+      var next = e.key === 'Home' ? 0 : e.key === 'End' ? tabs.length - 1 :
+        (index + (e.key === 'ArrowRight' ? 1 : -1) + tabs.length) % tabs.length;
+      tabs[next].focus();
+      activate(tabs[next].getAttribute('data-page-tab'), true);
+    });
+  });
+  activate(location.hash === '#macro' ? 'macro' : 'news', false);
+  window.addEventListener('hashchange', function(){
+    activate(location.hash === '#macro' ? 'macro' : 'news', false);
+  });
+})();
+</script>
+<script defer src="/news/macro/macro-events.js?v=__MACRO_VERSION__"></script>
+<script defer src="/news/macro/macro-calendar.js?v=__MACRO_VERSION__"></script>
 <script>window.NF={page:__PAGE__,per:__PER__,pages:__PAGES__,data:__DATA__};</script>
 <script>
 /* 主题切换：与净值页同一套逻辑，写 StackColorScheme 即同步整站 */
@@ -1376,6 +1464,7 @@ def build_index_html(items_all, now, page_no: int = 1, total_pages: int = 1,
             .replace("__PER__", str(per))
             .replace("__COUNT__", str(total_items or len(items_all)))
             .replace("__DATA__", data_json)
+            .replace("__MACRO_VERSION__", _macro_asset_version())
             .replace("__NOW__", now.strftime("%Y-%m-%d %H:%M"))
             .replace("__LATEST__", max((it["date"] for it in items_all),
                                        default=now).strftime("%Y-%m-%d")))
@@ -1470,6 +1559,7 @@ def main():
     flat = [it for pg in pages for it in pg]     # 与静态分页严格同序，供前端重排
     out_dir = Path(args.out_dir)
     out_dir.mkdir(parents=True, exist_ok=True)
+    install_macro_assets(out_dir)
     for i, pg in enumerate(pages, start=1):
         target = out_dir / "index.html" if i == 1 else out_dir / "page" / str(i) / "index.html"
         target.parent.mkdir(parents=True, exist_ok=True)

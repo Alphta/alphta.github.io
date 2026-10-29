@@ -1,0 +1,440 @@
+/* ─────────────── 宏观信息日历 ───────────────
+   同时兼容新闻独立页（--fg/--bg/--line，html.dark）
+   与 Hugo Stack 主题（--card-*，data-scheme="dark"）。
+   本文件只使用标准 CSS 语法，新闻生成器会原样发布为 CSS。 */
+
+:root {
+    --mc-cn: #d9534f;
+    --mc-us: #3b82f6;
+    --mc-eu: #8b5cf6;
+    --mc-global: #16a34a;
+    --mc-imp-high: #d9534f;
+    --mc-imp-medium: #d97706;
+    --mc-imp-low: #059669;
+}
+
+:root[data-scheme="dark"],
+:root.dark {
+    --mc-cn: #f87171;
+    --mc-us: #60a5fa;
+    --mc-eu: #a78bfa;
+    --mc-global: #4ade80;
+    --mc-imp-high: #f87171;
+    --mc-imp-medium: #fbbf24;
+    --mc-imp-low: #34d399;
+}
+
+.macro-cal,
+.mc-modal {
+    --mc-region: var(--mc-cn);
+    --mc-imp: var(--mc-imp-high);
+    --mc-text: var(--fg, var(--card-text-color-main, #1a1a1a));
+    --mc-text-2: var(--dim, var(--card-text-color-secondary, #5f6670));
+    --mc-text-3: var(--dim, var(--card-text-color-tertiary, #8a8a8a));
+    --mc-border: var(--line, var(--card-separator-color, #ececec));
+    --mc-bg: var(--bg, var(--card-background, #fff));
+    --mc-accent: var(--link, var(--accent-color, #0a5bd4));
+    color: var(--mc-text);
+    font-size: 14.5px;
+}
+
+.macro-cal .is-cn, .mc-modal .is-cn { --mc-region: var(--mc-cn); }
+.macro-cal .is-us, .mc-modal .is-us { --mc-region: var(--mc-us); }
+.macro-cal .is-eu, .mc-modal .is-eu { --mc-region: var(--mc-eu); }
+.macro-cal .is-global, .mc-modal .is-global { --mc-region: var(--mc-global); }
+.macro-cal .imp-high, .mc-modal .imp-high { --mc-imp: var(--mc-imp-high); }
+.macro-cal .imp-medium, .mc-modal .imp-medium { --mc-imp: var(--mc-imp-medium); }
+.macro-cal .imp-low, .mc-modal .imp-low { --mc-imp: var(--mc-imp-low); }
+
+.macro-cal button:focus-visible,
+.macro-cal input:focus-visible,
+.macro-cal select:focus-visible,
+.mc-modal button:focus-visible {
+    outline: 2px solid var(--mc-accent);
+    outline-offset: 2px;
+}
+
+/* ─────────────── 工具栏 ─────────────── */
+.macro-cal__toolbar { display: flex; flex-direction: column; gap: 14px; margin-bottom: 6px; }
+.macro-cal__controls { display: flex; flex-wrap: wrap; gap: 12px; align-items: center; }
+.macro-cal__field {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    font-size: 12.5px;
+    color: var(--mc-text-3);
+}
+.macro-cal__field select {
+    padding: 5px 8px;
+    border-radius: 7px;
+    border: 1px solid var(--mc-border);
+    background: var(--mc-bg);
+    color: var(--mc-text);
+    font-family: inherit;
+    font-size: 13px;
+}
+.macro-cal__tabs {
+    display: inline-flex;
+    gap: 2px;
+    padding: 3px;
+    border-radius: 8px;
+    border: 1px solid var(--mc-border);
+    background: var(--mc-bg);
+}
+.macro-cal__tab {
+    padding: 5px 14px;
+    border: 0;
+    border-radius: 6px;
+    background: transparent;
+    color: var(--mc-text-2);
+    font-family: inherit;
+    font-size: 13px;
+    cursor: pointer;
+    transition: background .15s, color .15s;
+}
+.macro-cal__tab:hover { color: var(--mc-text); }
+.macro-cal__tab.is-active { background: var(--mc-accent); color: #fff; }
+.macro-cal__search { flex: 1 1 220px; min-width: 170px; }
+.macro-cal__search input {
+    width: 100%;
+    padding: 6px 10px;
+    border-radius: 7px;
+    border: 1px solid var(--mc-border);
+    background: var(--mc-bg);
+    color: var(--mc-text);
+    font-family: inherit;
+    font-size: 13px;
+}
+.macro-cal__filters { display: flex; flex-direction: column; gap: 8px; }
+.macro-cal__chiprow { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; }
+.macro-cal__chiplabel { font-size: 12px; color: var(--mc-text-3); }
+.macro-cal__chips { display: flex; flex-wrap: wrap; gap: 4px; }
+.macro-cal__chip {
+    padding: 3px 11px;
+    border-radius: 999px;
+    border: 1px solid var(--mc-border);
+    background: transparent;
+    color: var(--mc-text-2);
+    font-family: inherit;
+    font-size: 12.5px;
+    cursor: pointer;
+    transition: border-color .15s, color .15s, background .15s;
+}
+.macro-cal__chip:hover { border-color: var(--mc-accent); color: var(--mc-text); }
+.macro-cal__chip.is-active {
+    background: var(--mc-accent);
+    border-color: var(--mc-accent);
+    color: #fff;
+}
+
+/* ─────────────── 图例 / 摘要 ─────────────── */
+.macro-cal__legend {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 10px;
+    padding: 10px 0;
+    font-size: 12.5px;
+    color: var(--mc-text-2);
+    border-top: 1px dashed var(--mc-border);
+    border-bottom: 1px dashed var(--mc-border);
+}
+.macro-cal__legendlabel, .macro-cal__legendnote { color: var(--mc-text-3); }
+.macro-cal__legenditem { display: inline-flex; align-items: center; gap: 5px; }
+.macro-cal__legenddot {
+    width: 9px;
+    height: 9px;
+    border-radius: 50%;
+    background: var(--mc-region);
+    display: inline-block;
+    flex: none;
+}
+.macro-cal__legendsep { width: 1px; height: 12px; background: var(--mc-border); }
+.macro-cal__summary { padding: 10px 0 4px; font-size: 12.5px; color: var(--mc-text-3); }
+.macro-cal__summary strong { color: var(--mc-text); }
+
+/* ─────────────── 节奏总览 ─────────────── */
+.macro-cal__tablewrap {
+    overflow-x: auto;
+    border: 1px solid var(--mc-border);
+    border-radius: 10px;
+}
+.macro-cal__table {
+    border-collapse: separate;
+    border-spacing: 0;
+    width: 100%;
+    min-width: 780px;
+    font-size: 13px;
+}
+.macro-cal__th {
+    padding: 9px 6px;
+    font-weight: 600;
+    font-size: 12.5px;
+    color: var(--mc-text-2);
+    background: var(--mc-bg);
+    border-bottom: 1px solid var(--mc-border);
+    text-align: center;
+    white-space: nowrap;
+}
+.macro-cal__th--name,
+.macro-cal__td--name {
+    text-align: left;
+    position: sticky;
+    left: 0;
+    background: var(--mc-bg);
+    z-index: 1;
+}
+.macro-cal__td {
+    padding: 6px 5px;
+    border-bottom: 1px solid var(--mc-border);
+    border-right: 1px solid var(--mc-border);
+    text-align: center;
+}
+.macro-cal__tr:last-child .macro-cal__td { border-bottom: 0; }
+.macro-cal__celldim { color: var(--mc-text-3); opacity: .45; }
+.macro-cal__cell {
+    display: inline-block;
+    padding: 3px 7px;
+    border: 0;
+    border-radius: 6px;
+    font-family: inherit;
+    font-size: 12.5px;
+    font-variant-numeric: tabular-nums;
+    background: color-mix(in srgb, var(--mc-region) 15%, transparent);
+    color: var(--mc-text);
+    cursor: pointer;
+    transition: transform .12s;
+}
+.macro-cal__cell:hover { transform: translateY(-1px); }
+.macro-cal__namebtn {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+    width: 100%;
+    padding: 5px 9px;
+    border: 0;
+    border-left: 3px solid var(--mc-region);
+    border-radius: 6px;
+    background: color-mix(in srgb, var(--mc-region) 9%, transparent);
+    color: var(--mc-text);
+    font-family: inherit;
+    text-align: left;
+    cursor: pointer;
+}
+.macro-cal__nametext { font-weight: 600; font-size: 13px; color: var(--mc-text); }
+.macro-cal__namemeta {
+    display: flex;
+    align-items: center;
+    gap: 5px;
+    font-size: 11.5px;
+    color: var(--mc-text-3);
+}
+.macro-cal__namemeta .macro-cal__legenddot { background: var(--mc-imp); }
+.macro-cal__legenditem.imp-high .macro-cal__legenddot,
+.macro-cal__legenditem.imp-medium .macro-cal__legenddot,
+.macro-cal__legenditem.imp-low .macro-cal__legenddot { background: var(--mc-imp); }
+.macro-cal__tag.imp-high { --mc-region: var(--mc-imp-high); }
+.macro-cal__tag.imp-medium { --mc-region: var(--mc-imp-medium); }
+.macro-cal__tag.imp-low { --mc-region: var(--mc-imp-low); }
+
+/* ─────────────── 月历 ─────────────── */
+.macro-cal__months {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(275px, 1fr));
+    gap: 16px;
+}
+.macro-cal__month {
+    border: 1px solid var(--mc-border);
+    border-radius: 10px;
+    padding: 12px;
+    background: var(--mc-bg);
+}
+.macro-cal__monthhead {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    font-size: 14px;
+    font-weight: 600;
+    margin: 0 0 9px;
+    color: var(--mc-text);
+}
+.macro-cal__monthcount {
+    font-size: 11.5px;
+    font-weight: 400;
+    color: var(--mc-text-3);
+    background: var(--mc-border);
+    border-radius: 999px;
+    padding: 1px 8px;
+}
+.macro-cal__weekdays,
+.macro-cal__days { display: grid; grid-template-columns: repeat(7, 1fr); gap: 3px; }
+.macro-cal__weekdays { margin-bottom: 3px; }
+.macro-cal__weekdays span { text-align: center; font-size: 11px; color: var(--mc-text-3); }
+.macro-cal__day {
+    min-height: 50px;
+    border: 1px solid var(--mc-border);
+    border-radius: 5px;
+    padding: 3px 4px;
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+    background: transparent;
+}
+.macro-cal__day--blank { border: 0; background: transparent; }
+.macro-cal__day--today {
+    background: color-mix(in srgb, var(--mc-accent) 12%, transparent);
+    border-color: var(--mc-accent);
+}
+.macro-cal__daynum { font-size: 11px; color: var(--mc-text-3); font-variant-numeric: tabular-nums; }
+.macro-cal__dayevents { display: flex; flex-direction: column; gap: 2px; overflow: hidden; }
+.macro-cal__mini {
+    padding: 1px 5px;
+    border: 0;
+    border-left: 2px solid var(--mc-region);
+    border-radius: 4px;
+    background: color-mix(in srgb, var(--mc-region) 18%, transparent);
+    color: var(--mc-text);
+    font-family: inherit;
+    font-size: 10.5px;
+    line-height: 1.3;
+    text-align: left;
+    cursor: pointer;
+}
+.macro-cal__monthnotes {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 4px;
+    margin-top: 9px;
+    padding-top: 9px;
+    border-top: 1px dashed var(--mc-border);
+}
+.macro-cal__notechip {
+    padding: 2px 8px;
+    border-radius: 999px;
+    border: 1px solid var(--mc-border);
+    background: color-mix(in srgb, var(--mc-region) 10%, transparent);
+    color: var(--mc-text-2);
+    font-family: inherit;
+    font-size: 11.5px;
+    cursor: pointer;
+}
+.macro-cal__notechip em { font-style: normal; color: var(--mc-text-3); }
+
+/* ─────────────── 时间轴 ─────────────── */
+.macro-cal__timeline, .macro-cal__rows { display: flex; flex-direction: column; }
+.macro-cal__timeline { gap: 22px; }
+.macro-cal__rows { gap: 6px; }
+.macro-cal__row {
+    display: flex;
+    gap: 12px;
+    align-items: flex-start;
+    width: 100%;
+    padding: 9px 12px;
+    border-radius: 8px;
+    border: 1px solid var(--mc-border);
+    border-left: 3px solid var(--mc-region);
+    background: var(--mc-bg);
+    text-align: left;
+    cursor: pointer;
+    font-family: inherit;
+    color: var(--mc-text);
+    transition: transform .12s;
+}
+.macro-cal__row:hover { transform: translateX(2px); }
+.macro-cal__row--rest { border-style: dashed; }
+.macro-cal__rowday {
+    flex: 0 0 60px;
+    font-size: 12px;
+    color: var(--mc-text-3);
+    font-variant-numeric: tabular-nums;
+    padding-top: 1px;
+}
+.macro-cal__rowbody { flex: 1; display: flex; flex-direction: column; gap: 2px; min-width: 0; }
+.macro-cal__rowname { font-size: 13.5px; font-weight: 600; }
+.macro-cal__rowmeta { font-size: 12px; color: var(--mc-text-3); }
+.macro-cal__row .macro-cal__legenddot { margin-top: 4px; background: var(--mc-imp); }
+
+/* ─────────────── 空态与详情弹窗 ─────────────── */
+.macro-cal__empty {
+    padding: 40px 16px;
+    text-align: center;
+    color: var(--mc-text-3);
+    border: 1px dashed var(--mc-border);
+    border-radius: 10px;
+}
+.mc-modal { position: fixed; inset: 0; z-index: 9000; display: none; }
+.mc-modal.is-open { display: block; }
+.mc-modal__backdrop { position: absolute; inset: 0; background: rgba(0, 0, 0, .55); backdrop-filter: blur(2px); }
+.mc-modal__card {
+    position: relative;
+    width: calc(100% - 32px);
+    max-width: 480px;
+    max-height: 84vh;
+    overflow-y: auto;
+    margin: 7vh auto 0;
+    padding: 22px 24px;
+    border-radius: 12px;
+    border: 1px solid var(--mc-border);
+    background: var(--mc-bg);
+    color: var(--mc-text);
+    box-shadow: 0 18px 48px rgba(0, 0, 0, .35);
+}
+.mc-modal__close {
+    position: absolute;
+    top: 12px;
+    right: 14px;
+    width: 28px;
+    height: 28px;
+    border: 0;
+    border-radius: 8px;
+    background: transparent;
+    color: var(--mc-text-3);
+    font-size: 20px;
+    line-height: 1;
+    cursor: pointer;
+}
+.mc-modal__close:hover { color: var(--mc-text); background: var(--mc-border); }
+.mc-modal__tags { display: flex; flex-wrap: wrap; gap: 6px; margin-bottom: 10px; }
+.macro-cal__tag {
+    padding: 2px 9px;
+    border-radius: 999px;
+    font-size: 11.5px;
+    border: 1px solid var(--mc-border);
+    color: var(--mc-text-2);
+    background: color-mix(in srgb, var(--mc-region) 12%, transparent);
+}
+.mc-modal__title { margin: 0 0 14px; font-size: 18px; color: var(--mc-text); }
+.mc-modal__dl {
+    display: grid;
+    grid-template-columns: auto 1fr;
+    gap: 7px 14px;
+    margin: 0 0 14px;
+    font-size: 13px;
+}
+.mc-modal__dl dt { color: var(--mc-text-3); white-space: nowrap; }
+.mc-modal__dl dd { margin: 0; color: var(--mc-text); overflow-wrap: anywhere; }
+.mc-modal__note {
+    margin: 0 0 10px;
+    font-size: 13px;
+    line-height: 1.7;
+    color: var(--mc-text-2);
+    padding: 10px 12px;
+    border-radius: 8px;
+    background: color-mix(in srgb, var(--mc-text) 5%, transparent);
+}
+.mc-modal__hint { margin: 0; font-size: 11.5px; color: var(--mc-text-3); }
+
+@media (max-width: 560px) {
+    .macro-cal__tabs { flex: 1 1 100%; }
+    .macro-cal__tab { flex: 1; padding-inline: 8px; }
+    .macro-cal__search { flex-basis: 100%; }
+    .macro-cal__months { grid-template-columns: minmax(0, 1fr); }
+    .mc-modal__card { padding: 20px 18px; }
+    .mc-modal__dl { grid-template-columns: 1fr; gap: 2px; }
+    .mc-modal__dl dd { margin-bottom: 8px; }
+}
+
+@media print {
+    .macro-cal__toolbar, .macro-cal__legend { display: none; }
+    .macro-cal__months { grid-template-columns: repeat(3, 1fr); }
+}

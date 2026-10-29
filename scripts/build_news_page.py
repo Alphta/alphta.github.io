@@ -520,7 +520,7 @@ def parse_mof_policy(text: str, src: "Source", now: datetime):
         if len(title) < 4 or not dt:
             continue
         items.append({"title": title[:180],
-                      "link": urllib.parse.urljoin(src.home or src.url,
+                      "link": urllib.parse.urljoin(src.url,
                                                    html_mod.unescape(href)),
                       "date": dt})
     return items

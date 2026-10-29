@@ -890,7 +890,7 @@ __ROWS__
 <nav class="pager">__NAV__</nav>
 
 <footer class="foot">
-  <p>央行、监管、交易所与金融基础设施的官方公告聚合 · 共 __COUNT__ 条 · 第 __PAGE__/__PAGES__ 页 · 更新于 __NOW__ (UTC+8) · 最近新增 __LATEST__</p>
+  <p>官方公告、新闻聚合 · 共 __COUNT__ 条 · 第 __PAGE__/__PAGES__ 页 · 更新于 __NOW__ (UTC+8) · 最近新增 __LATEST__</p>
   <p>兴趣学习：<b id="hits">0</b> 次点击 · 覆盖 <b id="kinds">0</b> 项机关/栏目/主题 · 最后记录 <b id="last">—</b>
      <button id="mode" type="button">按时间</button>
      <button id="reset" type="button">重置</button></p>

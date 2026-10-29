@@ -1,4 +1,4 @@
-/* 宏观信息日历：单月月历 + 分国别当月事件。
+/* 宏观信息日历：单月月历 / 年历 / 未来 7 天速览 + 分国别当月事件。
    同时兼容新闻独立页（--fg/--bg/--line，html.dark）
    与 Hugo Stack 主题（--card-*，data-scheme="dark"）。
    本文件只使用标准 CSS 语法，新闻生成器会原样发布为 CSS。
@@ -44,15 +44,15 @@
 .macro-cal .imp-medium, .mc-modal .imp-medium { --mc-imp: var(--mc-imp-medium); }
 .macro-cal .imp-low, .mc-modal .imp-low { --mc-imp: var(--mc-imp-low); }
 .macro-cal button:focus-visible, .macro-cal input:focus-visible,
-.mc-modal button:focus-visible {
+.mc-modal button:focus-visible, .mc-modal a:focus-visible {
     outline: 2px solid var(--mc-accent);
     outline-offset: 2px;
 }
 
-/* 工具栏与月份切换：导航、今天、搜索框统一 32px 高 */
+/* 工具栏与月份切换：导航、今天、视图切换、导出、搜索框统一 32px 高 */
 .macro-cal__toolbar { display: flex; flex-direction: column; gap: 14px; margin-bottom: 6px; }
 .macro-cal__controls { display: flex; flex-wrap: wrap; gap: 16px; align-items: center; }
-.macro-cal__monthnav { display: flex; align-items: center; gap: 7px; }
+.macro-cal__monthnav { display: flex; align-items: center; gap: 7px; flex-wrap: wrap; }
 .macro-cal__monthtitle {
     min-width: 174px;
     margin: 0;
@@ -62,7 +62,7 @@
     line-height: 1.4;
     font-variant-numeric: tabular-nums;
 }
-.macro-cal__navbtn, .macro-cal__today {
+.macro-cal__navbtn, .macro-cal__today, .macro-cal__action {
     height: 32px;
     border: 1px solid var(--mc-border);
     border-radius: 8px;
@@ -81,11 +81,33 @@
     justify-content: center;
     font-size: 20px;
 }
-.macro-cal__today { padding: 0 12px; }
-.macro-cal__navbtn:hover, .macro-cal__today:hover {
+.macro-cal__today, .macro-cal__action { padding: 0 12px; }
+.macro-cal__navbtn:hover, .macro-cal__today:hover, .macro-cal__action:hover {
     border-color: var(--mc-accent);
     color: var(--mc-accent);
 }
+/* 月历 / 年历视图切换：分段控件，样式与新闻页 page-tabs 同族 */
+.macro-cal__views {
+    display: inline-flex;
+    gap: 2px;
+    padding: 2px;
+    border: 1px solid var(--mc-border);
+    border-radius: 8px;
+}
+.macro-cal__viewbtn {
+    height: 26px;
+    padding: 0 11px;
+    border: 0;
+    border-radius: 6px;
+    background: transparent;
+    color: var(--mc-text-2);
+    font-family: inherit;
+    font-size: 13px;
+    cursor: pointer;
+    transition: background .15s, color .15s;
+}
+.macro-cal__viewbtn:hover { color: var(--mc-text); }
+.macro-cal__viewbtn.is-active { background: var(--mc-accent); color: #fff; }
 .macro-cal__search { flex: 1 1 230px; min-width: 180px; }
 .macro-cal__search input {
     width: 100%;
@@ -119,6 +141,52 @@
     border-color: var(--mc-accent);
     color: #fff;
 }
+
+/* 未来 7 天速览：今天起 7 个日卡横向排布，窄屏横向滚动 */
+.macro-cal__upnext {
+    display: flex;
+    align-items: stretch;
+    gap: 8px;
+    margin-bottom: 12px;
+    overflow-x: auto;
+    padding-bottom: 4px;
+}
+.macro-cal__upnextlabel {
+    flex: none;
+    align-self: center;
+    font-size: 11.5px;
+    color: var(--mc-text-3);
+}
+.macro-cal__upnextdays { display: flex; flex: 1; gap: 8px; }
+.macro-cal__upnextday {
+    flex: 1 0 96px;
+    min-width: 0;
+    display: flex;
+    flex-direction: column;
+    gap: 5px;
+    padding: 7px 9px;
+    border: 1px solid var(--mc-border);
+    border-radius: 8px;
+    background: var(--mc-bg);
+}
+.macro-cal__upnextday.is-today {
+    border-color: var(--mc-accent);
+    background: color-mix(in srgb, var(--mc-accent) 6%, transparent);
+}
+.macro-cal__upnexthead {
+    display: flex;
+    justify-content: space-between;
+    align-items: baseline;
+    font-size: 11.5px;
+    font-weight: 600;
+    color: var(--mc-text-2);
+}
+.macro-cal__upnexthead time {
+    font-weight: 400;
+    color: var(--mc-text-3);
+    font-variant-numeric: tabular-nums;
+}
+.macro-cal__upnextempty { font-size: 11.5px; color: var(--mc-text-3); opacity: .5; }
 
 /* 图例与“下个重要事件”合并为一行；口径声明只保留页顶与页底两处 */
 .macro-cal__legend {
@@ -334,7 +402,143 @@
 .macro-cal__regionname { font-size: 13px; font-weight: 600; }
 .macro-cal__regionmeta { color: var(--mc-text-3); font-size: 11.5px; line-height: 1.55; }
 .macro-cal__regionstars { grid-column: 3; grid-row: 1; padding-top: 2px; font-size: 11.5px; }
+/* 倒计时徽标：高重要度事件“今天/明天/N 天后”，与星星同列上下排布 */
+.macro-cal__countdown {
+    grid-column: 3;
+    grid-row: 2;
+    justify-self: end;
+    padding: 1px 8px;
+    border-radius: 999px;
+    background: color-mix(in srgb, var(--mc-imp) 14%, transparent);
+    color: var(--mc-imp);
+    font-size: 11.5px;
+    white-space: nowrap;
+    font-variant-numeric: tabular-nums;
+}
 .macro-cal__regionempty { padding: 18px 13px; color: var(--mc-text-3); font-size: 13px; }
+
+/* 年历视图：12 格小月历 + 全年重点（不随月历横滚） */
+.macro-cal__yearwrap { margin-top: 2px; }
+.macro-cal__yeargrid {
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 12px;
+}
+.macro-cal__minimonth {
+    text-align: left;
+    padding: 10px;
+    border: 1px solid var(--mc-border);
+    border-radius: 12px;
+    background: var(--mc-bg);
+    color: var(--mc-text);
+    font-family: inherit;
+    cursor: pointer;
+    transition: border-color .15s;
+}
+.macro-cal__minimonth:hover { border-color: var(--mc-accent); }
+.macro-cal__minititle {
+    display: block;
+    margin-bottom: 6px;
+    font-size: 13px;
+    font-weight: 600;
+}
+.macro-cal__minigrid {
+    display: grid;
+    grid-template-columns: repeat(7, minmax(0, 1fr));
+    gap: 2px;
+}
+.macro-cal__minidow {
+    padding: 2px 0;
+    text-align: center;
+    font-size: 11.5px;
+    color: var(--mc-text-3);
+}
+.macro-cal__miniday {
+    position: relative;
+    height: 24px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 4px;
+    font-size: 11.5px;
+    color: var(--mc-text-2);
+    font-variant-numeric: tabular-nums;
+}
+.macro-cal__miniday.has-events {
+    background: color-mix(in srgb, var(--mc-text) 4%, transparent);
+}
+.macro-cal__miniday.today {
+    color: var(--mc-accent);
+    font-weight: 600;
+    box-shadow: inset 0 0 0 1px var(--mc-accent);
+}
+.macro-cal__minidots {
+    position: absolute;
+    left: 0;
+    right: 0;
+    bottom: 1px;
+    display: flex;
+    justify-content: center;
+    gap: 2px;
+}
+.macro-cal__minidots i {
+    width: 4px;
+    height: 4px;
+    border-radius: 50%;
+    background: var(--mc-region);
+}
+/* 全年重点：季度及以上频率节点，按月分组的时间轴列表 */
+.macro-cal__highlights {
+    margin-top: 14px;
+    border: 1px solid var(--mc-border);
+    border-radius: 12px;
+    background: var(--mc-bg);
+    overflow: hidden;
+}
+.macro-cal__hlhead {
+    padding: 11px 13px;
+    font-size: 14.5px;
+    font-weight: 600;
+    border-bottom: 1px solid var(--mc-border);
+}
+.macro-cal__hlmonth {
+    padding: 7px 13px 3px;
+    font-size: 11.5px;
+    color: var(--mc-text-3);
+    border-top: 1px solid var(--mc-border);
+    background: color-mix(in srgb, var(--mc-text) 2%, transparent);
+}
+.macro-cal__highlights .macro-cal__hlmonth:first-of-type { border-top: 0; }
+.macro-cal__hlrow {
+    display: flex;
+    align-items: baseline;
+    gap: 10px;
+    width: 100%;
+    padding: 7px 13px;
+    border: 0;
+    background: transparent;
+    color: var(--mc-text);
+    font-family: inherit;
+    text-align: left;
+    cursor: pointer;
+    transition: background .15s;
+}
+.macro-cal__hlrow:hover { background: color-mix(in srgb, var(--mc-text) 3%, transparent); }
+.macro-cal__hlday {
+    flex: none;
+    width: 40px;
+    font-size: 13px;
+    font-weight: 600;
+    font-variant-numeric: tabular-nums;
+}
+.macro-cal__hlname {
+    flex: 1;
+    min-width: 0;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    font-size: 13px;
+}
 
 /* 详情弹窗 */
 .mc-modal { position: fixed; inset: 0; z-index: 9000; display: none; }
@@ -391,6 +595,9 @@
 }
 .mc-modal__dl dt { color: var(--mc-text-3); white-space: nowrap; }
 .mc-modal__dl dd { margin: 0; color: var(--mc-text); overflow-wrap: anywhere; }
+.mc-modal__dl dd strong { color: var(--mc-accent); font-weight: 600; }
+.mc-modal__srclink { color: var(--mc-accent); text-decoration: none; }
+.mc-modal__srclink:hover { text-decoration: underline; }
 .mc-modal__note {
     margin: 0;
     font-size: 13px;
@@ -400,13 +607,58 @@
     border-radius: 8px;
     background: color-mix(in srgb, var(--mc-text) 5%, transparent);
 }
+/* 关注点：金色小标签 + 描述，与「★ 值得注意」的语义同源 */
+.mc-modal__focus {
+    margin: 10px 0 0;
+    padding: 10px 12px;
+    border-radius: 8px;
+    background: color-mix(in srgb, var(--mc-imp-high) 7%, transparent);
+}
+.mc-modal__focuslabel {
+    display: block;
+    margin-bottom: 3px;
+    font-size: 11.5px;
+    font-weight: 600;
+    color: var(--mc-imp-high);
+}
+.mc-modal__focus p { margin: 0; font-size: 13px; line-height: 1.7; color: var(--mc-text); }
+/* 相关公告：来自同页新闻聚合（window.NF），按机关+关键词匹配 */
+.mc-modal__news {
+    margin-top: 12px;
+    padding-top: 10px;
+    border-top: 1px solid var(--mc-border);
+}
+.mc-modal__newshead {
+    margin-bottom: 4px;
+    font-size: 11.5px;
+    color: var(--mc-text-3);
+}
+.mc-modal__news a {
+    display: block;
+    padding: 4px 0;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    font-size: 13px;
+    line-height: 1.5;
+    color: var(--mc-accent);
+    text-decoration: none;
+}
+.mc-modal__news a:hover { text-decoration: underline; }
+.mc-modal__news time {
+    margin-right: 8px;
+    color: var(--mc-text-3);
+    font-variant-numeric: tabular-nums;
+}
 
 @media (max-width: 1080px) {
     .macro-cal__regions { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+    .macro-cal__yeargrid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
 }
 @media (max-width: 720px) {
     .macro-cal__scrollhint { display: block; }
     .macro-cal__regions { grid-template-columns: 1fr; }
+    .macro-cal__yeargrid { grid-template-columns: 1fr; }
 }
 @media (max-width: 560px) {
     .macro-cal__monthnav { width: 100%; }
@@ -416,11 +668,13 @@
     .macro-cal__weekdays, .macro-cal__days { gap: 4px; }
     .macro-cal__day { padding: 5px; }
     .macro-cal__day--today { padding: 4px; }
+    .macro-cal__upnextday { flex-basis: 104px; }
     .mc-modal__card { padding: 20px 18px; }
     .mc-modal__dl { grid-template-columns: 1fr; gap: 2px; }
     .mc-modal__dl dd { margin-bottom: 8px; }
 }
 @media print {
-    .macro-cal__toolbar, .macro-cal__legend, .macro-cal__scrollhint { display: none; }
+    .macro-cal__toolbar, .macro-cal__legend, .macro-cal__scrollhint,
+    .macro-cal__upnext { display: none; }
     .macro-cal__calendarwrap { min-width: 0; }
 }

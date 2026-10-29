@@ -27,6 +27,7 @@ REPO_ROOT = Path(__file__).resolve().parents[1]
 MACRO_ASSETS = (
     (REPO_ROOT / "assets" / "macro" / "macro-events.js", "macro-events.js"),
     (REPO_ROOT / "assets" / "macro" / "macro-calendar.js", "macro-calendar.js"),
+    (REPO_ROOT / "assets" / "macro" / "macro-actuals.js", "macro-actuals.js"),
     (REPO_ROOT / "assets" / "scss" / "macro.scss", "macro-calendar.css"),
 )
 
@@ -987,6 +988,7 @@ __ROWS__
 </script>
 <script defer src="/news/macro/macro-events.js?v=__MACRO_VERSION__"></script>
 <script defer src="/news/macro/macro-calendar.js?v=__MACRO_VERSION__"></script>
+<script defer src="/news/macro/macro-actuals.js?v=__MACRO_VERSION__"></script>
 <script>window.NF={page:__PAGE__,per:__PER__,pages:__PAGES__,data:__DATA__};</script>
 <script>
 /* 主题切换：与净值页同一套逻辑，写 StackColorScheme 即同步整站 */

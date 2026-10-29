@@ -820,13 +820,23 @@ h1{font-size:1.45rem;margin:0 0 1.6rem}
 .back{font-family:-apple-system,BlinkMacSystemFont,"PingFang SC","Segoe UI",sans-serif;
       font-size:13px;color:#6b7280;text-decoration:none}
 html.dark .back{color:#8b95a3}
+.tools{display:flex;gap:.5rem;align-items:center}
+.favview{background:var(--bg);border:1px solid var(--line);color:var(--dim);border-radius:8px;
+      height:34px;padding:0 .6rem;font-size:13px;cursor:pointer;
+      transition:color .2s ease,border-color .2s ease}
+.favview:hover{color:var(--link);border-color:var(--link)}
+.favview.on{color:#e8a33d;border-color:#e8a33d}
+.fav{color:var(--dim);background:none;border:none;cursor:pointer;font-size:15px;
+      padding:0;line-height:1;justify-self:center;transition:color .15s ease}
+.fav:hover{color:#e8a33d}
+.fav.on{color:#e8a33d}
 .theme-btn{background:var(--bg);border:1px solid var(--line);color:var(--dim);border-radius:8px;
       width:34px;height:34px;display:inline-flex;align-items:center;justify-content:center;
       cursor:pointer;transition:color .2s ease,border-color .2s ease}
 .theme-btn:hover{color:var(--link);border-color:var(--link)}
 .theme-btn svg{display:block}
 ul{list-style:none;padding:0;margin:0}
-.hd,li{display:grid;grid-template-columns:5.6rem minmax(0,1fr) 7rem;
+.hd,li{display:grid;grid-template-columns:5.6rem minmax(0,1fr) 7rem 1.6rem;
        column-gap:.85rem;align-items:center}
 .hd{padding:.5rem .2rem;border-bottom:2px solid var(--line);
     font-size:.82rem;color:var(--dim);position:sticky;top:0;background:var(--bg);z-index:1}
@@ -862,11 +872,11 @@ a.t.read{color:var(--dim);opacity:.62}
 .foot button:hover{border-color:var(--link)}
 .foot .hint{opacity:.75;font-size:.8rem}
 @media (max-width:560px){
-  .hd,li{grid-template-columns:5.2rem minmax(0,1fr)}
+  .hd,li{grid-template-columns:5.2rem minmax(0,1fr) 1.6rem}
   .hd .c-src,li .s{display:none}
 }
 </style></head><body>
-<div class="topbar"><a class="back" href="/">← 返回首页</a><button class="theme-btn" id="theme-btn" aria-label="切换明暗"></button></div>
+<div class="topbar"><a class="back" href="/">← 返回首页</a><span class="tools"><button class="favview" id="favview" type="button" title="只看收藏">★ 收藏 <span id="favn">0</span></button><button class="theme-btn" id="theme-btn" aria-label="切换明暗"></button></span></div>
 <h1>机构公告速递</h1>
 
 <div class="hd">
@@ -884,7 +894,7 @@ __ROWS__
   <p>兴趣学习：<b id="hits">0</b> 次点击 · 覆盖 <b id="kinds">0</b> 项机关/栏目/主题 · 最后记录 <b id="last">—</b>
      <button id="mode" type="button">按时间</button>
      <button id="reset" type="button">重置</button></p>
-  <p class="hint">记录只存在这台电脑的浏览器里（localStorage / IndexedDB / Cookie 各存一份，清缓存只清掉一层不会丢），不上传任何地方。</p>
+  <p class="hint">点击记录和 ★ 收藏只存在这台电脑的浏览器里（localStorage / IndexedDB / Cookie 各存一份，清缓存只清掉一层不会丢），不上传任何地方。收藏的条目永久保留，不随后续更新被冲掉。</p>
 </footer>
 
 <script>window.NF={page:__PAGE__,per:__PER__,pages:__PAGES__,data:__DATA__};</script>
@@ -987,7 +997,7 @@ __ROWS__
         var d = o.devices[id] || {};
         d.src = d.src || {}; d.ch = d.ch || {}; d.topic = d.topic || {}; d.ts = d.ts || 0;
       }
-      return {v:2, devices:o.devices};
+      return {v:2, devices:o.devices, fav:o.fav || {}};
     }
     if (o.src || o.ch || o.topic) {
       return {v:2, devices:{legacy:{ts:o.ts || 0, src:o.src || {}, ch:o.ch || {}, topic:o.topic || {}}}};
@@ -1007,11 +1017,14 @@ __ROWS__
         for (var k in s) t[k] = Math.max(t[k] || 0, s[k]);
       });
     }
+    var fa = a.fav || (a.fav = {}), fb = b.fav || {};
+    for (var fk in fb) { if (!fa[fk] || (fb[fk].ts || 0) > (fa[fk].ts || 0)) fa[fk] = fb[fk]; }
     return a;
   }
 
   var db = normalize(lsGet('db', null)) || normalize(cookieGet()) || {v:2, devices:{}};
   if (!db.devices[DEV]) db.devices[DEV] = blankDev();
+  db.fav = db.fav || {};
   var read = lsGet('read', null) || {};
   var mode = lsGet('mode', 'time');
 
@@ -1058,6 +1071,8 @@ __ROWS__
     if (h) h.textContent = String(hits());
     var k = document.getElementById('kinds');
     if (k) k.textContent = String(kinds());
+    var fn = document.getElementById('favn');
+    if (fn) fn.textContent = String(Object.keys(db.fav).length);
     var l = document.getElementById('last');
     if (l) l.textContent = mine().ts ? new Date(mine().ts).toLocaleString('zh-CN', {hour12:false}) : '—';
   }
@@ -1075,6 +1090,43 @@ __ROWS__
     paint();
   }
 
+  /* ---------- 收藏 ---------- */
+  var viewFav = false;
+  function toggleFav(btn){
+    var k = btn.dataset.fav;
+    if (db.fav[k]) { delete db.fav[k]; }
+    else {
+      var li = btn.parentNode, a = li.querySelector('a.t'), tm = li.querySelector('time');
+      db.fav[k] = {t: a ? a.textContent : k, u: a ? a.href : '',
+                   d: tm ? tm.getAttribute('datetime') : '',
+                   s: a ? (a.dataset.src || '') : '', c: a ? (a.dataset.ch || '') : '',
+                   ts: Date.now()};
+    }
+    persist();
+    paintStars();
+    paint();
+    if (viewFav) render();
+  }
+  function paintStars(){
+    var bs = document.querySelectorAll('#list .fav');
+    for (var i = 0; i < bs.length; i++){
+      var on = !!db.fav[bs[i].dataset.fav];
+      bs[i].textContent = on ? '★' : '☆';
+      bs[i].classList.toggle('on', on);
+    }
+    var fv = document.getElementById('favview');
+    if (fv) fv.classList.toggle('on', viewFav);
+  }
+  function favItems(){
+    var out = [], k;
+    for (k in db.fav) out.push(db.fav[k]);
+    out.sort(function(a, b){
+      if (a.d !== b.d) return a.d < b.d ? 1 : -1;
+      return (b.ts || 0) - (a.ts || 0);
+    });
+    return out;
+  }
+
   /* ---------- 渲染 ---------- */
   function liHTML(it){
     var k = it.u || it.t;
@@ -1085,10 +1137,16 @@ __ROWS__
          + '<a class="' + cls + '" href="' + esc(it.u) + '" data-k="' + esc(k) + '"'
          + ' data-src="' + esc(it.s) + '" data-ch="' + esc(it.c || '') + '"'
          + ' target="_blank" rel="noopener">' + esc(it.t) + '</a>'
-         + '<span class="s" title="' + esc(tip) + '">' + esc(it.s) + '</span></li>';
+         + '<span class="s" title="' + esc(tip) + '">' + esc(it.s) + '</span>'
+         + '<button class="fav' + (db.fav[k] ? ' on' : '') + '" data-fav="' + esc(k) + '"'
+         + ' title="收藏/取消收藏" type="button">' + (db.fav[k] ? '★' : '☆') + '</button></li>';
   }
 
   function bind(){
+    var stars = document.querySelectorAll('#list .fav');
+    for (var j = 0; j < stars.length; j++) (function(b){
+      b.addEventListener('click', function(ev){ ev.preventDefault(); toggleFav(b); });
+    })(stars[j]);
     var links = document.querySelectorAll('#list a.t');
     for (var i = 0; i < links.length; i++) (function(a){
       var k = a.dataset.k;
@@ -1108,17 +1166,25 @@ __ROWS__
   function render(){
     var list = document.getElementById('list');
     if (!list) return;
-    var items = data.slice();
-    if (mode === 'interest') {
-      var A = {src:agg('src'), ch:agg('ch'), topic:agg('topic')};
-      items.sort(function(a, b){
-        var d = score(b, A) - score(a, A);
-        if (d) return d;
-        return a.d < b.d ? 1 : (a.d > b.d ? -1 : 0);
-      });
+    var pager = document.querySelector('.pager');
+    if (pager) pager.style.display = viewFav ? 'none' : '';
+    var items;
+    if (viewFav) {
+      items = favItems();
+    } else {
+      items = data.slice();
+      if (mode === 'interest') {
+        var A = {src:agg('src'), ch:agg('ch'), topic:agg('topic')};
+        items.sort(function(a, b){
+          var d = score(b, A) - score(a, A);
+          if (d) return d;
+          return a.d < b.d ? 1 : (a.d > b.d ? -1 : 0);
+        });
+      }
+      var from = (PAGE - 1) * PER;
+      items = items.slice(from, from + PER);
     }
-    var from = (PAGE - 1) * PER;
-    list.innerHTML = items.slice(from, from + PER).map(liHTML).join('');
+    list.innerHTML = items.map(liHTML).join('');
     bind();
     var btn = document.getElementById('mode');
     if (btn) btn.textContent = mode === 'interest' ? '按兴趣' : '按时间';
@@ -1167,6 +1233,13 @@ __ROWS__
     if (mode === 'time') location.reload(); else render();
   });
 
+  var btnFav = document.getElementById('favview');
+  if (btnFav) btnFav.addEventListener('click', function(){
+    viewFav = !viewFav;
+    render();
+    paintStars();
+  });
+
   var btnReset = document.getElementById('reset');
   if (btnReset) btnReset.addEventListener('click', function(){
     if (!confirm('清空这台电脑记住的点击记录？')) return;
@@ -1183,6 +1256,7 @@ __ROWS__
     if (booted) return;
     booted = true;
     paint();
+    paintStars();
     if (mode === 'interest') render(); else bind();
   }
   idb.get('db', function(v){
@@ -1274,7 +1348,8 @@ def _li_html(it) -> str:
         f'<a class="t" href="{escape(it["link"])}" data-k="{key}"'
         f' data-src="{short}" data-ch="{ch}" target="_blank" rel="noopener">'
         f'{escape(it["title"])}</a>'
-        f'<span class="s" title="{tip}">{short}</span></li>'
+        f'<span class="s" title="{tip}">{short}</span>'
+        f'<button class="fav" data-fav="{key}" title="收藏/取消收藏" type="button">☆</button></li>'
     )
 
 

@@ -838,6 +838,7 @@ html.dark{--fg:#e6e9ee;--dim:#8b95a3;--line:#262c35;--link:#4ea1ff;--bg:#0f1216}
 *{box-sizing:border-box}
 body{font:16px/1.75 -apple-system,BlinkMacSystemFont,"Noto Sans SC","PingFang SC",sans-serif;
      max-width:52rem;margin:3rem auto;padding:0 1.2rem;color:var(--fg);background:var(--bg)}
+body.macro-active{max-width:76rem}
 h1{font-size:1.45rem;margin:0 0 1.6rem}
 .topbar{display:flex;align-items:center;justify-content:space-between;margin-bottom:10px}
 .back{font-family:-apple-system,BlinkMacSystemFont,"PingFang SC","Segoe UI",sans-serif;
@@ -962,6 +963,7 @@ __ROWS__
       document.getElementById(tab.getAttribute('aria-controls')).hidden = !on;
     });
     if (fav) fav.hidden = name !== 'news';
+    document.body.classList.toggle('macro-active', name === 'macro');
     if (updateHash) {
       try { history.replaceState(null, '', name === 'macro' ? '#macro' : '#news'); } catch(e) {}
     }

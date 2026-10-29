@@ -1,8 +1,6 @@
 /**
- * 宏观信息日历 · 渲染逻辑
- *
- * 依赖：window.MACRO_EVENTS（见 macro-events.js）
- * 挂载点：<div data-macro-calendar></div>
+ * 宏观信息日历 · 单月月历与分国别列表
+ * 依赖：window.MACRO_EVENTS；挂载点：<div data-macro-calendar></div>
  * 无框架、无外部依赖，纯原生 JS。
  */
 (function () {
@@ -35,14 +33,9 @@
   }
 
   var NOW = new Date();
-  var currentYear = NOW.getFullYear();
   var state = {
-    year: currentYear,
-    view: "rhythm", // rhythm | calendar | timeline
-    region: "all",
-    category: "all",
-    importance: "all",
-    query: ""
+    year: NOW.getFullYear(), month: NOW.getMonth() + 1,
+    region: "all", category: "all", importance: "all", query: ""
   };
 
   /* ─────────────── 工具函数 ─────────────── */
@@ -53,13 +46,13 @@
       .replace(/>/g, "&gt;").replace(/"/g, "&quot;")
       .replace(/'/g, "&#39;");
   }
-
   function daysInMonth(y, m) { return new Date(y, m, 0).getDate(); }
   function pad2(n) { return n < 10 ? "0" + n : String(n); }
   function validWeekday(w) {
     w = Number(w);
     return w >= 0 && w <= 6 && Math.floor(w) === w;
   }
+  function monthText(y, m) { return y + " 年 " + m + " 月"; }
 
   /** 把事件落到具体日期。weeklyWeekday 返回当月全部指定星期。 */
   function resolveDays(ev, year, month) {
@@ -71,8 +64,7 @@
     if (p === "day") {
       d = Number(ev.day);
       if (!isFinite(d) || d < 1) return [];
-      d = Math.floor(d);
-      return [Math.min(d, dim)];
+      return [Math.min(Math.floor(d), dim)];
     }
     if (p === "weeklyWeekday") {
       if (!validWeekday(ev.weekday)) return [];
@@ -102,30 +94,12 @@
     return [];
   }
 
-  /** 是否在该月出现；不定期事件也可用 months 限定通常月份。 */
   function isOccurring(ev, month) {
     if (ev.frequency === "monthly" || ev.frequency === "weekly") return true;
     if (Array.isArray(ev.months) && ev.months.length) {
       return ev.months.indexOf(month) !== -1;
     }
     return true;
-  }
-
-  function cellHint(ev) {
-    var p = ev.placement;
-    if (p === "weeklyWeekday" && validWeekday(ev.weekday)) {
-      return WEEK_CN[Number(ev.weekday)];
-    }
-    if (ev.frequency === "weekly") return "每周";
-    if (p === "irregular") return "不定期";
-    if (p === "last") return "月末";
-    if (p === "firstWeekday" && validWeekday(ev.weekday)) {
-      return "首" + WEEK_CN[Number(ev.weekday)].slice(1);
-    }
-    if (p === "lastWeekday" && validWeekday(ev.weekday)) {
-      return "末" + WEEK_CN[Number(ev.weekday)].slice(1);
-    }
-    return Number(ev.day) + "日";
   }
 
   function matches(ev) {
@@ -144,8 +118,6 @@
     return true;
   }
 
-  function visibleEvents() { return EVENTS.filter(matches); }
-
   function sortEvents(list) {
     return list.slice().sort(function (a, b) {
       var ar = IMPORTANCE[a.importance] ? IMPORTANCE[a.importance].rank : 0;
@@ -153,7 +125,11 @@
       return br - ar || a.name.localeCompare(b.name, "zh-Hans-CN");
     });
   }
-
+  function monthItems() {
+    return sortEvents(EVENTS.filter(matches).filter(function (ev) {
+      return isOccurring(ev, state.month);
+    }));
+  }
   function regionLabel(ev) {
     return REGIONS[ev.region] ? REGIONS[ev.region].label : ev.region;
   }
@@ -164,10 +140,14 @@
     return IMPORTANCE[ev.importance] ? IMPORTANCE[ev.importance].label : ev.importance;
   }
   function freqLabel(ev) { return FREQ_CN[ev.frequency] || ev.frequency || ""; }
-  function isPlaced(ev) { return ev.placement !== "irregular"; }
   function findEvent(id) {
     for (var i = 0; i < EVENTS.length; i++) if (EVENTS[i].id === id) return EVENTS[i];
     return null;
+  }
+  function shiftMonth(step) {
+    var index = state.year * 12 + state.month - 1 + step;
+    state.year = Math.floor(index / 12);
+    state.month = (index % 12 + 12) % 12 + 1;
   }
 
   /* ─────────────── 骨架 ─────────────── */
@@ -176,13 +156,11 @@
   root.innerHTML =
     '<div class="macro-cal__toolbar" role="toolbar" aria-label="日历控制">' +
       '<div class="macro-cal__controls">' +
-        '<label class="macro-cal__field"><span>年份</span>' +
-          '<select id="mc-year" aria-label="日历年份">' +
-            yearOptions(currentYear - 2, currentYear + 3) +
-          '</select></label>' +
-        '<div class="macro-cal__tabs" role="tablist" aria-label="日历视图">' +
-          tabHtml("rhythm", "节奏总览") + tabHtml("calendar", "月历") +
-          tabHtml("timeline", "时间轴") +
+        '<div class="macro-cal__monthnav">' +
+          '<button type="button" class="macro-cal__navbtn" data-month-step="-1" aria-label="上一个月">‹</button>' +
+          '<h2 class="macro-cal__monthtitle" id="mc-month-title" aria-live="polite"></h2>' +
+          '<button type="button" class="macro-cal__navbtn" data-month-step="1" aria-label="下一个月">›</button>' +
+          '<button type="button" class="macro-cal__today" data-today>今天</button>' +
         '</div>' +
         '<div class="macro-cal__search">' +
           '<input type="search" id="mc-search" aria-label="搜索宏观事件" ' +
@@ -196,23 +174,14 @@
     '</div>' +
     '<div class="macro-cal__legend" id="mc-legend"></div>' +
     '<div class="macro-cal__summary" id="mc-summary" aria-live="polite"></div>' +
-    '<div class="macro-cal__body" id="mc-body"></div>';
-
-  function yearOptions(from, to) {
-    var out = "";
-    for (var y = from; y <= to; y++) {
-      out += '<option value="' + y + '"' + (y === state.year ? " selected" : "") +
-        ">" + y + "</option>";
-    }
-    return out;
-  }
-
-  function tabHtml(key, label) {
-    var on = state.view === key;
-    return '<button type="button" class="macro-cal__tab' + (on ? " is-active" : "") +
-      '" role="tab" data-view="' + key + '" aria-selected="' + on +
-      '" tabindex="' + (on ? "0" : "-1") + '">' + esc(label) + "</button>";
-  }
+    '<div class="macro-cal__calendarwrap"><div class="macro-cal__calendar">' +
+      '<div class="macro-cal__weekdays">' +
+        '<span>周一</span><span>周二</span><span>周三</span><span>周四</span>' +
+        '<span>周五</span><span>周六</span><span>周日</span>' +
+      '</div><div class="macro-cal__days" id="mc-days"></div>' +
+    '</div></div>' +
+    '<div class="macro-cal__scrollhint">左右滑动查看完整月历</div>' +
+    '<div class="macro-cal__regions" id="mc-regions"></div>';
 
   function chipRow(key, label) {
     var vals = {
@@ -232,7 +201,7 @@
     return out + "</div></div>";
   }
 
-  /* ─────────────── 图例与摘要 ─────────────── */
+  /* ─────────────── 图例、月历与分国别列表 ─────────────── */
 
   function renderLegend() {
     var html = "<span class='macro-cal__legendlabel'>地区</span>";
@@ -251,154 +220,104 @@
     root.querySelector("#mc-legend").innerHTML = html;
   }
 
-  function renderSummary() {
-    root.querySelector("#mc-summary").innerHTML =
-      "当前筛选下共 <strong>" + visibleEvents().length + "</strong> 项事件 · 年份 " + state.year;
+  function occurrenceCount(items) {
+    return items.reduce(function (total, ev) {
+      var days = resolveDays(ev, state.year, state.month);
+      return total + (days.length || 1);
+    }, 0);
   }
-
-  /* ─────────────── 三种视图 ─────────────── */
 
   function renderBody() {
-    var list = sortEvents(visibleEvents());
-    var body = root.querySelector("#mc-body");
-    if (!list.length) {
-      body.innerHTML = '<div class="macro-cal__empty">没有符合筛选条件的事件。</div>';
-      return;
-    }
-    if (state.view === "rhythm") body.innerHTML = viewRhythm(list);
-    else if (state.view === "calendar") body.innerHTML = viewCalendar(list);
-    else body.innerHTML = viewTimeline(list);
+    var items = monthItems();
+    root.querySelector("#mc-month-title").textContent = monthText(state.year, state.month);
+    root.querySelector("#mc-summary").innerHTML =
+      "本月 <strong>" + items.length + "</strong> 项事件 · " +
+      occurrenceCount(items) + " 项次（周频按实际日期计）";
+    root.querySelector('[data-month-step="-1"]').setAttribute("aria-label",
+      "上一个月：" + monthText(state.month === 1 ? state.year - 1 : state.year,
+        state.month === 1 ? 12 : state.month - 1));
+    root.querySelector('[data-month-step="1"]').setAttribute("aria-label",
+      "下一个月：" + monthText(state.month === 12 ? state.year + 1 : state.year,
+        state.month === 12 ? 1 : state.month + 1));
+    renderCalendar(items);
+    renderRegionGroups(items);
   }
 
-  function viewRhythm(list) {
-    var h = "<div class='macro-cal__tablewrap'><table class='macro-cal__table'>" +
-      "<thead><tr><th class='macro-cal__th macro-cal__th--name'>事件</th>";
-    for (var m = 1; m <= 12; m++) h += "<th class='macro-cal__th'>" + m + "月</th>";
-    h += "</tr></thead><tbody>";
-    list.forEach(function (ev) {
-      h += "<tr class='macro-cal__tr'><td class='macro-cal__td macro-cal__td--name'>" +
-        "<button type='button' class='macro-cal__namebtn is-" + ev.region + " imp-" +
-        ev.importance + "' data-id='" + esc(ev.id) + "'>" +
-        "<span class='macro-cal__nametext'>" + esc(ev.name) + "</span>" +
-        "<span class='macro-cal__namemeta'><i class='macro-cal__legenddot'></i>" +
-        esc(regionLabel(ev)) + " · " + esc(catLabel(ev)) + " · " + esc(freqLabel(ev)) +
-        "</span></button></td>";
-      for (var mm = 1; mm <= 12; mm++) {
-        if (!isOccurring(ev, mm)) {
-          h += "<td class='macro-cal__td macro-cal__celldim'>—</td>";
-        } else {
-          h += "<td class='macro-cal__td'><button type='button' class='macro-cal__cell is-" +
-            ev.region + " imp-" + ev.importance + "' data-id='" + esc(ev.id) +
-            "' aria-label='" + esc(ev.name + "，" + mm + "月，" + cellHint(ev)) + "'>" +
-            esc(cellHint(ev)) + "</button></td>";
-        }
+  function renderCalendar(items) {
+    var y = state.year, m = state.month;
+    var dim = daysInMonth(y, m);
+    var first = new Date(y, m - 1, 1).getDay();
+    var offset = (first + 6) % 7;
+    var totalCells = Math.ceil((offset + dim) / 7) * 7;
+    var today = new Date();
+    var h = "";
+    for (var i = 0; i < totalCells; i++) {
+      var d = i - offset + 1;
+      if (d < 1 || d > dim) {
+        h += "<span class='macro-cal__day macro-cal__day--blank' aria-hidden='true'></span>";
+        continue;
       }
-      h += "</tr>";
-    });
-    return h + "</tbody></table></div>";
-  }
-
-  function viewCalendar(list) {
-    var h = "<div class='macro-cal__months'>";
-    for (var m = 1; m <= 12; m++) h += monthCard(list, m);
-    return h + "</div>";
-  }
-
-  function monthCard(list, month) {
-    var y = state.year;
-    var dim = daysInMonth(y, month);
-    var first = new Date(y, month - 1, 1).getDay();
-    var offset = (first + 6) % 7; // 周一为第一列
-    var items = list.filter(function (ev) { return isOccurring(ev, month); });
-    var h = "<section class='macro-cal__month'><h3 class='macro-cal__monthhead'>" +
-      y + " 年 " + month + " 月<span class='macro-cal__monthcount' title='事件定义数'>" +
-      items.length + "</span></h3><div class='macro-cal__weekdays'>";
-    ["一", "二", "三", "四", "五", "六", "日"].forEach(function (w) {
-      h += "<span>" + w + "</span>";
-    });
-    h += "</div><div class='macro-cal__days'>";
-    for (var i = 0; i < offset; i++) {
-      h += "<span class='macro-cal__day macro-cal__day--blank'></span>";
-    }
-    for (var d = 1; d <= dim; d++) {
       var dayItems = items.filter(function (ev) {
-        return resolveDays(ev, y, month).indexOf(d) !== -1;
+        return resolveDays(ev, y, m).indexOf(d) !== -1;
       });
-      var isToday = y === NOW.getFullYear() && month === NOW.getMonth() + 1 && d === NOW.getDate();
+      var isToday = y === today.getFullYear() && m === today.getMonth() + 1 && d === today.getDate();
       h += "<span class='macro-cal__day" + (isToday ? " macro-cal__day--today" : "") +
-        "'><span class='macro-cal__daynum'>" + d + "</span><span class='macro-cal__dayevents'>";
+        (dayItems.length ? " macro-cal__day--has-events" : "") + "'>" +
+        "<span class='macro-cal__daynum'>" + d + "</span><span class='macro-cal__dayevents'>";
       dayItems.forEach(function (ev) {
-        h += "<button type='button' class='macro-cal__mini is-" + ev.region + " imp-" +
+        h += "<button type='button' class='macro-cal__event is-" + ev.region + " imp-" +
           ev.importance + "' data-id='" + esc(ev.id) + "' title='" +
           esc(ev.name + " · " + ev.window) + "'>" + esc(ev.short || ev.name) + "</button>";
       });
       h += "</span></span>";
     }
-    h += "</div>";
-    var notes = list.filter(function (ev) {
-      return !isPlaced(ev) && isOccurring(ev, month);
-    });
-    if (notes.length) {
-      h += "<div class='macro-cal__monthnotes'>";
-      notes.forEach(function (ev) {
-        h += "<button type='button' class='macro-cal__notechip is-" + ev.region + " imp-" +
-          ev.importance + "' data-id='" + esc(ev.id) + "'>" + esc(ev.short || ev.name) +
-          " <em>" + esc(freqLabel(ev)) + "</em></button>";
-      });
-      h += "</div>";
-    }
-    return h + "</section>";
+    root.querySelector("#mc-days").innerHTML = h;
   }
 
-  function viewTimeline(list) {
-    var h = "<div class='macro-cal__timeline'>";
-    for (var m = 1; m <= 12; m++) {
-      var occurrences = [];
-      list.forEach(function (ev) {
-        if (!isPlaced(ev) || !isOccurring(ev, m)) return;
-        resolveDays(ev, state.year, m).forEach(function (d) {
-          occurrences.push({ event: ev, day: d });
-        });
+  function eventDayLabel(ev) {
+    if (ev.frequency === "weekly" && validWeekday(ev.weekday)) {
+      return "每" + WEEK_CN[Number(ev.weekday)];
+    }
+    var days = resolveDays(ev, state.year, state.month);
+    if (!days.length) return "不定期";
+    if (days.length === 1) return days[0] + " 日";
+    return days.join("、") + " 日";
+  }
+
+  function renderRegionGroups(items) {
+    var regions = state.region === "all" ? Object.keys(REGIONS) : [state.region];
+    var h = "";
+    regions.forEach(function (region) {
+      var regionItems = items.filter(function (ev) { return ev.region === region; });
+      regionItems.sort(function (a, b) {
+        var ad = resolveDays(a, state.year, state.month)[0] || 99;
+        var bd = resolveDays(b, state.year, state.month)[0] || 99;
+        if (ad !== bd) return ad - bd;
+        var ar = IMPORTANCE[a.importance] ? IMPORTANCE[a.importance].rank : 0;
+        var br = IMPORTANCE[b.importance] ? IMPORTANCE[b.importance].rank : 0;
+        return br - ar || a.name.localeCompare(b.name, "zh-Hans-CN");
       });
-      occurrences.sort(function (a, b) {
-        if (a.day !== b.day) return a.day - b.day;
-        var ar = IMPORTANCE[a.event.importance] ? IMPORTANCE[a.event.importance].rank : 0;
-        var br = IMPORTANCE[b.event.importance] ? IMPORTANCE[b.event.importance].rank : 0;
-        return br - ar || a.event.name.localeCompare(b.event.name, "zh-Hans-CN");
-      });
-      if (!occurrences.length) continue;
-      h += "<section class='macro-cal__monthblock'><h3 class='macro-cal__monthhead'>" +
-        state.year + " 年 " + m + " 月<span class='macro-cal__monthcount' title='事件项次'>" +
-        occurrences.length + "</span></h3><div class='macro-cal__rows'>";
-      occurrences.forEach(function (item) {
-        var ev = item.event;
-        h += "<button type='button' class='macro-cal__row is-" + ev.region + " imp-" +
-          ev.importance + "' data-id='" + esc(ev.id) + "'>" +
-          "<span class='macro-cal__rowday'>" + item.day + " 日</span>" +
-          "<span class='macro-cal__rowbody'><span class='macro-cal__rowname'>" +
-          esc(ev.name) + "</span><span class='macro-cal__rowmeta'>" +
-          esc(regionLabel(ev)) + " · " + esc(catLabel(ev)) + " · " + esc(ev.window) +
-          "</span></span><i class='macro-cal__legenddot'></i></button>";
+      h += "<section class='macro-cal__region is-" + region + "'>" +
+        "<h3 class='macro-cal__regionhead'><span><i class='macro-cal__legenddot'></i>" +
+        esc(REGIONS[region].label) + "</span><span class='macro-cal__regioncount'>" +
+        regionItems.length + " 项</span></h3>";
+      if (!regionItems.length) {
+        h += "<div class='macro-cal__regionempty'>本月没有符合筛选条件的事件</div></section>";
+        return;
+      }
+      h += "<div class='macro-cal__regionlist'>";
+      regionItems.forEach(function (ev) {
+        h += "<button type='button' class='macro-cal__regionrow imp-" + ev.importance +
+          "' data-id='" + esc(ev.id) + "'>" +
+          "<span class='macro-cal__regionday'>" + esc(eventDayLabel(ev)) + "</span>" +
+          "<span class='macro-cal__regionbody'><span class='macro-cal__regionname'>" +
+          esc(ev.name) + "</span><span class='macro-cal__regionmeta'>" +
+          esc(catLabel(ev)) + " · " + esc(ev.window) + "</span></span>" +
+          "<i class='macro-cal__legenddot'></i></button>";
       });
       h += "</div></section>";
-    }
-    var rest = list.filter(function (ev) { return !isPlaced(ev); });
-    if (rest.length) {
-      h += "<section class='macro-cal__monthblock'><h3 class='macro-cal__monthhead'>" +
-        "不定期关注<span class='macro-cal__monthcount'>" + rest.length +
-        "</span></h3><div class='macro-cal__rows'>";
-      rest.forEach(function (ev) {
-        h += "<button type='button' class='macro-cal__row macro-cal__row--rest is-" +
-          ev.region + " imp-" + ev.importance + "' data-id='" + esc(ev.id) + "'>" +
-          "<span class='macro-cal__rowday'>" + esc(freqLabel(ev)) + "</span>" +
-          "<span class='macro-cal__rowbody'><span class='macro-cal__rowname'>" +
-          esc(ev.name) + "</span><span class='macro-cal__rowmeta'>" +
-          esc(regionLabel(ev)) + " · " + esc(catLabel(ev)) + " · " + esc(ev.window) +
-          "</span></span><i class='macro-cal__legenddot'></i></button>";
-      });
-      h += "</div></section>";
-    }
-    return h + "</div>";
+    });
+    root.querySelector("#mc-regions").innerHTML = h;
   }
 
   /* ─────────────── 详情弹窗 ─────────────── */
@@ -433,7 +352,6 @@
           e.preventDefault();
           closeModal();
         } else if (e.key === "Tab") {
-          // 弹窗目前只有关闭按钮可聚焦，阻止 Tab 落到背景页面。
           e.preventDefault();
           var close = modal.querySelector(".mc-modal__close");
           if (close) close.focus();
@@ -480,11 +398,16 @@
   /* ─────────────── 事件绑定 ─────────────── */
 
   root.addEventListener("click", function (e) {
-    var t = e.target.closest("[data-view], [data-filter], [data-id]");
+    var t = e.target.closest("[data-month-step], [data-today], [data-filter], [data-id]");
     if (!t || !root.contains(t)) return;
-    if (t.dataset.view) {
-      state.view = t.dataset.view;
-      renderAll();
+    if (t.hasAttribute("data-month-step")) {
+      shiftMonth(Number(t.getAttribute("data-month-step")));
+      renderBody();
+    } else if (t.hasAttribute("data-today")) {
+      var today = new Date();
+      state.year = today.getFullYear();
+      state.month = today.getMonth() + 1;
+      renderBody();
     } else if (t.dataset.filter) {
       var k = t.dataset.filter, v = t.dataset.value;
       state[k] = state[k] === v ? "all" : v;
@@ -495,50 +418,27 @@
   });
 
   root.addEventListener("keydown", function (e) {
-    var tab = e.target.closest("[data-view]");
-    if (!tab || ["ArrowLeft", "ArrowRight", "Home", "End"].indexOf(e.key) === -1) return;
+    var nav = e.target.closest("[data-month-step]");
+    if (!nav || ["ArrowLeft", "ArrowRight"].indexOf(e.key) === -1) return;
     e.preventDefault();
-    var views = ["rhythm", "calendar", "timeline"];
-    var index = views.indexOf(state.view);
-    if (e.key === "Home") index = 0;
-    else if (e.key === "End") index = views.length - 1;
-    else index = (index + (e.key === "ArrowRight" ? 1 : -1) + views.length) % views.length;
-    state.view = views[index];
-    renderAll();
-    root.querySelector('[data-view="' + state.view + '"]').focus();
-  });
-
-  root.addEventListener("change", function (e) {
-    if (e.target.id === "mc-year") {
-      state.year = Number(e.target.value);
-      renderAll();
-    }
+    shiftMonth(e.key === "ArrowRight" ? 1 : -1);
+    renderBody();
   });
 
   root.addEventListener("input", function (e) {
     if (e.target.id === "mc-search") {
       state.query = e.target.value;
       renderBody();
-      renderSummary();
     }
   });
 
   function renderAll() {
-    var sel = root.querySelector("#mc-year");
-    if (sel) sel.innerHTML = yearOptions(currentYear - 2, currentYear + 3);
-    root.querySelectorAll(".macro-cal__tab").forEach(function (tab) {
-      var on = tab.dataset.view === state.view;
-      tab.className = "macro-cal__tab" + (on ? " is-active" : "");
-      tab.setAttribute("aria-selected", on);
-      tab.setAttribute("tabindex", on ? "0" : "-1");
-    });
     root.querySelectorAll(".macro-cal__chip").forEach(function (chip) {
       var on = state[chip.dataset.filter] === chip.dataset.value;
       chip.className = "macro-cal__chip" + (on ? " is-active" : "");
       chip.setAttribute("aria-pressed", on);
     });
     renderBody();
-    renderSummary();
   }
 
   renderLegend();

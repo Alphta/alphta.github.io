@@ -811,7 +811,7 @@ INDEX_TMPL = """<!doctype html>
 </script>
 <style>
 :root{--fg:#1a1a1a;--dim:#8a8a8a;--line:#ececec;--link:#0a5bd4;--bg:#fff}
-html.dark{--fg:#e6e6e6;--dim:#8f8f8f;--line:#2a2a2a;--link:#6aa9ff;--bg:#161616}
+html.dark{--fg:#e6e9ee;--dim:#8b95a3;--line:#262c35;--link:#4ea1ff;--bg:#0f1216}
 *{box-sizing:border-box}
 body{font:16px/1.75 -apple-system,BlinkMacSystemFont,"Noto Sans SC","PingFang SC",sans-serif;
      max-width:52rem;margin:3rem auto;padding:0 1.2rem;color:var(--fg);background:var(--bg)}

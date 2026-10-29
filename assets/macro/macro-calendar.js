@@ -10,15 +10,15 @@
   var WEEK_CN = ["周日", "周一", "周二", "周三", "周四", "周五", "周六"];
   var REGIONS = {
     cn: { label: "中国" }, us: { label: "美国" },
-    eu: { label: "欧元区" }, global: { label: "全球" }
+    eu: { label: "欧洲" }, global: { label: "全球" }
   };
   var CATEGORIES = {
     data: { label: "数据" }, policy: { label: "政策" }, meeting: { label: "会议" }
   };
   var IMPORTANCE = {
-    high: { label: "高", rank: 3 },
-    medium: { label: "中", rank: 2 },
-    low: { label: "低", rank: 1 }
+    high: { label: "最重要", stars: "★★★", rank: 3 },
+    medium: { label: "次重要", stars: "★★", rank: 2 },
+    low: { label: "一般", stars: "★", rank: 1 }
   };
   var FREQ_CN = {
     monthly: "每月", quarterly: "每季", semiannual: "每半年",
@@ -139,6 +139,9 @@
   function impLabel(ev) {
     return IMPORTANCE[ev.importance] ? IMPORTANCE[ev.importance].label : ev.importance;
   }
+  function impStars(ev) {
+    return IMPORTANCE[ev.importance] ? IMPORTANCE[ev.importance].stars : "";
+  }
   function freqLabel(ev) { return FREQ_CN[ev.frequency] || ev.frequency || ""; }
   function findEvent(id) {
     for (var i = 0; i < EVENTS.length; i++) if (EVENTS[i].id === id) return EVENTS[i];
@@ -174,29 +177,32 @@
     '</div>' +
     '<div class="macro-cal__legend" id="mc-legend"></div>' +
     '<div class="macro-cal__summary" id="mc-summary" aria-live="polite"></div>' +
-    '<div class="macro-cal__calendarwrap"><div class="macro-cal__calendar">' +
-      '<div class="macro-cal__weekdays">' +
-        '<span>周一</span><span>周二</span><span>周三</span><span>周四</span>' +
-        '<span>周五</span><span>周六</span><span>周日</span>' +
-      '</div><div class="macro-cal__days" id="mc-days"></div>' +
+    '<div class="macro-cal__scroll"><div class="macro-cal__monthly">' +
+      '<div class="macro-cal__calendarwrap"><div class="macro-cal__calendar">' +
+        '<div class="macro-cal__weekdays">' +
+          '<span>周一</span><span>周二</span><span>周三</span><span>周四</span>' +
+          '<span>周五</span><span>周六</span><span>周日</span>' +
+        '</div><div class="macro-cal__days" id="mc-days"></div>' +
+      '</div></div>' +
+      '<div class="macro-cal__regions" id="mc-regions"></div>' +
     '</div></div>' +
-    '<div class="macro-cal__scrollhint">左右滑动查看完整月历</div>' +
-    '<div class="macro-cal__regions" id="mc-regions"></div>';
+    '<div class="macro-cal__scrollhint">左右滑动查看完整月历与地区列表</div>';
 
   function chipRow(key, label) {
     var vals = {
-      region: ["all:全部", "cn:中国", "us:美国", "eu:欧元区", "global:全球"],
+      region: ["all:全部", "cn:中国", "us:美国", "eu:欧洲", "global:全球"],
       category: ["all:全部", "data:数据", "policy:政策", "meeting:会议"],
-      importance: ["all:全部", "high:高", "medium:中", "low:低"]
+      importance: ["all:全部", "high:★★★", "medium:★★", "low:★"]
     }[key];
     var out = '<div class="macro-cal__chiprow"><span class="macro-cal__chiplabel">' +
       esc(label) + '</span><div class="macro-cal__chips">';
     vals.forEach(function (v) {
       var parts = v.split(":"), val = parts[0], lab = parts[1];
       var on = state[key] === val;
+      var ariaLabel = key === "importance" && IMPORTANCE[val] ? IMPORTANCE[val].label : lab;
       out += '<button type="button" class="macro-cal__chip' + (on ? " is-active" : "") +
         '" data-filter="' + key + '" data-value="' + val + '" aria-pressed="' + on +
-        '">' + esc(lab) + "</button>";
+        '" aria-label="' + esc(ariaLabel) + '">' + esc(lab) + "</button>";
     });
     return out + "</div></div>";
   }
@@ -212,8 +218,9 @@
     html += "<span class='macro-cal__legendsep'></span>" +
       "<span class='macro-cal__legendlabel'>重要度</span>";
     ["high", "medium", "low"].forEach(function (i) {
-      html += "<span class='macro-cal__legenditem imp-" + i +
-        "'><i class='macro-cal__legenddot'></i>" + esc(IMPORTANCE[i].label) + "</span>";
+      html += "<span class='macro-cal__legenditem'><i class='macro-cal__stars imp-" + i +
+        "' aria-hidden='true'>" + IMPORTANCE[i].stars + "</i>" +
+        esc(IMPORTANCE[i].label) + "</span>";
     });
     html += "<span class='macro-cal__legendsep'></span>" +
       "<span class='macro-cal__legendnote'>日期为通常发布窗口，以官方公告为准</span>";
@@ -248,26 +255,36 @@
     var dim = daysInMonth(y, m);
     var first = new Date(y, m - 1, 1).getDay();
     var offset = (first + 6) % 7;
-    var totalCells = Math.ceil((offset + dim) / 7) * 7;
+    var totalCells = 42; // 固定六周，切换月份时单元格数量和尺寸不变
     var today = new Date();
     var h = "";
     for (var i = 0; i < totalCells; i++) {
       var d = i - offset + 1;
+      var weekend = i % 7 >= 5;
       if (d < 1 || d > dim) {
-        h += "<span class='macro-cal__day macro-cal__day--blank' aria-hidden='true'></span>";
+        h += "<span class='macro-cal__day macro-cal__day--blank" +
+          (weekend ? " macro-cal__day--weekend" : "") + "' aria-hidden='true'></span>";
         continue;
       }
       var dayItems = items.filter(function (ev) {
         return resolveDays(ev, y, m).indexOf(d) !== -1;
       });
       var isToday = y === today.getFullYear() && m === today.getMonth() + 1 && d === today.getDate();
+      var density = dayItems.length >= 7 ? " macro-cal__day--very-dense" :
+        dayItems.length >= 5 ? " macro-cal__day--dense" :
+        dayItems.length >= 3 ? " macro-cal__day--many" : "";
       h += "<span class='macro-cal__day" + (isToday ? " macro-cal__day--today" : "") +
-        (dayItems.length ? " macro-cal__day--has-events" : "") + "'>" +
+        (weekend ? " macro-cal__day--weekend" : "") +
+        (dayItems.length ? " macro-cal__day--has-events" : "") + density +
+        "' data-event-count='" + dayItems.length + "'>" +
         "<span class='macro-cal__daynum'>" + d + "</span><span class='macro-cal__dayevents'>";
       dayItems.forEach(function (ev) {
         h += "<button type='button' class='macro-cal__event is-" + ev.region + " imp-" +
           ev.importance + "' data-id='" + esc(ev.id) + "' title='" +
-          esc(ev.name + " · " + ev.window) + "'>" + esc(ev.short || ev.name) + "</button>";
+          esc(ev.name + " · " + ev.window) + "'>" +
+          "<i class='macro-cal__eventdot' aria-hidden='true'></i>" +
+          "<span class='macro-cal__eventlabel'>" + esc(ev.short || ev.name) +
+          "</span></button>";
       });
       h += "</span></span>";
     }
@@ -313,7 +330,9 @@
           "<span class='macro-cal__regionbody'><span class='macro-cal__regionname'>" +
           esc(ev.name) + "</span><span class='macro-cal__regionmeta'>" +
           esc(catLabel(ev)) + " · " + esc(ev.window) + "</span></span>" +
-          "<i class='macro-cal__legenddot'></i></button>";
+          "<span class='macro-cal__regionstars imp-" + ev.importance +
+          "' aria-label='" + esc(impLabel(ev)) + "' title='" + esc(impLabel(ev)) +
+          "'>" + esc(impStars(ev)) + "</span></button>";
       });
       h += "</div></section>";
     });
@@ -367,8 +386,8 @@
         "<div class='mc-modal__tags'>" +
           "<span class='macro-cal__tag is-" + ev.region + "'>" + esc(regionLabel(ev)) + "</span>" +
           "<span class='macro-cal__tag'>" + esc(catLabel(ev)) + "</span>" +
-          "<span class='macro-cal__tag imp-" + ev.importance + "'>重要度 " +
-            esc(impLabel(ev)) + "</span>" +
+          "<span class='macro-cal__tag imp-" + ev.importance + "'>" +
+            esc(impStars(ev)) + " " + esc(impLabel(ev)) + "</span>" +
         "</div>" +
         "<h3 class='mc-modal__title' id='mc-modal-title'>" + esc(ev.name) + "</h3>" +
         "<dl class='mc-modal__dl'>" +

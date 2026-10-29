@@ -35,7 +35,7 @@
   var NOW = new Date();
   var state = {
     year: NOW.getFullYear(), month: NOW.getMonth() + 1,
-    region: "all", category: "all", importance: "all", query: ""
+    region: "all", category: "all", importance: [], query: ""
   };
 
   /* ─────────────── 工具函数 ─────────────── */
@@ -105,7 +105,7 @@
   function matches(ev) {
     if (state.region !== "all" && ev.region !== state.region) return false;
     if (state.category !== "all" && ev.category !== state.category) return false;
-    if (state.importance !== "all" && ev.importance !== state.importance) return false;
+    if (state.importance.length && state.importance.indexOf(ev.importance) === -1) return false;
     if (state.query) {
       var q = state.query.toLowerCase();
       var hay = [
@@ -188,6 +188,12 @@
     '</div></div>' +
     '<div class="macro-cal__scrollhint">左右滑动查看完整月历与地区列表</div>';
 
+  function filterActive(key, value) {
+    if (key !== "importance") return state[key] === value;
+    return value === "all" ? state.importance.length === 0 :
+      state.importance.indexOf(value) !== -1;
+  }
+
   function chipRow(key, label) {
     var vals = {
       region: ["all:全部", "cn:中国", "us:美国", "eu:欧洲", "global:全球"],
@@ -198,7 +204,7 @@
       esc(label) + '</span><div class="macro-cal__chips">';
     vals.forEach(function (v) {
       var parts = v.split(":"), val = parts[0], lab = parts[1];
-      var on = state[key] === val;
+      var on = filterActive(key, val);
       var ariaLabel = key === "importance" && IMPORTANCE[val] ? IMPORTANCE[val].label : lab;
       out += '<button type="button" class="macro-cal__chip' + (on ? " is-active" : "") +
         '" data-filter="' + key + '" data-value="' + val + '" aria-pressed="' + on +
@@ -270,9 +276,8 @@
         return resolveDays(ev, y, m).indexOf(d) !== -1;
       });
       var isToday = y === today.getFullYear() && m === today.getMonth() + 1 && d === today.getDate();
-      var density = dayItems.length >= 7 ? " macro-cal__day--very-dense" :
-        dayItems.length >= 5 ? " macro-cal__day--dense" :
-        dayItems.length >= 3 ? " macro-cal__day--many" : "";
+      var density = dayItems.length >= 7 ? " macro-cal__day--multi macro-cal__day--dense" :
+        dayItems.length >= 4 ? " macro-cal__day--multi" : "";
       h += "<span class='macro-cal__day" + (isToday ? " macro-cal__day--today" : "") +
         (weekend ? " macro-cal__day--weekend" : "") +
         (dayItems.length ? " macro-cal__day--has-events" : "") + density +
@@ -429,7 +434,17 @@
       renderBody();
     } else if (t.dataset.filter) {
       var k = t.dataset.filter, v = t.dataset.value;
-      state[k] = state[k] === v ? "all" : v;
+      if (k === "importance") {
+        if (v === "all") {
+          state.importance = [];
+        } else {
+          var index = state.importance.indexOf(v);
+          if (index === -1) state.importance.push(v);
+          else state.importance.splice(index, 1);
+        }
+      } else {
+        state[k] = state[k] === v ? "all" : v;
+      }
       renderAll();
     } else if (t.dataset.id) {
       openModal(t.dataset.id, t);
@@ -453,7 +468,7 @@
 
   function renderAll() {
     root.querySelectorAll(".macro-cal__chip").forEach(function (chip) {
-      var on = state[chip.dataset.filter] === chip.dataset.value;
+      var on = filterActive(chip.dataset.filter, chip.dataset.value);
       chip.className = "macro-cal__chip" + (on ? " is-active" : "");
       chip.setAttribute("aria-pressed", on);
     });

@@ -143,7 +143,7 @@
 
 /* 大格单月月历 */
 .macro-cal__scroll { overflow-x: auto; padding-bottom: 2px; }
-.macro-cal__monthly { min-width: 700px; }
+.macro-cal__monthly { min-width: 1050px; }
 .macro-cal__calendarwrap {
     border: 1px solid var(--mc-border);
     border-radius: 12px;
@@ -187,7 +187,7 @@
     background: color-mix(in srgb, var(--mc-accent) 9%, transparent);
 }
 .macro-cal__day--weekend {
-    background: color-mix(in srgb, #ef4444 9%, transparent);
+    background: color-mix(in srgb, var(--mc-text) 6%, transparent);
 }
 .macro-cal__daynum {
     flex: none;
@@ -235,18 +235,22 @@
 }
 .macro-cal__eventlabel { min-width: 0; overflow: hidden; text-overflow: ellipsis; }
 .macro-cal__event:hover { background: color-mix(in srgb, var(--mc-region) 27%, transparent); }
-.macro-cal__day--many .macro-cal__dayevents { gap: 3px; }
-.macro-cal__day--many .macro-cal__event { --mc-day-event-font: 10.5px; padding: 2px 4px; }
-.macro-cal__day--dense .macro-cal__dayevents { gap: 2px; }
-.macro-cal__day--dense .macro-cal__event { --mc-day-event-font: 9.5px; padding: 2px 3px; }
-.macro-cal__day--dense .macro-cal__eventdot { width: 5px; height: 5px; }
-.macro-cal__day--very-dense .macro-cal__dayevents { gap: 1px; }
-.macro-cal__day--very-dense .macro-cal__event {
-    --mc-day-event-font: 8.5px;
-    padding: 1px 3px;
-    line-height: 1.1;
+.macro-cal__day--multi .macro-cal__dayevents {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    align-content: start;
+    gap: 4px;
 }
-.macro-cal__day--very-dense .macro-cal__eventdot { width: 4px; height: 4px; }
+.macro-cal__day--multi .macro-cal__event {
+    --mc-day-event-font: 12px;
+    padding: 2px 3px;
+}
+.macro-cal__day--dense .macro-cal__dayevents { gap: 2px; }
+.macro-cal__day--dense .macro-cal__event {
+    --mc-day-event-font: 11px;
+    padding: 1px 3px;
+    line-height: 1.2;
+}
 .macro-cal__scrollhint { display: none; margin-top: 6px; font-size: 11px; color: var(--mc-text-3); }
 
 /* 月历下方：按国别列示当月事件 */
@@ -391,7 +395,7 @@
     .macro-cal__monthnav { width: 100%; }
     .macro-cal__monthtitle { flex: 1; min-width: 130px; font-size: 17px; }
     .macro-cal__search { flex-basis: 100%; }
-    .macro-cal__monthly { min-width: 650px; }
+    .macro-cal__monthly { min-width: 1050px; }
     .macro-cal__calendar { padding: 7px; }
     .macro-cal__weekdays, .macro-cal__days { gap: 4px; }
     .macro-cal__days { grid-auto-rows: 150px; }

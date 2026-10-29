@@ -1376,7 +1376,9 @@ def build_index_html(items_all, now, page_no: int = 1, total_pages: int = 1,
             .replace("__PER__", str(per))
             .replace("__COUNT__", str(total_items or len(items_all)))
             .replace("__DATA__", data_json)
-            .replace("__NOW__", now.strftime("%Y-%m-%d %H:%M")))
+            .replace("__NOW__", now.strftime("%Y-%m-%d %H:%M"))
+            .replace("__LATEST__", max((it["date"] for it in items_all),
+                                       default=now).strftime("%Y-%m-%d")))
 
 
 def main():

@@ -261,7 +261,7 @@
     var dim = daysInMonth(y, m);
     var first = new Date(y, m - 1, 1).getDay();
     var offset = (first + 6) % 7;
-    var totalCells = 42; // 固定六周，切换月份时单元格数量和尺寸不变
+    var totalCells = Math.ceil((offset + dim) / 7) * 7; // 只显示当月实际需要的周数
     var today = new Date();
     var h = "";
     for (var i = 0; i < totalCells; i++) {

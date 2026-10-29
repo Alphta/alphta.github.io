@@ -21,6 +21,8 @@
  *              irregular      日期不固定（只在月份备注和时间轴末尾列示）
  * day        placement = day 时使用的日期
  * weekday    placement 为 *Weekday 时使用的星期
+ * datesByYear 可选官方日程：{ 2026: ["01-28", "03-18"] }；该年优先于通常日期规则，
+ *              多日会议记录结果公布日（通常为会议第二日），而非起止两日均占位
  * window     通常发布窗口（文字说明）
  * note       口径 / 备注
  * source     发布机构
@@ -29,8 +31,8 @@
  * ------------
  * 这里是「通常发布窗口」，不是官方排期。同一指标在不同年份、不同年份的节假日安排下，
  * 实际发布日会在窗口内浮动 1-3 天（例如 CPI 有时 9 日、有时 10 日；PMI 偶有因节假日
- * 顺延）。会议类（FOMC、欧央行）每年的具体日期由官方提前公布，本表只在对应月份
- * 给出「通常时点」作为参考。使用前请以国家统计局、央行、美国劳工部等官方公告为准。
+ * 顺延）。会议类（FOMC、欧央行）若配置 datesByYear 则优先使用官方日程；未配置年份
+ * 只在对应月份给出「通常时点」作为参考。使用前请以国家统计局、央行、美国劳工部等官方公告为准。
  */
 window.MACRO_EVENTS = [
   /* ─────────────── 中国 · 月度数据 ─────────────── */
@@ -85,7 +87,7 @@ window.MACRO_EVENTS = [
     frequency: "monthly",
     placement: "day",
     day: 7,
-    window: "每月 7 日左右",
+    window: "每月 7-13 日左右",
     note: "以美元计价的进出口总额、贸易顺差/逆差；出口链相关度高。",
     source: "海关总署"
   },
@@ -367,16 +369,30 @@ window.MACRO_EVENTS = [
   },
   {
     id: "us-michigan-confidence",
-    name: "密歇根大学消费者信心指数",
-    short: "密歇根信心",
+    name: "密歇根大学消费者信心指数初值",
+    short: "密歇根初值",
     region: "us",
     category: "data",
     importance: "low",
     frequency: "monthly",
     placement: "day",
-    day: 15,
-    window: "每月 10-15 日（初值/终值）",
-    note: "消费者信心终值与预期差；关注通胀预期分项。",
+    day: 11,
+    window: "每月约 10-12 日（初值）",
+    note: "消费者信心初值与通胀预期分项，关注消费者对经济前景的早期反馈。",
+    source: "密歇根大学 / 汤森路透"
+  },
+  {
+    id: "us-michigan-confidence-final",
+    name: "密歇根大学消费者信心指数终值",
+    short: "密歇根终值",
+    region: "us",
+    category: "data",
+    importance: "low",
+    frequency: "monthly",
+    placement: "day",
+    day: 24,
+    window: "每月约 24-25 日（终值）",
+    note: "消费者信心终值与预期差；关注终值修订及通胀预期分项。",
     source: "密歇根大学 / 汤森路透"
   },
   {
@@ -404,6 +420,10 @@ window.MACRO_EVENTS = [
     importance: "high",
     frequency: "multiple",
     months: [1, 3, 4, 6, 7, 9, 10, 12],
+    datesByYear: {
+      2026: ["01-28", "03-18", "04-29", "06-17", "07-29", "09-16", "10-28", "12-09"],
+      2027: ["01-27", "03-17", "04-28", "06-09", "07-28", "09-15", "10-27", "12-08"]
+    },
     placement: "day",
     day: 15,
     window: "每年约 8 次，1/3/4/6/7/9/10/12 月",
@@ -419,6 +439,10 @@ window.MACRO_EVENTS = [
     importance: "high",
     frequency: "quarterly",
     months: [3, 6, 9, 12],
+    datesByYear: {
+      2026: ["03-18", "06-17", "09-16", "12-09"],
+      2027: ["03-17", "06-09", "09-15", "12-08"]
+    },
     placement: "day",
     day: 15,
     window: "3/6/9/12 月 FOMC 会议日（含点阵图）",
@@ -435,10 +459,15 @@ window.MACRO_EVENTS = [
     category: "meeting",
     importance: "high",
     frequency: "multiple",
-    months: [1, 3, 4, 6, 7, 9, 10, 12],
+    months: [2, 3, 4, 6, 7, 9, 10, 12],
+    datesByYear: {
+      2026: ["02-05", "03-19", "04-30", "06-11", "07-23", "09-10", "10-29", "12-17"],
+      2027: ["02-04", "03-18", "04-29", "06-10", "07-22", "09-09", "10-28", "12-16"],
+      2028: ["02-03", "03-23", "05-04", "06-22", "07-20", "09-07", "10-12", "11-23", "12-07"]
+    },
     placement: "day",
     day: 15,
-    window: "每年约 8 次，1/3/4/6/7/9/10/12 月",
+    window: "每年约 8 次，2/3/4/6/7/9/10/12 月",
     note: "主要再融资利率、存款便利利率、资产购买计划表态；含拉加德发布会。",
     source: "欧洲中央银行（ECB）"
   },

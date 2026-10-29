@@ -10,3 +10,20 @@
         font-size: 2.5rem;
     }
 }
+
+/* 深色模式统一为净值页配色（#0f1216 系深黑，替代主题默认的 #303030/#424242 灰调） */
+:root[data-scheme="dark"] {
+    --body-background: #0f1216;
+    --body-text-color: rgba(230, 233, 238, 0.72);
+
+    --card-background: #171b21;
+    --card-background-selected: rgba(78, 161, 255, 0.18);
+    --card-text-color-main: #e6e9ee;
+    --card-text-color-secondary: rgba(230, 233, 238, 0.72);
+    --card-text-color-tertiary: #8b95a3;
+    --card-separator-color: #262c35;
+
+    --blockquote-background-color: #1d232b;
+    --table-border-color: #262c35;
+    --tr-even-background-color: #1d232b;
+}

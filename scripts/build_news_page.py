@@ -800,9 +800,18 @@ INDEX_TMPL = """<!doctype html>
 <html lang="zh-cn"><head><meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <title>机构公告速递</title>
+<script>
+// 与博客/净值页共用配色偏好（Stack 主题存在 localStorage 的 StackColorScheme）
+(function(){
+  var pref = "auto";
+  try { pref = localStorage.getItem("StackColorScheme") || "auto"; } catch(e) {}
+  var dark = pref === "dark" || (pref === "auto" && window.matchMedia("(prefers-color-scheme: dark)").matches);
+  document.documentElement.classList.toggle("dark", dark);
+})();
+</script>
 <style>
 :root{--fg:#1a1a1a;--dim:#8a8a8a;--line:#ececec;--link:#0a5bd4;--bg:#fff}
-@media (prefers-color-scheme:dark){:root{--fg:#e6e6e6;--dim:#8f8f8f;--line:#2a2a2a;--link:#6aa9ff;--bg:#161616}}
+html.dark{--fg:#e6e6e6;--dim:#8f8f8f;--line:#2a2a2a;--link:#6aa9ff;--bg:#161616}
 *{box-sizing:border-box}
 body{font:16px/1.75 -apple-system,BlinkMacSystemFont,"Noto Sans SC","PingFang SC",sans-serif;
      max-width:52rem;margin:3rem auto;padding:0 1.2rem;color:var(--fg);background:var(--bg)}
@@ -810,7 +819,12 @@ h1{font-size:1.45rem;margin:0 0 1.6rem}
 .topbar{display:flex;align-items:center;justify-content:space-between;margin-bottom:10px}
 .back{font-family:-apple-system,BlinkMacSystemFont,"PingFang SC","Segoe UI",sans-serif;
       font-size:13px;color:#6b7280;text-decoration:none}
-@media (prefers-color-scheme:dark){.back{color:#8b95a3}}
+html.dark .back{color:#8b95a3}
+.theme-btn{background:var(--bg);border:1px solid var(--line);color:var(--dim);border-radius:8px;
+      width:34px;height:34px;display:inline-flex;align-items:center;justify-content:center;
+      cursor:pointer;transition:color .2s ease,border-color .2s ease}
+.theme-btn:hover{color:var(--link);border-color:var(--link)}
+.theme-btn svg{display:block}
 ul{list-style:none;padding:0;margin:0}
 .hd,li{display:grid;grid-template-columns:5.6rem minmax(0,1fr) 7rem;
        column-gap:.85rem;align-items:center}
@@ -852,7 +866,7 @@ a.t.read{color:var(--dim);opacity:.62}
   .hd .c-src,li .s{display:none}
 }
 </style></head><body>
-<div class="topbar"><a class="back" href="/">← 返回首页</a></div>
+<div class="topbar"><a class="back" href="/">← 返回首页</a><button class="theme-btn" id="theme-btn" aria-label="切换明暗"></button></div>
 <h1>机构公告速递</h1>
 
 <div class="hd">
@@ -874,6 +888,34 @@ __ROWS__
 </footer>
 
 <script>window.NF={page:__PAGE__,per:__PER__,pages:__PAGES__,data:__DATA__};</script>
+<script>
+/* 主题切换：与净值页同一套逻辑，写 StackColorScheme 即同步整站 */
+(function(){
+  var SUN = '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M4.9 4.9l1.4 1.4M17.7 17.7l1.4 1.4M2 12h2M20 12h2M4.9 19.1l1.4-1.4M17.7 6.3l1.4-1.4"/></svg>';
+  var MOON = '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M21 12.8A9 9 0 1 1 11.2 3a7 7 0 0 0 9.8 9.8z"/></svg>';
+  function syncBtn(){
+    var btn = document.getElementById('theme-btn');
+    if (btn) btn.innerHTML = document.documentElement.classList.contains('dark') ? SUN : MOON;
+  }
+  function setTheme(dark, persist){
+    document.documentElement.classList.toggle('dark', dark);
+    if (persist) { try { localStorage.setItem('StackColorScheme', dark ? 'dark' : 'light'); } catch(e) {} }
+    syncBtn();
+  }
+  var btn = document.getElementById('theme-btn');
+  if (btn) btn.addEventListener('click', function(){
+    setTheme(!document.documentElement.classList.contains('dark'), true);
+  });
+  try {
+    window.matchMedia('(prefers-color-scheme: dark)').addEventListener('change', function(e){
+      var pref = 'auto';
+      try { pref = localStorage.getItem('StackColorScheme') || 'auto'; } catch(_) {}
+      if (pref === 'auto') setTheme(e.matches, false);
+    });
+  } catch(e) {}
+  syncBtn();
+})();
+</script>
 <script>
 (function(){
   var NF = window.NF || {data:[]};

@@ -544,7 +544,7 @@ def parse_ndrc(text: str, src: "Source", now: datetime):
         if len(title) < 4 or not dt:
             continue
         items.append({"title": title[:180],
-                      "link": urllib.parse.urljoin(src.home or src.url, a.group(1)),
+                      "link": urllib.parse.urljoin(src.url, a.group(1)),
                       "date": dt})
     return items
 

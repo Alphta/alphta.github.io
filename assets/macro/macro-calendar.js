@@ -201,17 +201,16 @@
       '</div>' +
     '</div>' +
     '<div class="macro-cal__legend" id="mc-legend"></div>' +
-    '<div class="macro-cal__summary" id="mc-summary" aria-live="polite"></div>' +
-    '<div class="macro-cal__scroll"><div class="macro-cal__monthly">' +
-      '<div class="macro-cal__calendarwrap"><div class="macro-cal__calendar">' +
+    '<div class="macro-cal__scroll"><div class="macro-cal__calendarwrap">' +
+      '<div class="macro-cal__calendar">' +
         '<div class="macro-cal__weekdays">' +
           '<span>周一</span><span>周二</span><span>周三</span><span>周四</span>' +
           '<span>周五</span><span>周六</span><span>周日</span>' +
         '</div><div class="macro-cal__days" id="mc-days"></div>' +
-      '</div></div>' +
-      '<div class="macro-cal__regions" id="mc-regions"></div>' +
+      '</div>' +
     '</div></div>' +
-    '<div class="macro-cal__scrollhint">左右滑动查看完整月历与地区列表</div>';
+    '<div class="macro-cal__regions" id="mc-regions"></div>' +
+    '<div class="macro-cal__scrollhint">左右滑动查看完整月历</div>';
 
   function filterActive(key, value) {
     if (key !== "importance") return state[key] === value;
@@ -240,6 +239,25 @@
 
   /* ─────────────── 图例、月历与分国别列表 ─────────────── */
 
+  function nextImportant() {
+    var today = new Date();
+    today.setHours(0, 0, 0, 0);
+    for (var offset = 0; offset < 370; offset++) {
+      var date = new Date(today.getFullYear(), today.getMonth(), today.getDate() + offset);
+      var y = date.getFullYear(), m = date.getMonth() + 1, d = date.getDate();
+      var items = EVENTS.filter(function (ev) {
+        return ev.importance === "high" && isOccurring(ev, m, y) &&
+          resolveDays(ev, y, m).indexOf(d) !== -1;
+      });
+      if (items.length) {
+        var ev = sortEvents(items)[0];
+        return (offset === 0 ? "今日" : "下个") + " ★★★：" + m + " 月 " + d +
+          " 日 · " + ev.name;
+      }
+    }
+    return "";
+  }
+
   function renderLegend() {
     var html = "<span class='macro-cal__legendlabel'>地区</span>";
     Object.keys(REGIONS).forEach(function (r) {
@@ -253,24 +271,14 @@
         "' aria-hidden='true'>" + IMPORTANCE[i].stars + "</i>" +
         esc(IMPORTANCE[i].label) + "</span>";
     });
-    html += "<span class='macro-cal__legendsep'></span>" +
-      "<span class='macro-cal__legendnote'>官方日程优先，其余日期为通常发布窗口</span>";
+    var next = nextImportant();
+    if (next) html += "<span class='macro-cal__legendnext'>" + esc(next) + "</span>";
     root.querySelector("#mc-legend").innerHTML = html;
-  }
-
-  function occurrenceCount(items) {
-    return items.reduce(function (total, ev) {
-      var days = resolveDays(ev, state.year, state.month);
-      return total + (days.length || 1);
-    }, 0);
   }
 
   function renderBody() {
     var items = monthItems();
     root.querySelector("#mc-month-title").textContent = monthText(state.year, state.month);
-    root.querySelector("#mc-summary").innerHTML =
-      "本月 <strong>" + items.length + "</strong> 项事件 · " +
-      occurrenceCount(items) + " 项次（周频按实际日期计）";
     root.querySelector('[data-month-step="-1"]').setAttribute("aria-label",
       "上一个月：" + monthText(state.month === 1 ? state.year - 1 : state.year,
         state.month === 1 ? 12 : state.month - 1));
@@ -293,8 +301,9 @@
       var d = i - offset + 1;
       var weekend = i % 7 >= 5;
       if (d < 1 || d > dim) {
-        h += "<span class='macro-cal__day macro-cal__day--blank" +
-          (weekend ? " macro-cal__day--weekend" : "") + "' aria-hidden='true'></span>";
+        var adjacent = d < 1 ? daysInMonth(y, m - 1) + d : d - dim;
+        h += "<span class='macro-cal__day macro-cal__day--adjacent' aria-hidden='true'>" +
+          "<span class='macro-cal__daynum'>" + adjacent + "</span></span>";
         continue;
       }
       var dayItems = items.filter(function (ev) {
@@ -313,7 +322,6 @@
         h += "<button type='button' class='macro-cal__event is-" + ev.region + " imp-" +
           ev.importance + "' data-id='" + esc(ev.id) + "' title='" +
           esc(official + ev.name + " · " + ev.window) + "'>" +
-          "<i class='macro-cal__eventdot' aria-hidden='true'></i>" +
           "<span class='macro-cal__eventlabel'>" + esc(ev.short || ev.name) +
           "</span></button>";
       });
@@ -390,8 +398,6 @@
     if (ev.frequency === "monthly" || ev.frequency === "weekly") dateText = ev.window;
     var isOfficial = officialDatesForYear(ev, state.year) !== null;
     var dateLabel = isOfficial ? state.year + " 年官方日期" : "本年度日期 / 节奏";
-    var hintText = isOfficial ? "※ 日期取自官方会议日历，后续调整仍以官方公告为准。" :
-      "※ 以上为通常窗口推算，实际日期以官方公告为准。";
 
     if (!modal) {
       modal = document.createElement("div");
@@ -433,7 +439,6 @@
           "<dt>发布机构</dt><dd>" + esc(ev.source) + "</dd>" +
         "</dl>" +
         "<p class='mc-modal__note'>" + esc(ev.note) + "</p>" +
-        "<p class='mc-modal__hint'>" + esc(hintText) + "</p>" +
       "</div>";
     modal.classList.add("is-open");
     document.body.style.overflow = "hidden";

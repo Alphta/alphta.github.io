@@ -945,7 +945,7 @@ __ROWS__
 <section id="macro-panel" role="tabpanel" aria-labelledby="macro-tab" hidden>
   <p class="macro-page-note">全年宏观数据发布与政策会议节奏一览，覆盖中国、美国、欧元区与全球关键节点。点击任意事件可查看通常窗口、频率、推算日期与口径备注。</p>
   <div data-macro-calendar></div>
-  <p class="macro-page-note macro-page-note--disclaimer"><strong>口径声明：</strong>所有日期均为通常发布窗口的推算值，不是官方排期。实际发布日可能因周末、节假日或官方安排调整；FOMC、欧央行等会议日期以官方公告为准。本页不构成投资建议。</p>
+  <p class="macro-page-note macro-page-note--disclaimer"><strong>口径声明：</strong>除标注「官方日程」的央行会议外，日期均为通常发布窗口的推算值，不是官方排期。实际发布日可能因周末、节假日或官方安排调整；央行会议未标注官方日程的年份以官方公告为准。本页不构成投资建议。</p>
 </section>
 
 <script>

@@ -1,25 +1,28 @@
 /* 宏观信息日历：单月月历 + 分国别当月事件。
    同时兼容新闻独立页（--fg/--bg/--line，html.dark）
    与 Hugo Stack 主题（--card-*，data-scheme="dark"）。
-   本文件只使用标准 CSS 语法，新闻生成器会原样发布为 CSS。 */
+   本文件只使用标准 CSS 语法，新闻生成器会原样发布为 CSS。
+   字号只分四档：11.5 / 13 / 14.5 / 20px。 */
 
 :root {
-    --mc-cn: #d9534f;
-    --mc-us: #3b82f6;
-    --mc-eu: #16a34a;
-    --mc-global: #8b5cf6;
-    --mc-imp-high: #d9534f;
-    --mc-imp-medium: #d97706;
-    --mc-imp-low: #059669;
+    /* 地区色：共用同一 HSL 饱和度与明度，并排时视觉重量一致 */
+    --mc-cn: hsl(358 62% 54%);
+    --mc-us: hsl(217 62% 54%);
+    --mc-eu: hsl(152 62% 54%);
+    --mc-global: hsl(265 62% 54%);
+    /* 重要度不再占用色相：★★★ 沿用全站收藏金，★★/★ 用灰阶 */
+    --mc-imp-high: #e8a33d;
+    --mc-imp-medium: #9aa0a6;
+    --mc-imp-low: #c6cacf;
 }
 :root[data-scheme="dark"], :root.dark {
-    --mc-cn: #f87171;
-    --mc-us: #60a5fa;
-    --mc-eu: #4ade80;
-    --mc-global: #a78bfa;
-    --mc-imp-high: #f87171;
-    --mc-imp-medium: #fbbf24;
-    --mc-imp-low: #34d399;
+    --mc-cn: hsl(358 65% 68%);
+    --mc-us: hsl(217 65% 68%);
+    --mc-eu: hsl(152 65% 68%);
+    --mc-global: hsl(265 65% 68%);
+    --mc-imp-high: #e8a33d;
+    --mc-imp-medium: #8b95a3;
+    --mc-imp-low: #5c6470;
 }
 .macro-cal, .mc-modal {
     --mc-region: var(--mc-cn);
@@ -46,7 +49,7 @@
     outline-offset: 2px;
 }
 
-/* 工具栏与月份切换 */
+/* 工具栏与月份切换：导航、今天、搜索框统一 32px 高 */
 .macro-cal__toolbar { display: flex; flex-direction: column; gap: 14px; margin-bottom: 6px; }
 .macro-cal__controls { display: flex; flex-wrap: wrap; gap: 16px; align-items: center; }
 .macro-cal__monthnav { display: flex; align-items: center; gap: 7px; }
@@ -60,17 +63,25 @@
     font-variant-numeric: tabular-nums;
 }
 .macro-cal__navbtn, .macro-cal__today {
-    height: 34px;
+    height: 32px;
     border: 1px solid var(--mc-border);
     border-radius: 8px;
     background: var(--mc-bg);
     color: var(--mc-text-2);
     font-family: inherit;
+    font-size: 13px;
     cursor: pointer;
     transition: border-color .15s, color .15s, background .15s;
 }
-.macro-cal__navbtn { width: 36px; padding: 0; font-size: 25px; line-height: 1; }
-.macro-cal__today { padding: 0 11px; font-size: 12.5px; }
+.macro-cal__navbtn {
+    width: 32px;
+    padding: 0;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 20px;
+}
+.macro-cal__today { padding: 0 12px; }
 .macro-cal__navbtn:hover, .macro-cal__today:hover {
     border-color: var(--mc-accent);
     color: var(--mc-accent);
@@ -78,7 +89,8 @@
 .macro-cal__search { flex: 1 1 230px; min-width: 180px; }
 .macro-cal__search input {
     width: 100%;
-    padding: 7px 11px;
+    height: 32px;
+    padding: 0 11px;
     border-radius: 8px;
     border: 1px solid var(--mc-border);
     background: var(--mc-bg);
@@ -88,16 +100,16 @@
 }
 .macro-cal__filters { display: flex; flex-direction: column; gap: 8px; }
 .macro-cal__chiprow { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; }
-.macro-cal__chiplabel { font-size: 12px; color: var(--mc-text-3); }
+.macro-cal__chiplabel { font-size: 11.5px; color: var(--mc-text-3); }
 .macro-cal__chips { display: flex; flex-wrap: wrap; gap: 4px; }
 .macro-cal__chip {
-    padding: 3px 11px;
+    padding: 4px 12px;
     border-radius: 999px;
     border: 1px solid var(--mc-border);
     background: transparent;
     color: var(--mc-text-2);
     font-family: inherit;
-    font-size: 12.5px;
+    font-size: 11.5px;
     cursor: pointer;
     transition: border-color .15s, color .15s, background .15s;
 }
@@ -108,19 +120,20 @@
     color: #fff;
 }
 
-/* 图例与摘要 */
+/* 图例与“下个重要事件”合并为一行；口径声明只保留页顶与页底两处 */
 .macro-cal__legend {
     display: flex;
     flex-wrap: wrap;
     align-items: center;
     gap: 10px;
+    margin-bottom: 12px;
     padding: 10px 0;
-    font-size: 12.5px;
+    font-size: 11.5px;
     color: var(--mc-text-2);
-    border-top: 1px dashed var(--mc-border);
-    border-bottom: 1px dashed var(--mc-border);
+    border-top: 1px solid var(--mc-border);
+    border-bottom: 1px solid var(--mc-border);
 }
-.macro-cal__legendlabel, .macro-cal__legendnote { color: var(--mc-text-3); }
+.macro-cal__legendlabel { color: var(--mc-text-3); }
 .macro-cal__legenditem { display: inline-flex; align-items: center; gap: 5px; }
 .macro-cal__legenddot {
     width: 9px;
@@ -131,6 +144,12 @@
     flex: none;
 }
 .macro-cal__legendsep { width: 1px; height: 12px; background: var(--mc-border); }
+.macro-cal__legendnext {
+    margin-left: auto;
+    color: var(--mc-text-2);
+    white-space: nowrap;
+    font-variant-numeric: tabular-nums;
+}
 .macro-cal__stars, .macro-cal__regionstars {
     color: var(--mc-imp);
     font-style: normal;
@@ -138,13 +157,11 @@
     letter-spacing: .5px;
     font-variant-numeric: tabular-nums;
 }
-.macro-cal__summary { padding: 10px 0; font-size: 12.5px; color: var(--mc-text-3); }
-.macro-cal__summary strong { color: var(--mc-text); }
 
-/* 大格单月月历 */
+/* 大格单月月历（月历天然横向，允许横滚；文字列表不随它横滚） */
 .macro-cal__scroll { overflow-x: auto; padding-bottom: 2px; }
-.macro-cal__monthly { min-width: 1050px; }
 .macro-cal__calendarwrap {
+    min-width: 1050px;
     border: 1px solid var(--mc-border);
     border-radius: 12px;
     background: var(--mc-bg);
@@ -160,7 +177,7 @@
 .macro-cal__weekdays span {
     padding: 4px 0;
     text-align: center;
-    font-size: 12px;
+    font-size: 11.5px;
     font-weight: 600;
     color: var(--mc-text-3);
 }
@@ -180,14 +197,21 @@
 .macro-cal__day--has-events {
     background: color-mix(in srgb, var(--mc-text) 2%, transparent);
 }
-.macro-cal__day--blank { opacity: .32; background: transparent; }
+/* 周末声明在 today 之前：今天落在周末时仍保留强调蓝底与 2px 边框 */
+.macro-cal__day--weekend {
+    background: color-mix(in srgb, var(--mc-text) 6%, transparent);
+}
 .macro-cal__day--today {
     border: 2px solid var(--mc-accent);
     padding: 6px;
     background: color-mix(in srgb, var(--mc-accent) 9%, transparent);
 }
-.macro-cal__day--weekend {
-    background: color-mix(in srgb, var(--mc-text) 6%, transparent);
+/* 邻月日期：去边框只留三档灰数字，保持月历连续感 */
+.macro-cal__day--adjacent { border-color: transparent; background: transparent; }
+.macro-cal__day--adjacent .macro-cal__daynum {
+    color: var(--mc-text-3);
+    opacity: .45;
+    font-weight: 400;
 }
 .macro-cal__daynum {
     flex: none;
@@ -207,66 +231,53 @@
     min-height: 0;
     overflow: hidden;
 }
+/* 事件条目：左侧 3px 色条承载地区色，不再叠加同色圆点 */
 .macro-cal__event {
     display: flex;
     align-items: center;
-    gap: 4px;
     flex: none;
     width: 100%;
-    padding: 3px 5px;
+    padding: 3px 6px 3px 5px;
     border: 0;
-    border-radius: 5px;
-    background: color-mix(in srgb, var(--mc-region) 17%, transparent);
+    border-left: 3px solid var(--mc-region);
+    border-radius: 4px;
+    background: color-mix(in srgb, var(--mc-region) 12%, transparent);
     color: var(--mc-text);
     font-family: inherit;
-    font-size: var(--mc-day-event-font, 12px);
-    line-height: 1.2;
+    font-size: 11.5px;
+    line-height: 1.25;
     text-align: left;
     white-space: nowrap;
     cursor: pointer;
     transition: background .15s;
 }
-.macro-cal__eventdot {
-    width: 6px;
-    height: 6px;
-    flex: none;
-    border-radius: 50%;
-    background: var(--mc-region);
-}
 .macro-cal__eventlabel { min-width: 0; overflow: hidden; text-overflow: ellipsis; }
-.macro-cal__event:hover { background: color-mix(in srgb, var(--mc-region) 27%, transparent); }
+.macro-cal__event:hover { background: color-mix(in srgb, var(--mc-region) 22%, transparent); }
 .macro-cal__day--multi .macro-cal__dayevents {
     display: grid;
     grid-template-columns: repeat(2, minmax(0, 1fr));
     align-content: start;
     gap: 4px;
 }
-.macro-cal__day--multi .macro-cal__event {
-    --mc-day-event-font: 12px;
-    padding: 2px 3px;
-}
+.macro-cal__day--multi .macro-cal__event { padding: 2px 4px 2px 3px; }
 .macro-cal__day--dense .macro-cal__dayevents { gap: 2px; }
-.macro-cal__day--dense .macro-cal__event {
-    --mc-day-event-font: 11px;
-    padding: 1px 3px;
-    line-height: 1.2;
-}
-.macro-cal__scrollhint { display: none; margin-top: 6px; font-size: 11px; color: var(--mc-text-3); }
+.macro-cal__day--dense .macro-cal__event { padding: 1px 4px 1px 3px; }
+.macro-cal__scrollhint { display: none; margin-top: 6px; font-size: 11.5px; color: var(--mc-text-3); }
 
-/* 月历下方：按国别列示当月事件 */
+/* 月历下方：按国别列示当月事件（独立布局，不参与月历横滚） */
 .macro-cal__regions {
     display: grid;
     grid-template-columns: repeat(4, minmax(0, 1fr));
     align-items: stretch;
     gap: 10px;
     width: 100%;
-    margin-top: 16px;
+    margin-top: 14px;
 }
 .macro-cal__region {
     min-width: 0;
     margin: 0;
     border: 1px solid var(--mc-border);
-    border-radius: 10px;
+    border-radius: 12px;
     background: var(--mc-bg);
     overflow: hidden;
 }
@@ -275,19 +286,20 @@
     justify-content: space-between;
     align-items: center;
     margin: 0;
-    padding: 11px 13px;
-    border-left: 3px solid var(--mc-region);
-    background: color-mix(in srgb, var(--mc-region) 8%, transparent);
+    padding: 11px 13px 11px 11px;
+    border-left: 2px solid var(--mc-region);
+    background: color-mix(in srgb, var(--mc-region) 5%, transparent);
     color: var(--mc-text);
-    font-size: 14px;
+    font-size: 14.5px;
 }
 .macro-cal__regionhead > span:first-child { display: inline-flex; align-items: center; gap: 7px; }
 .macro-cal__regioncount { font-size: 11.5px; font-weight: 400; color: var(--mc-text-3); }
 .macro-cal__regionlist { display: flex; flex-direction: column; }
+/* 日期作为视觉锚点：固定宽左列、主文字色、tabular-nums */
 .macro-cal__regionrow {
     display: grid;
-    grid-template-columns: minmax(0, 1fr) auto;
-    gap: 4px 8px;
+    grid-template-columns: 54px minmax(0, 1fr) auto;
+    gap: 2px 10px;
     align-items: start;
     width: 100%;
     padding: 10px 13px;
@@ -303,24 +315,26 @@
 .macro-cal__regionrow:hover { background: color-mix(in srgb, var(--mc-region) 7%, transparent); }
 .macro-cal__regionday {
     grid-column: 1;
-    grid-row: 1;
-    color: var(--mc-text-3);
-    font-size: 12px;
+    grid-row: 1 / span 2;
+    padding-top: 1px;
+    color: var(--mc-text);
+    font-size: 13px;
+    font-weight: 600;
     white-space: nowrap;
     font-variant-numeric: tabular-nums;
 }
 .macro-cal__regionbody {
     display: flex;
-    grid-column: 1 / -1;
-    grid-row: 2;
+    grid-column: 2;
+    grid-row: 1 / span 2;
     flex-direction: column;
     gap: 2px;
     min-width: 0;
 }
 .macro-cal__regionname { font-size: 13px; font-weight: 600; }
 .macro-cal__regionmeta { color: var(--mc-text-3); font-size: 11.5px; line-height: 1.55; }
-.macro-cal__regionstars { grid-column: 2; grid-row: 1; font-size: 11px; }
-.macro-cal__regionempty { padding: 18px 13px; color: var(--mc-text-3); font-size: 12.5px; }
+.macro-cal__regionstars { grid-column: 3; grid-row: 1; padding-top: 2px; font-size: 11.5px; }
+.macro-cal__regionempty { padding: 18px 13px; color: var(--mc-text-3); font-size: 13px; }
 
 /* 详情弹窗 */
 .mc-modal { position: fixed; inset: 0; z-index: 9000; display: none; }
@@ -367,7 +381,7 @@
 .macro-cal__tag.imp-high { --mc-region: var(--mc-imp-high); }
 .macro-cal__tag.imp-medium { --mc-region: var(--mc-imp-medium); }
 .macro-cal__tag.imp-low { --mc-region: var(--mc-imp-low); }
-.mc-modal__title { margin: 0 0 14px; font-size: 18px; color: var(--mc-text); }
+.mc-modal__title { margin: 0 0 14px; font-size: 20px; color: var(--mc-text); }
 .mc-modal__dl {
     display: grid;
     grid-template-columns: auto 1fr;
@@ -378,7 +392,7 @@
 .mc-modal__dl dt { color: var(--mc-text-3); white-space: nowrap; }
 .mc-modal__dl dd { margin: 0; color: var(--mc-text); overflow-wrap: anywhere; }
 .mc-modal__note {
-    margin: 0 0 10px;
+    margin: 0;
     font-size: 13px;
     line-height: 1.7;
     color: var(--mc-text-2);
@@ -386,29 +400,27 @@
     border-radius: 8px;
     background: color-mix(in srgb, var(--mc-text) 5%, transparent);
 }
-.mc-modal__hint { margin: 0; font-size: 11.5px; color: var(--mc-text-3); }
 
+@media (max-width: 1080px) {
+    .macro-cal__regions { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+}
 @media (max-width: 720px) {
     .macro-cal__scrollhint { display: block; }
+    .macro-cal__regions { grid-template-columns: 1fr; }
 }
 @media (max-width: 560px) {
     .macro-cal__monthnav { width: 100%; }
-    .macro-cal__monthtitle { flex: 1; min-width: 130px; font-size: 17px; }
+    .macro-cal__monthtitle { flex: 1; min-width: 130px; }
     .macro-cal__search { flex-basis: 100%; }
-    .macro-cal__monthly { min-width: 1050px; }
     .macro-cal__calendar { padding: 7px; }
     .macro-cal__weekdays, .macro-cal__days { gap: 4px; }
-    .macro-cal__days { grid-auto-rows: 150px; }
-    .macro-cal__day { height: 150px; padding: 5px; }
+    .macro-cal__day { padding: 5px; }
     .macro-cal__day--today { padding: 4px; }
-    .macro-cal__event { padding: 3px 5px; font-size: 11px; }
     .mc-modal__card { padding: 20px 18px; }
     .mc-modal__dl { grid-template-columns: 1fr; gap: 2px; }
     .mc-modal__dl dd { margin-bottom: 8px; }
 }
 @media print {
     .macro-cal__toolbar, .macro-cal__legend, .macro-cal__scrollhint { display: none; }
-    .macro-cal__monthly { min-width: 0; }
-    .macro-cal__days { grid-auto-rows: 150px; }
-    .macro-cal__day { height: 150px; }
+    .macro-cal__calendarwrap { min-width: 0; }
 }

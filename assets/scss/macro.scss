@@ -50,7 +50,7 @@
 }
 
 /* 工具栏与月份切换：导航、今天、视图切换、导出、搜索框统一 32px 高 */
-.macro-cal__toolbar { display: flex; flex-direction: column; gap: 14px; margin-bottom: 6px; }
+.macro-cal__toolbar { display: flex; flex-direction: column; gap: 14px; margin-bottom: 12px; }
 .macro-cal__controls { display: flex; flex-wrap: wrap; gap: 16px; align-items: center; }
 .macro-cal__monthnav { display: flex; align-items: center; gap: 7px; flex-wrap: wrap; }
 .macro-cal__monthtitle {
@@ -120,7 +120,15 @@
     font-family: inherit;
     font-size: 13px;
 }
-.macro-cal__filters { display: flex; flex-direction: column; gap: 8px; }
+/* 筛选带：上下细线成带，与控件行、七日速览明确分模块（与图例带同族） */
+.macro-cal__filters {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    padding: 10px 0 12px;
+    border-top: 1px solid var(--mc-border);
+    border-bottom: 1px solid var(--mc-border);
+}
 .macro-cal__chiprow { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; }
 .macro-cal__chiplabel { font-size: 11.5px; color: var(--mc-text-3); }
 .macro-cal__chips { display: flex; flex-wrap: wrap; gap: 4px; }
@@ -655,10 +663,11 @@
     .macro-cal__regions { grid-template-columns: repeat(2, minmax(0, 1fr)); }
     .macro-cal__yeargrid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
 }
-/* 宽屏：地区/类别/重要度三组并排一行；1080px 及以下维持逐行堆叠 */
+/* 宽屏：地区/类别/重要度三组并排一行；自然宽度 + space-between，
+   组间间隙均分，首组贴左、末组贴右与上下内容边缘对齐；1080px 及以下维持逐行堆叠 */
 @media (min-width: 1081px) {
-    .macro-cal__filters { flex-direction: row; flex-wrap: nowrap; align-items: center; gap: 16px; }
-    .macro-cal__chiprow { flex: 1 1 0; min-width: 0; }
+    .macro-cal__filters { flex-direction: row; flex-wrap: nowrap; align-items: center; gap: 16px; justify-content: space-between; }
+    .macro-cal__chiprow { flex: 0 0 auto; min-width: 0; }
 }
 @media (max-width: 720px) {
     .macro-cal__scrollhint { display: block; }

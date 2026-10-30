@@ -655,6 +655,11 @@
     .macro-cal__regions { grid-template-columns: repeat(2, minmax(0, 1fr)); }
     .macro-cal__yeargrid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
 }
+/* 宽屏：地区/类别/重要度三组并排一行；1080px 及以下维持逐行堆叠 */
+@media (min-width: 1081px) {
+    .macro-cal__filters { flex-direction: row; flex-wrap: nowrap; align-items: center; gap: 16px; }
+    .macro-cal__chiprow { flex: 1 1 0; min-width: 0; }
+}
 @media (max-width: 720px) {
     .macro-cal__scrollhint { display: block; }
     .macro-cal__regions { grid-template-columns: 1fr; }

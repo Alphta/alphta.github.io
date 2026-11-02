@@ -836,10 +836,9 @@ INDEX_TMPL = """<!doctype html>
 <style>
 :root{--fg:#1a1a1a;--dim:#8a8a8a;--line:#e6e7ec;--link:#0a5bd4;--bg:#f5f5fa;
   --card:#fff;--panel:#fff;--on-accent:#fff;--glow:none;
-  --card-grad:none;--card-shadow:0 1px 2px rgba(0,0,0,.04)}
+  --card-shadow:0 1px 2px rgba(0,0,0,.04)}
 html.dark{--fg:#e9edf3;--dim:#8a94a3;--line:rgba(255,255,255,.075);--link:#4ea1ff;--bg:#0f1216;
   --card:#151a21;--panel:#151a21;--on-accent:#06101d;
-  --card-grad:linear-gradient(180deg,rgba(255,255,255,.045),rgba(255,255,255,.012) 55%,rgba(255,255,255,0));
   --card-shadow:0 1px 2px rgba(0,0,0,.4),0 10px 28px -18px rgba(0,0,0,.9),inset 0 1px 0 rgba(255,255,255,.05);
   --glow:radial-gradient(1100px 480px at 50% -120px,rgba(78,161,255,.16),rgba(78,161,255,.04) 45%,transparent 72%)}
 *{box-sizing:border-box}
@@ -847,8 +846,10 @@ body{font:16px/1.75 -apple-system,BlinkMacSystemFont,"Noto Sans SC","PingFang SC
      max-width:52rem;margin:3rem auto;padding:0 1.2rem;color:var(--fg);
      background-color:var(--bg);background-image:var(--glow);background-repeat:no-repeat}
 body.macro-active{max-width:76rem}
-/* 列表与日历收进同一张卡片：比底色浅一档 + 发丝描边 + 顶部内高光 + 投影 */
-#news-panel,#macro-panel{background:var(--card);background-image:var(--card-grad);
+/* 列表与日历收进同一张卡片：比底色浅一档 + 发丝描边 + 顶部内高光 + 投影。
+   这里刻意不叠竖向微渐变：吸顶表头和日历内部控件都是实色块，
+   压在渐变上会比周围深一档，看起来像脏块。 */
+#news-panel,#macro-panel{background:var(--card);
   border:1px solid var(--line);border-radius:14px;box-shadow:var(--card-shadow);
   padding:.15rem 1.15rem 1.1rem}
 h1{font-size:1.45rem;margin:0 0 1.6rem}

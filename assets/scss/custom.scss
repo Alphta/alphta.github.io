@@ -11,19 +11,219 @@
     }
 }
 
-/* 深色模式统一为净值页配色（#0f1216 系深黑，替代主题默认的 #303030/#424242 灰调） */
+/* ==========================================================================
+   深色模式 v2 —— 参考 aigocode.net 的暗色设计语言
+   --------------------------------------------------------------------------
+   参考点（取自对方线上 CSS 的实际写法，不是印象）：
+     1. 底色不是纯平的黑，顶部叠了一层很淡的冷色径向光，像有光源打下来：
+        radial-gradient(ellipse 50% 35% at 50% 0%, hsla(215 32% 84% / .12), transparent 60%)
+     2. 卡片 = 半透明填充 + 白色 5%→2% 竖向渐变 + 1px 发丝描边 + 阴影：
+        rounded-3xl border-border/70 bg-card/90 border-white/10
+        bg-linear-to-b from-white/5 to-white/2 shadow-lg
+     3. 主色只给一支高饱和冷蓝（hsl(207 95% 60%)），其余全部是低饱和中性色
+     4. 圆角偏大、分隔线用 7% 白而不是实色灰，靠「描边 + 微渐变」出层次而不是靠色块
+   下面把这些做法换算成 Stack 主题的变量与选择器。所有规则都收在
+   [data-scheme="dark"] 里，浅色模式不受任何影响。
+   ========================================================================== */
+
 :root[data-scheme="dark"] {
+    /* ---- 底色层 ---- */
     --body-background: #0f1216;
-    --body-text-color: rgba(230, 233, 238, 0.72);
+    --body-text-color: rgba(233, 237, 243, 0.7);
 
-    --card-background: #171b21;
-    --card-background-selected: rgba(78, 161, 255, 0.18);
-    --card-text-color-main: #e6e9ee;
-    --card-text-color-secondary: rgba(230, 233, 238, 0.72);
-    --card-text-color-tertiary: #8b95a3;
-    --card-separator-color: #262c35;
+    /* ---- 主色：从「白」换成冷蓝（与 /desk 净值页同一支蓝）---- */
+    --accent-color: #4ea1ff;
+    --accent-color-darker: #7dbaff; /* 深色下 hover 应当变亮，不是变暗 */
+    --accent-color-text: #06101d; /* 落在主色块上的文字 */
 
-    --blockquote-background-color: #1d232b;
-    --table-border-color: #262c35;
-    --tr-even-background-color: #1d232b;
+    /* ---- 卡片层 ---- */
+    --card-background: #151a21;
+    --card-background-selected: rgba(78, 161, 255, 0.16);
+    --card-text-color-main: #e9edf3;
+    --card-text-color-secondary: rgba(233, 237, 243, 0.66);
+    --card-text-color-tertiary: #8a94a3;
+    --card-separator-color: rgba(255, 255, 255, 0.075);
+
+    --card-border-radius: 14px;
+    --tag-border-radius: 999px;
+
+    /* ---- 正文内元素 ---- */
+    --blockquote-background-color: rgba(255, 255, 255, 0.035);
+    --table-border-color: rgba(255, 255, 255, 0.09);
+    --tr-even-background-color: rgba(255, 255, 255, 0.025);
+    --code-background-color: rgba(255, 255, 255, 0.07);
+    --code-text-color: #c9d4e3;
+    --pre-background-color: #0c1116;
+    --pre-text-color: #e2e8f2;
+    --link-background-color: 78, 161, 255;
+
+    /* ---- 阴影：深色下投影要更重，层次才出得来 ---- */
+    --shadow-l1: 0 1px 2px rgba(0, 0, 0, 0.4), 0 10px 28px -18px rgba(0, 0, 0, 0.9);
+    --shadow-l2: 0 2px 8px rgba(0, 0, 0, 0.45), 0 22px 44px -22px rgba(0, 0, 0, 0.95);
+}
+
+/* 顶部冷光晕：整页有「光源」，而不是一块死平的黑。
+   fixed 让光晕跟着视口走，长文章往下滚也还在。 */
+:root[data-scheme="dark"] body {
+    background-color: var(--body-background);
+    background-image: radial-gradient(
+        ellipse 72% 48% at 50% -10%,
+        rgba(78, 161, 255, 0.2),
+        rgba(78, 161, 255, 0.055) 45%,
+        transparent 72%
+    );
+    background-repeat: no-repeat;
+    background-attachment: fixed;
+}
+
+/* 卡片：半透明填充 + 竖向微渐变 + 发丝描边 + 顶部 1px 内高光，四层叠出玻璃感。
+   主题里所有「卡片」都是 @include card-style（background-color + shadow + radius），
+   所以这里只补 background-image / border / 内高光，不动原有布局。 */
+:root[data-scheme="dark"] {
+    .article-list article,
+    .article-list--compact,
+    .main-article,
+    .widget--toc,
+    .article-toc details,
+    .widget.archives .widget-archive--list,
+    .tagCloud-tags a,
+    .search-form input,
+    .not-found-card,
+    .cookies {
+        background-image: linear-gradient(
+            180deg,
+            rgba(255, 255, 255, 0.045),
+            rgba(255, 255, 255, 0.012) 55%,
+            rgba(255, 255, 255, 0)
+        );
+        border: 1px solid rgba(255, 255, 255, 0.07);
+        box-shadow: var(--shadow-l1), inset 0 1px 0 rgba(255, 255, 255, 0.05);
+    }
+}
+
+/* 文章卡片 hover：描边提亮 + 轻微上浮（只动 transform，不引起重排） */
+:root[data-scheme="dark"] .article-list article {
+    transition: box-shadow 0.3s ease, border-color 0.3s ease, transform 0.3s ease;
+
+    &:hover {
+        border-color: rgba(255, 255, 255, 0.13);
+        transform: translateY(-2px);
+    }
+}
+
+/* 站名：主色换成蓝之后，标题不要跟着变蓝（会被误读成链接），保持近白。
+   注意标题是 <h1 class=site-name><a>，内层 a 会被 general.scss 的
+   `a { color: var(--accent-color) }` 单独染色，所以这里要一起写。 */
+:root[data-scheme="dark"] .left-sidebar header .site-name,
+:root[data-scheme="dark"] .left-sidebar header .site-name a {
+    color: #eef2f8;
+}
+
+/* 左侧菜单：hover 提亮 + 过渡（主题原本没有 hover 反馈） */
+:root[data-scheme="dark"] #main-menu li a {
+    transition: color 0.2s ease;
+}
+
+:root[data-scheme="dark"] #main-menu li:not(.current) a:hover {
+    color: var(--card-text-color-main);
+}
+
+/* 标签 / 分类：实心大色块 → 主色淡染的胶囊，弱化但更精致 */
+:root[data-scheme="dark"] {
+    .article-category a,
+    .article-tags a {
+        background-color: rgba(78, 161, 255, 0.12);
+        border: 1px solid rgba(78, 161, 255, 0.22);
+        color: #9ecbff;
+        font-weight: 500;
+        transition: background-color 0.2s ease, border-color 0.2s ease, color 0.2s ease;
+
+        &:hover {
+            background-color: rgba(78, 161, 255, 0.2);
+            border-color: rgba(78, 161, 255, 0.38);
+            color: #cfe4ff;
+        }
+    }
+}
+
+/* 代码块：主题里 .chroma 把背景写死成 Monokai 的 #272822，和冷黑底色打架。
+   这里统一成比卡片更深的「凹槽」色，加发丝描边和圆角，语法配色保持不变。 */
+:root[data-scheme="dark"] {
+    .highlight {
+        background-color: var(--pre-background-color);
+        border: 1px solid rgba(255, 255, 255, 0.07);
+        border-radius: 12px;
+
+        .chroma {
+            background-color: transparent;
+        }
+    }
+
+    /* 行内代码不要跟着标签变成胶囊 */
+    .article-content code {
+        border-radius: 5px;
+    }
+}
+
+/* 选中文字：主色淡染，替代浏览器默认的蓝 */
+:root[data-scheme="dark"] ::selection {
+    background-color: rgba(78, 161, 255, 0.3);
+    color: #f2f6fc;
+}
+
+/* 滚动条：细一点、低对比，融进底色（Safari / Chromium） */
+:root[data-scheme="dark"] {
+    ::-webkit-scrollbar {
+        width: 10px;
+        height: 10px;
+    }
+
+    ::-webkit-scrollbar-track {
+        background: transparent;
+    }
+
+    ::-webkit-scrollbar-thumb {
+        background-color: rgba(255, 255, 255, 0.12);
+        background-clip: content-box;
+        border: 2px solid transparent;
+        border-radius: 999px;
+    }
+
+    ::-webkit-scrollbar-thumb:hover {
+        background-color: rgba(255, 255, 255, 0.22);
+    }
+}
+
+/* 键盘聚焦：统一成主色描边（主题各处的 focus 样式并不一致） */
+:root[data-scheme="dark"] {
+    a:focus-visible,
+    button:focus-visible,
+    input:focus-visible,
+    select:focus-visible,
+    textarea:focus-visible,
+    summary:focus-visible {
+        outline: 2px solid rgba(78, 161, 255, 0.55);
+        outline-offset: 2px;
+    }
+}
+
+/* 资料页 / 付费墙：按钮和徽章的主色底上改用深色字，保证对比度 */
+:root[data-scheme="dark"] {
+    .lib-btn,
+    .lib-go,
+    .paywall-btn,
+    .lib-badge,
+    .paywall-badge {
+        color: var(--accent-color-text);
+    }
+}
+
+@media (prefers-reduced-motion: reduce) {
+    :root[data-scheme="dark"] .article-list article {
+        transition: box-shadow 0.3s ease, border-color 0.3s ease;
+
+        &:hover {
+            transform: none;
+        }
+    }
 }

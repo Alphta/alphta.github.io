@@ -29,28 +29,40 @@
         --marker-fill: #ffffff;
         --tooltip-bg: #ffffff;
         --tooltip-border: #e2e4ea;
+        --glow: none;
+        --card-grad: none;
+        --card-shadow: 0 1px 2px rgba(0, 0, 0, 0.04);
     }
     html.dark {
         --bg: #0f1216;
-        --card: #171b21;
-        --border: #262c35;
-        --text: #e6e9ee;
-        --muted: #8b95a3;
+        --card: #151a21;
+        --border: rgba(255, 255, 255, 0.07);
+        --text: #e9edf3;
+        --muted: #8a94a3;
         --accent: #4ea1ff;
         --up: #e05c5c;
         --down: #3ba55d;
-        --grid: #1f252d;
+        --grid: rgba(255, 255, 255, 0.06);
         --area-top: rgba(78, 161, 255, 0.22);
         --area-bottom: rgba(78, 161, 255, 0.01);
         --marker-fill: #0f1216;
-        --tooltip-bg: #1d232b;
-        --tooltip-border: #2c3440;
+        --tooltip-bg: #1a1f27;
+        --tooltip-border: rgba(255, 255, 255, 0.1);
+        /* 与博客同一套：顶部冷光晕 + 卡片竖向微渐变 + 内高光 */
+        --glow: radial-gradient(900px 420px at 50% -100px, rgba(78, 161, 255, 0.16),
+                rgba(78, 161, 255, 0.04) 45%, transparent 72%);
+        --card-grad: linear-gradient(180deg, rgba(255, 255, 255, 0.045),
+                rgba(255, 255, 255, 0.012) 55%, rgba(255, 255, 255, 0));
+        --card-shadow: 0 1px 2px rgba(0, 0, 0, 0.4), 0 10px 28px -18px rgba(0, 0, 0, 0.9),
+                inset 0 1px 0 rgba(255, 255, 255, 0.05);
     }
     * { box-sizing: border-box; }
     body {
         margin: 0;
         padding: 24px 20px 40px;
-        background: var(--bg);
+        background-color: var(--bg);
+        background-image: var(--glow);
+        background-repeat: no-repeat;
         color: var(--text);
         font-family: -apple-system, BlinkMacSystemFont, "PingFang SC", "Segoe UI", sans-serif;
     }
@@ -80,8 +92,10 @@
     }
     .kpi {
         background: var(--card);
+        background-image: var(--card-grad);
         border: 1px solid var(--border);
         border-radius: 10px;
+        box-shadow: var(--card-shadow);
         padding: 14px 16px;
     }
     .kpi .label { color: var(--muted); font-size: 12px; margin-bottom: 6px; }
@@ -90,8 +104,10 @@
     .down { color: var(--down); }
     .chart-card {
         background: var(--card);
+        background-image: var(--card-grad);
         border: 1px solid var(--border);
         border-radius: 12px;
+        box-shadow: var(--card-shadow);
         padding: 14px 10px 6px;
     }
     #chart { width: 100%; height: 460px; }

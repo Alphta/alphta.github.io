@@ -834,11 +834,14 @@ INDEX_TMPL = """<!doctype html>
 })();
 </script>
 <style>
-:root{--fg:#1a1a1a;--dim:#8a8a8a;--line:#ececec;--link:#0a5bd4;--bg:#fff}
-html.dark{--fg:#e6e9ee;--dim:#8b95a3;--line:#262c35;--link:#4ea1ff;--bg:#0f1216}
+:root{--fg:#1a1a1a;--dim:#8a8a8a;--line:#ececec;--link:#0a5bd4;--bg:#fff;--glow:none;--on-accent:#fff}
+html.dark{--fg:#e9edf3;--dim:#8a94a3;--line:rgba(255,255,255,.075);--link:#4ea1ff;--bg:#0f1216;
+  --on-accent:#06101d;
+  --glow:radial-gradient(1100px 480px at 50% -120px,rgba(78,161,255,.16),rgba(78,161,255,.04) 45%,transparent 72%)}
 *{box-sizing:border-box}
 body{font:16px/1.75 -apple-system,BlinkMacSystemFont,"Noto Sans SC","PingFang SC",sans-serif;
-     max-width:52rem;margin:3rem auto;padding:0 1.2rem;color:var(--fg);background:var(--bg)}
+     max-width:52rem;margin:3rem auto;padding:0 1.2rem;color:var(--fg);
+     background-color:var(--bg);background-image:var(--glow);background-repeat:no-repeat}
 body.macro-active{max-width:76rem}
 h1{font-size:1.45rem;margin:0 0 1.6rem}
 .topbar{display:flex;align-items:center;justify-content:space-between;margin-bottom:10px}
@@ -884,7 +887,7 @@ a.t.read{color:var(--dim);opacity:.62}
        padding:.28rem .6rem;text-decoration:none;color:var(--link);
        min-width:2.1rem;text-align:center}
 .pager a:hover{border-color:var(--link);background:rgba(10,91,212,.06)}
-.pager .cur{background:var(--link);border-color:var(--link);color:#fff;font-weight:600}
+.pager .cur{background:var(--link);border-color:var(--link);color:var(--on-accent);font-weight:600}
 .pager .off{color:var(--dim);border-color:var(--line);pointer-events:none;opacity:.5}
 .pager .gap{border:0;color:var(--dim);min-width:1rem}
 .foot{border-top:1px solid var(--line);padding-top:.9rem;margin:0 0 3rem;
@@ -903,10 +906,16 @@ a.t.read{color:var(--dim);opacity:.62}
        padding:.35rem .9rem;font-family:inherit;font-size:13px;font-weight:600;cursor:pointer;
        transition:background .15s ease,color .15s ease}
 .page-tab:hover{color:var(--fg)}
-.page-tab.is-active{background:var(--link);color:#fff}
+.page-tab.is-active{background:var(--link);color:var(--on-accent)}
 .page-tab:focus-visible{outline:2px solid var(--link);outline-offset:2px}
 .macro-page-note{color:var(--dim);font-size:.85rem;line-height:1.8;margin:0 0 1rem}
 .macro-page-note--disclaimer{margin:1.2rem 0 3rem;padding-top:.9rem;border-top:1px solid var(--line)}
+/* 深色：顶部光晕之上再放实色块会露出边，浮层改半透明 + 模糊 */
+html.dark .hd{background:color-mix(in srgb,var(--bg) 86%,transparent);backdrop-filter:blur(10px)}
+html.dark .page-tabs{background:rgba(255,255,255,.03)}
+html.dark .favview,html.dark .theme-btn{background:rgba(255,255,255,.03)}
+li:hover{background:color-mix(in srgb,var(--fg) 3%,transparent)}
+html.dark ::selection{background:rgba(78,161,255,.3)}
 @media (max-width:560px){
   .hd,li{grid-template-columns:5.2rem minmax(0,1fr) 1.6rem}
   .hd .c-src,li .s{display:none}

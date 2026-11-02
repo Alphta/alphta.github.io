@@ -34,7 +34,8 @@
     --mc-text-2: var(--dim, var(--card-text-color-secondary, #5f6670));
     --mc-text-3: var(--dim, var(--card-text-color-tertiary, #8a8a8a));
     --mc-border: var(--line, var(--card-separator-color, #ececec));
-    --mc-bg: var(--bg, var(--card-background, #fff));
+    /* 新闻页把内容包进卡片后，日历内部控件跟卡片同色，只靠描边区分 */
+    --mc-bg: var(--panel, var(--bg, var(--card-background, #fff)));
     --mc-accent: var(--link, var(--accent-color, #0a5bd4));
     color: var(--mc-text);
     font-size: 14.5px;

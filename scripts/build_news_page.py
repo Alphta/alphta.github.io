@@ -834,22 +834,30 @@ INDEX_TMPL = """<!doctype html>
 })();
 </script>
 <style>
-:root{--fg:#1a1a1a;--dim:#8a8a8a;--line:#ececec;--link:#0a5bd4;--bg:#fff;--glow:none;--on-accent:#fff}
+:root{--fg:#1a1a1a;--dim:#8a8a8a;--line:#e6e7ec;--link:#0a5bd4;--bg:#f5f5fa;
+  --card:#fff;--panel:#fff;--on-accent:#fff;--glow:none;
+  --card-grad:none;--card-shadow:0 1px 2px rgba(0,0,0,.04)}
 html.dark{--fg:#e9edf3;--dim:#8a94a3;--line:rgba(255,255,255,.075);--link:#4ea1ff;--bg:#0f1216;
-  --on-accent:#06101d;
+  --card:#151a21;--panel:#151a21;--on-accent:#06101d;
+  --card-grad:linear-gradient(180deg,rgba(255,255,255,.045),rgba(255,255,255,.012) 55%,rgba(255,255,255,0));
+  --card-shadow:0 1px 2px rgba(0,0,0,.4),0 10px 28px -18px rgba(0,0,0,.9),inset 0 1px 0 rgba(255,255,255,.05);
   --glow:radial-gradient(1100px 480px at 50% -120px,rgba(78,161,255,.16),rgba(78,161,255,.04) 45%,transparent 72%)}
 *{box-sizing:border-box}
 body{font:16px/1.75 -apple-system,BlinkMacSystemFont,"Noto Sans SC","PingFang SC",sans-serif;
      max-width:52rem;margin:3rem auto;padding:0 1.2rem;color:var(--fg);
      background-color:var(--bg);background-image:var(--glow);background-repeat:no-repeat}
 body.macro-active{max-width:76rem}
+/* 列表与日历收进同一张卡片：比底色浅一档 + 发丝描边 + 顶部内高光 + 投影 */
+#news-panel,#macro-panel{background:var(--card);background-image:var(--card-grad);
+  border:1px solid var(--line);border-radius:14px;box-shadow:var(--card-shadow);
+  padding:.15rem 1.15rem 1.1rem}
 h1{font-size:1.45rem;margin:0 0 1.6rem}
 .topbar{display:flex;align-items:center;justify-content:space-between;margin-bottom:10px}
 .back{font-family:-apple-system,BlinkMacSystemFont,"PingFang SC","Segoe UI",sans-serif;
       font-size:13px;color:#6b7280;text-decoration:none}
 html.dark .back{color:#8b95a3}
 .tools{display:flex;gap:.5rem;align-items:center}
-.favview{background:var(--bg);border:1px solid var(--line);color:var(--dim);border-radius:8px;
+.favview{background:var(--card);border:1px solid var(--line);color:var(--dim);border-radius:8px;
       height:34px;padding:0 .6rem;font-size:13px;cursor:pointer;
       transition:color .2s ease,border-color .2s ease}
 .favview:hover{color:var(--link);border-color:var(--link)}
@@ -858,7 +866,7 @@ html.dark .back{color:#8b95a3}
       padding:0;line-height:1;justify-self:center;transition:color .15s ease}
 .fav:hover{color:#e8a33d}
 .fav.on{color:#e8a33d}
-.theme-btn{background:var(--bg);border:1px solid var(--line);color:var(--dim);border-radius:8px;
+.theme-btn{background:var(--card);border:1px solid var(--line);color:var(--dim);border-radius:8px;
       width:34px;height:34px;display:inline-flex;align-items:center;justify-content:center;
       cursor:pointer;transition:color .2s ease,border-color .2s ease}
 .theme-btn:hover{color:var(--link);border-color:var(--link)}
@@ -867,7 +875,7 @@ ul{list-style:none;padding:0;margin:0}
 .hd,li{display:grid;grid-template-columns:5.6rem minmax(0,1fr) 7rem 1.6rem;
        column-gap:.85rem;align-items:center}
 .hd{padding:.5rem .2rem;border-bottom:2px solid var(--line);
-    font-size:.82rem;color:var(--dim);position:sticky;top:0;background:var(--bg);z-index:1}
+    font-size:.82rem;color:var(--dim);position:sticky;top:0;background:var(--card);z-index:1}
 .hd [data-sort]{cursor:pointer;user-select:none;white-space:nowrap}
 .hd [data-sort]:hover{color:var(--fg)}
 .hd [data-sort].active{color:var(--fg);font-weight:600}
@@ -890,7 +898,7 @@ a.t.read{color:var(--dim);opacity:.62}
 .pager .cur{background:var(--link);border-color:var(--link);color:var(--on-accent);font-weight:600}
 .pager .off{color:var(--dim);border-color:var(--line);pointer-events:none;opacity:.5}
 .pager .gap{border:0;color:var(--dim);min-width:1rem}
-.foot{border-top:1px solid var(--line);padding-top:.9rem;margin:0 0 3rem;
+.foot{border-top:1px solid var(--line);padding-top:.9rem;margin:1.4rem 0 0;
       color:var(--dim);font-size:.85rem;line-height:1.95}
 .foot p{margin:.15rem 0}
 .foot b{color:var(--fg);font-weight:600}
@@ -909,11 +917,9 @@ a.t.read{color:var(--dim);opacity:.62}
 .page-tab.is-active{background:var(--link);color:var(--on-accent)}
 .page-tab:focus-visible{outline:2px solid var(--link);outline-offset:2px}
 .macro-page-note{color:var(--dim);font-size:.85rem;line-height:1.8;margin:0 0 1rem}
-.macro-page-note--disclaimer{margin:1.2rem 0 3rem;padding-top:.9rem;border-top:1px solid var(--line)}
-/* 深色：顶部光晕之上再放实色块会露出边，浮层改半透明 + 模糊 */
-html.dark .hd{background:color-mix(in srgb,var(--bg) 86%,transparent);backdrop-filter:blur(10px)}
+.macro-page-note--disclaimer{margin:1.2rem 0 .2rem;padding-top:.9rem;border-top:1px solid var(--line)}
+/* 深色：顶部光晕之上再放实色块会露出边，标签条改半透明 */
 html.dark .page-tabs{background:rgba(255,255,255,.03)}
-html.dark .favview,html.dark .theme-btn{background:rgba(255,255,255,.03)}
 li:hover{background:color-mix(in srgb,var(--fg) 3%,transparent)}
 html.dark ::selection{background:rgba(78,161,255,.3)}
 @media (max-width:560px){

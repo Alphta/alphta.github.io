@@ -1,0 +1,26 @@
+{{- /* 相关文章卡片：配图 + 标题。无图时退回主题原本的纯文字卡片。 */ -}}
+{{- $page := . -}}
+{{- $image := partial "helper/related-image" $page -}}
+<article class="{{ if $image }}has-image{{ end }}">
+    <a href="{{ $page.RelPermalink }}" aria-label="{{ $page.Title }}">
+        {{- with $image }}
+        <div class="article-image">
+            {{ partial "helper/thumbnail-image" (dict
+                "Resource" .Resource
+                "Width" 300
+                "Height" 180
+                "Resize" $page.Site.Params.ImageProcessing.Thumbnail.Enabled
+                "Attributes" (dict
+                    "src" .Permalink
+                    "alt" (printf "%s 配图" $page.Title)
+                    "loading" "lazy"
+                    "sizes" "300px"
+                )
+            ) }}
+        </div>
+        {{- end }}
+        <div class="article-details">
+            <h2 class="article-title">{{ $page.Title }}</h2>
+        </div>
+    </a>
+</article>

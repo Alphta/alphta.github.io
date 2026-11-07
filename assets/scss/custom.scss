@@ -227,3 +227,73 @@
         }
     }
 }
+/* ==========================================================================
+   相关文章卡片配图
+   --------------------------------------------------------------------------
+   每张卡取该篇文章正文里的第一张图（layouts/_partials/helper/related-image.html），
+   铺满 300×180 的卡片，底部压一层自下而上的深色渐变保证标题可读；
+   没有配图的文章继续走主题原本的纯文字卡片，不会出现破图。
+   ========================================================================== */
+.related-articles {
+    .article-list--tile article {
+        width: 300px;
+        height: 180px;
+        transition: transform 0.3s ease, box-shadow 0.3s ease;
+
+        &:hover {
+            transform: translateY(-2px);
+        }
+
+        @media (max-width: 479px) {
+            width: 254px;
+            height: 152px;
+        }
+    }
+
+    .article-list--tile article.has-image {
+        box-shadow: var(--shadow-l1), inset 0 0 0 1px rgba(255, 255, 255, 0.12);
+
+        .article-details {
+            background-color: transparent;
+            background-image: linear-gradient(
+                to top,
+                rgba(6, 10, 16, 0.94) 0%,
+                rgba(6, 10, 16, 0.8) 24%,
+                rgba(6, 10, 16, 0.42) 50%,
+                rgba(6, 10, 16, 0.08) 74%,
+                rgba(6, 10, 16, 0) 100%
+            );
+        }
+
+        .article-title {
+            color: #fff;
+            font-size: 1.7rem;
+            font-weight: 600;
+            line-height: 1.45;
+            text-shadow: 0 1px 2px rgba(0, 0, 0, 0.35);
+            display: -webkit-box;
+            -webkit-box-orient: vertical;
+            -webkit-line-clamp: 2;
+            overflow: hidden;
+        }
+
+        .article-image img {
+            transition: transform 0.5s cubic-bezier(0.22, 0.61, 0.36, 1);
+        }
+
+        &:hover .article-image img {
+            transform: scale(1.05);
+        }
+    }
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .related-articles .article-list--tile article,
+    .related-articles .article-list--tile article.has-image .article-image img {
+        transition: none;
+
+        &:hover {
+            transform: none;
+        }
+    }
+}

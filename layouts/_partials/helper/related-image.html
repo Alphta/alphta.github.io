@@ -1,0 +1,68 @@
+{{- /*
+    取一篇文章「正文里的第一张图」，给相关文章卡片用。
+
+    优先级：
+      1. front matter 的 image（以后手写封面时优先用封面）
+      2. 正文第一张 Markdown 图片（本地 page bundle 资源，或外链）
+      3. page bundle 里按文件名排第一的图片（正文用 HTML/shortcode 插图时兜底）
+
+    入参：Page
+    返回：dict（Resource / Permalink / Width / Height / Alt），无图时返回空 dict
+*/ -}}
+{{- $page := . -}}
+{{- $result := dict -}}
+
+{{- with $page.Params.image -}}
+    {{- $img := partial "helper/image" (dict "Image" . "Resources" $page.Resources "Context" $page) -}}
+    {{- with $img.Permalink -}}
+        {{- $result = dict
+            "Resource" $img.Resource
+            "Permalink" $img.Permalink
+            "Width" $img.Width
+            "Height" $img.Height
+            "Alt" $page.Title
+        -}}
+    {{- end -}}
+{{- end -}}
+
+{{- if not $result -}}
+    {{- $dest := "" -}}
+    {{- $alt := "" -}}
+    {{- with findRESubmatch `!\[([^\]]*)\]\(\s*([^)\s]+?)(?:\s+["'][^"']*["'])?\s*\)` $page.RawContent 1 -}}
+        {{- $match := index . 0 -}}
+        {{- $alt = index $match 1 -}}
+        {{- $dest = index $match 2 -}}
+    {{- end -}}
+
+    {{- with $dest -}}
+        {{- if or (hasPrefix . "http://") (hasPrefix . "https://") -}}
+            {{- $result = dict "Resource" nil "Permalink" . "Width" nil "Height" nil "Alt" $alt -}}
+        {{- else -}}
+            {{- $res := $page.Resources.Get . -}}
+            {{- if not $res -}}
+                {{- $res = $page.Resources.GetMatch (printf "**/%s" (path.Base .)) -}}
+            {{- end -}}
+            {{- with $res -}}
+                {{- if reflect.IsImageResourceWithMeta . -}}
+                    {{- $result = dict "Resource" . "Permalink" .RelPermalink "Width" .Width "Height" .Height "Alt" $alt -}}
+                {{- else -}}
+                    {{- $result = dict "Resource" . "Permalink" .RelPermalink "Width" nil "Height" nil "Alt" $alt -}}
+                {{- end -}}
+            {{- end -}}
+        {{- end -}}
+    {{- end -}}
+
+    {{- if not $result -}}
+        {{- $images := $page.Resources.ByType "image" -}}
+        {{- with $images -}}
+            {{- $first := index . 0 -}}
+            {{- $result = dict "Resource" $first "Permalink" $first.RelPermalink "Width" $first.Width "Height" $first.Height "Alt" $page.Title -}}
+        {{- end -}}
+    {{- end -}}
+{{- end -}}
+
+{{- if and $result (not $result.Alt) -}}
+    {{- $result = merge $result (dict "Alt" $page.Title) -}}
+{{- end -}}
+
+{{- return $result -}}

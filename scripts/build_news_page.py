@@ -80,7 +80,8 @@ class Source:
 
     def __init__(self, sid, name, url, *, encoding="utf-8", base=None,
                  headers=None, parser=None, kind="html", body=None,
-                 cutoff_days=45, home=None, link_re=None, short=None, channel=None):
+                 cutoff_days=45, home=None, link_re=None, short=None, channel=None,
+                 exclude_re=None):
         self.id = sid
         self.name = name
         self.url = url
@@ -95,6 +96,8 @@ class Source:
         self.link_re = link_re
         self.short = short or name
         self.channel = channel
+        # 标题级排除：本源只丢弃命中该正则的条目（如人大「主席令」），其余照常进 feed
+        self.exclude_re = re.compile(exclude_re) if isinstance(exclude_re, str) else exclude_re
 
 
 # ---------------------------------------------------------------- 网络
@@ -802,6 +805,13 @@ def build_sources():
           "https://www.safe.gov.cn/safe/zcfgjd/",
           parser=parse_safe_policy, home="https://www.safe.gov.cn/",
           short="外汇局", channel="政策法规解读", cutoff_days=500),
+
+        # ---- 全国人大：法律文件（排除主席令、审议结果报告、修改情况汇报、修改意见报告）----
+        S("npc_flwj", "全国人民代表大会·法律文件",
+          "http://www.npc.gov.cn/npc/c2/c12435/c12488/",
+          home="http://www.npc.gov.cn/", short="全国人大", channel="法律文件",
+          cutoff_days=400,
+          exclude_re=r"主席令|修改意见的报告|审议结果的报告|修改情况的汇报"),
 
         # ---- 其余机构维持原样 ----
         S("cffex", "中国金融期货交易所·公告", "http://www.cffex.com.cn/cn/jysgg.html",
@@ -1524,6 +1534,7 @@ def main():
     cutoff = now - timedelta(days=60)
     merged, seen = [], set()
     dropped = 0
+    excluded = {}
     for src in sources:
         src_cutoff = now - timedelta(days=src.cutoff_days or 60)
         for it in results.get(src.id, []):
@@ -1531,6 +1542,9 @@ def main():
                 continue
             if not args.keep_noise and NOISE_RE.search(it["title"]):
                 dropped += 1
+                continue
+            if src.exclude_re and src.exclude_re.search(it["title"]):
+                excluded[src.id] = excluded.get(src.id, 0) + 1
                 continue
             it["source"] = src.name
             it["short"] = src.short
@@ -1565,6 +1579,8 @@ def main():
     print(f"[info] {len(merged)} 条 / {len(sources)} 源，失败 {len(errors)} 个")
     for sid, err in errors:
         print(f"[warn] {sid}: {err}")
+    for sid, n in excluded.items():
+        print(f"[info] {sid}: 按源规则排除 {n} 条")
     for src in sources:
         n = len(results.get(src.id, []))
         if n == 0 and not any(e[0] == src.id for e in errors):

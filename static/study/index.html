@@ -1,0 +1,926 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>波浪理论形态谱系 — 常见形态、判据与实战</title>
+<link rel="stylesheet" href="/katex/katex.min.css">
+<script defer src="/katex/katex.min.js"></script>
+<script defer src="/katex/contrib/auto-render.min.js"
+  onload="renderMathInElement(document.body,{delimiters:[{left:'$$',right:'$$',display:true},{left:'$',right:'$',display:false}],throwOnError:false});"></script>
+<style>
+:root{
+  --ink:#1F1F1F; --ink2:#4A4A46; --ink3:#6B6A64;
+  --bg:#FAFAF8; --line:#E2E0D9; --line2:#CFCDC5;
+  --accent:#185FA5; --warn:#A32D2D; --ok:#3B6D11; --amber:#854F0B;
+}
+*{box-sizing:border-box}
+body{
+  margin:0;padding:0;background:var(--bg);color:var(--ink);
+  font-family:-apple-system,BlinkMacSystemFont,"Segoe UI","Microsoft YaHei","PingFang SC",sans-serif;
+  font-size:15px;line-height:1.78;-webkit-font-smoothing:antialiased;
+}
+.wrap{max-width:880px;margin:0 auto;padding:56px 32px 100px}
+h1{font-size:28px;font-weight:500;line-height:1.35;margin:0 0 6px;letter-spacing:-.3px}
+.sub{font-size:14.5px;color:var(--ink3);margin:0 0 10px}
+.meta{font-size:12.5px;color:var(--ink3);border-top:1px solid var(--line);border-bottom:1px solid var(--line);padding:10px 0;margin:24px 0 8px}
+h2{font-size:20px;font-weight:500;margin:56px 0 6px;padding-top:20px;border-top:1px solid var(--line2);letter-spacing:-.1px}
+h2 .num{color:var(--ink3);font-weight:400;margin-right:12px;font-variant-numeric:tabular-nums}
+h3{font-size:17px;font-weight:500;margin:40px 0 4px;letter-spacing:-.1px}
+h3 .code{display:inline-block;font-family:"SFMono-Regular",Consolas,monospace;font-size:11.5px;font-weight:400;
+  background:#F1EFE8;color:var(--ink3);border-radius:4px;padding:1px 7px;margin-right:10px;vertical-align:2px}
+h4{font-size:14px;font-weight:500;margin:20px 0 4px;color:var(--ink2)}
+p{margin:10px 0}
+ul,ol{margin:10px 0;padding-left:22px}
+li{margin:5px 0}
+code{font-family:"SFMono-Regular",Consolas,monospace;font-size:13px;background:#F1EFE8;padding:1px 5px;border-radius:3px}
+table{border-collapse:collapse;width:100%;margin:16px 0;font-size:13.5px}
+th,td{border:1px solid var(--line);padding:8px 11px;text-align:left;vertical-align:top}
+th{background:#F4F2EC;font-weight:500;color:var(--ink2)}
+td.c,th.c{text-align:center}
+.figure{margin:24px 0 30px}
+.figure svg{display:block;width:100%;height:auto;border:1px solid var(--line);border-radius:10px;background:#FFF}
+.cap{font-size:12.5px;color:var(--ink3);margin-top:9px;line-height:1.62}
+.cap b{color:var(--ink2);font-weight:500}
+.callout{border-left:3px solid var(--accent);background:#F0F5FA;padding:13px 17px;border-radius:0 6px 6px 0;margin:18px 0;font-size:14px}
+.callout.warn{border-left-color:var(--warn);background:#FDF2F2}
+.callout.ok{border-left-color:var(--ok);background:#F2F7EC}
+.callout .lab{font-weight:500;display:block;margin-bottom:3px;color:var(--accent)}
+.callout.warn .lab{color:var(--warn)}
+.callout.ok .lab{color:var(--ok)}
+.grid2{display:grid;grid-template-columns:1fr 1fr;gap:14px;margin:16px 0}
+.grid2>div{border:1px solid var(--line);border-radius:8px;padding:12px 14px;font-size:13.5px;background:#FFF}
+.grid2 .h{font-weight:500;margin-bottom:5px;color:var(--ink2)}
+.tag{display:inline-block;font-size:11px;padding:1px 7px;border-radius:3px;margin-left:6px;font-weight:500;vertical-align:2px}
+.tag.hard{background:#FCEBEB;color:var(--warn)}
+.tag.soft{background:#FAEEDA;color:var(--amber)}
+.tag.buy{background:#F2F7EC;color:var(--ok)}
+hr{border:none;border-top:1px solid var(--line);margin:40px 0}
+.foot{font-size:12.5px;color:var(--ink3);margin-top:52px;padding-top:16px;border-top:1px solid var(--line)}
+.katex-display{margin:14px 0!important;overflow-x:auto;overflow-y:hidden;padding:2px 0}
+.toc{border:1px solid var(--line);border-radius:10px;padding:16px 22px;background:#FFF;font-size:13.5px;margin:20px 0 8px}
+.toc ol{margin:4px 0;padding-left:18px}
+.toc li{margin:3px 0}
+.toc a{color:var(--ink2);text-decoration:none;border-bottom:1px solid transparent}
+.toc a:hover{border-bottom-color:var(--line2)}
+.scroll{overflow-x:auto;-webkit-overflow-scrolling:touch;margin:16px 0}
+.scroll table{margin:0;min-width:520px}
+@media (max-width:620px){
+  .wrap{padding:34px 14px 70px}
+  .figure{overflow-x:auto}
+  .figure svg{min-width:560px}
+}
+@media print{
+  body{background:#fff}
+  .wrap{max-width:none;padding:0 12mm}
+  h2,h3{page-break-after:avoid}
+  .figure,table{page-break-inside:avoid}
+  .scroll{overflow:visible}
+  .scroll table{min-width:0}
+  .figure{overflow:visible}
+  .figure svg{min-width:0}
+  body{font-size:12pt}
+}
+</style>
+</head>
+<body>
+<div class="wrap">
+
+<h1>波浪理论形态谱系</h1>
+<p class="sub">常见形态 15 型（M1–M7、C1–C8）· 标签导航 · 组合法则 · 实战执行</p>
+<p class="meta">每型配结构图与识别要点；判据遵循硬规则否决制；所有图示为原型示意，非真实行情</p>
+
+<div class="toc">
+<strong style="font-weight:500">目录</strong>
+<ol>
+<li><a href="#sec0">总论：波浪为什么会这样分</a></li>
+<li><a href="#sec1">铁律、指引与判据形式化</a></li>
+<li><a href="#sec2">推动浪家族（M1–M7）</a></li>
+<li><a href="#sec3">调整浪家族（C1–C8）</a></li>
+<li><a href="#sec4">组合法则：交替、通道、比例、时间</a></li>
+<li><a href="#sec5">快速识别：两条判定链</a></li>
+<li><a href="#sec6">实战执行：从结构到仓位</a></li>
+<li><a href="#sec7">附录：速查表与常见误判</a></li>
+</ol>
+</div>
+
+<h2 id="sec0"><span class="num">0</span>总论：波浪为什么会这样分</h2>
+
+<p>先讲清楚一件事：下面这三条不是艾略特的公理，也不是严格推导出来的定理，而是<strong>本书用来记住整个谱系的组织框架</strong>。形态规则本身来自艾略特体系及后续教材（Frost &amp; Prechter 等），三条约束只解释"这些形态为什么长成这样、而不是随便画的"。把它们当记忆脚手架，不要当证明。</p>
+
+<h3>约束一：交替性（alternation）</h3>
+
+<p>市场在推进与休整之间交替。推进需要单方向的力量集中，休整需要多空双方在同一区间反复博弈。这两种行为在价格路径上留下的几何痕迹根本不同——前者是<strong>单边扩张、无重叠</strong>，后者是<strong>范围受限、有重叠</strong>。于是结构只能二分：推动型与调整型。</p>
+
+<h3>约束二：分形自相似（self-similarity）</h3>
+
+<p>如果推进与休整在所有时间尺度上同构，那么一个推动浪内部必须是更小级别的推动与休整的组合，一个调整浪内部同理。这条约束直接给出了<strong>子浪结构的规定</strong>：推动浪内部是 5-3-5-3-5（终结楔形是例外，为 3-3-3-3-3），调整浪内部按类型分别是 5-3-5、3-3-5、3-3-3-3-3；复合调整按<b>顶层段数</b>看：W-X-Y（双锯齿、双三）三段，W-X-Y-X-Z（三锯齿、三三）五段。但复合调整的 W、Y、Z <b>可以是任何合法调整形态</b>——锯齿、平台、三角形——所以<b>只有"组段全是锯齿、且每个 X 都为三浪"时才有固定的 7 段 / 11 段展开</b>（双锯齿是 W、Y 两段，三锯齿是 W、Y、Z 三段）；双三、三三的展开段数取决于各自的组成，没有统一写法。<b>字母数不等于子浪结构</b>，这是后面第 0 步的关键。</p>
+
+<p>注意这是一条<strong>自洽性要求</strong>，不是经验定律：如果你在某段走势上标了"推动浪"，却只能拆出三段，先怀疑自己的标注。但也要承认，子浪结构的规定本身有流派差异（尤其是楔形），所以"对不上"既不能证明理论、也不能立刻证明你错——它只说明这个假设目前不自洽。</p>
+
+<h3>约束三：最小阻力路径（least resistance）</h3>
+
+<p>调整浪的本质是"消化"，它需要时间但不需要空间。这解释了为什么调整浪的形态全部围绕<strong>重叠区间</strong>展开：平台、三角形、复合调整，都是不同宽度与不同持续时间的重叠结构。而锯齿之所以是"深而快"，是因为它消化的是幅度而非时间。</p>
+
+<p>下面这张图是本书的<b>标签导航</b>，不是从三条约束推导出来的分类学：它按"推动 / 调整"两族与"哪一浪被拉长"组织常见形态，方便查阅，<b>不保证穷尽</b>——屏障三角形、双三 / 三三组合就没有单列。三条约束解释的是"这些形态为什么长成这样"，不能反过来当作形态清单完备性的证明。</p>
+
+<div class="figure">
+<svg viewBox="0 0 680 424" width="100%" role="img" xmlns="http://www.w3.org/2000/svg">
+<title>波浪形态标签导航</title>
+<desc>按推动与调整两族组织的标签导航，不是互斥的分类树：同一段走势可以同时带多个标签。</desc>
+<rect x="40" y="184" width="106" height="44" rx="8" fill="#F4F2EC" stroke="#CFCDC5" stroke-width="0.5"/>
+<text x="93" y="206" font-family="system-ui, -apple-system, 'Segoe UI', sans-serif" font-size="13" font-weight="500" fill="#2C2C2A" text-anchor="middle" dominant-baseline="central">波浪结构</text>
+<path d="M146 206 L168 206" fill="none" stroke="#CFCDC5" stroke-width="1"/>
+<path d="M168 206 L168 127 L190 127" fill="none" stroke="#CFCDC5" stroke-width="1"/>
+<path d="M168 206 L168 287 L190 287" fill="none" stroke="#CFCDC5" stroke-width="1"/>
+<rect x="190" y="105" width="130" height="44" rx="8" fill="#FCEBEB" stroke="#A32D2D" stroke-width="0.5"/>
+<text x="255" y="127" font-family="system-ui, -apple-system, 'Segoe UI', sans-serif" font-size="13" fill="#501313" text-anchor="middle" dominant-baseline="central">推动型（5 段）</text>
+<rect x="190" y="265" width="130" height="44" rx="8" fill="#E6F1FB" stroke="#185FA5" stroke-width="0.5"/>
+<text x="255" y="287" font-family="system-ui, -apple-system, 'Segoe UI', sans-serif" font-size="13" fill="#042C53" text-anchor="middle" dominant-baseline="central">调整型（3 段起）</text>
+<path d="M320 127 L325 127" fill="none" stroke="#CFCDC5" stroke-width="1"/>
+<line x1="325" y1="67" x2="325" y2="205" stroke="#CFCDC5" stroke-width="1"/>
+<path d="M325 67 L340 67" fill="none" stroke="#CFCDC5" stroke-width="1"/>
+<path d="M325 113 L340 113" fill="none" stroke="#CFCDC5" stroke-width="1"/>
+<path d="M325 159 L340 159" fill="none" stroke="#CFCDC5" stroke-width="1"/>
+<path d="M325 205 L340 205" fill="none" stroke="#CFCDC5" stroke-width="1"/>
+<rect x="340" y="50" width="176" height="34" rx="6" fill="#FFFFFF" stroke="#D5D3CC" stroke-width="0.5"/>
+<text x="428" y="67" font-family="system-ui, -apple-system, 'Segoe UI', sans-serif" font-size="12.5" fill="#2C2C2A" text-anchor="middle" dominant-baseline="central">标准五浪</text>
+<text x="528" y="67" font-family="system-ui, -apple-system, 'Segoe UI', sans-serif" font-size="11.5" fill="#6B6A64" dominant-baseline="central">M1</text>
+<rect x="340" y="96" width="176" height="34" rx="6" fill="#FFFFFF" stroke="#D5D3CC" stroke-width="0.5"/>
+<text x="428" y="113" font-family="system-ui, -apple-system, 'Segoe UI', sans-serif" font-size="12.5" fill="#2C2C2A" text-anchor="middle" dominant-baseline="central">扩展型（1 / 3 / 5 之一）</text>
+<text x="528" y="113" font-family="system-ui, -apple-system, 'Segoe UI', sans-serif" font-size="11.5" fill="#6B6A64" dominant-baseline="central">M2 M3 M4</text>
+<rect x="340" y="142" width="176" height="34" rx="6" fill="#FFFFFF" stroke="#D5D3CC" stroke-width="0.5"/>
+<text x="428" y="159" font-family="system-ui, -apple-system, 'Segoe UI', sans-serif" font-size="12.5" fill="#2C2C2A" text-anchor="middle" dominant-baseline="central">楔形（引导 / 终结）</text>
+<text x="528" y="159" font-family="system-ui, -apple-system, 'Segoe UI', sans-serif" font-size="11.5" fill="#6B6A64" dominant-baseline="central">M5 M6</text>
+<rect x="340" y="188" width="176" height="34" rx="6" fill="#FFFFFF" stroke="#D5D3CC" stroke-width="0.5"/>
+<text x="428" y="205" font-family="system-ui, -apple-system, 'Segoe UI', sans-serif" font-size="12.5" fill="#2C2C2A" text-anchor="middle" dominant-baseline="central">失败五浪</text>
+<text x="528" y="205" font-family="system-ui, -apple-system, 'Segoe UI', sans-serif" font-size="11.5" fill="#6B6A64" dominant-baseline="central">M7</text>
+<path d="M320 287 L325 287" fill="none" stroke="#CFCDC5" stroke-width="1"/>
+<line x1="325" y1="275" x2="325" y2="375" stroke="#CFCDC5" stroke-width="1"/>
+<path d="M325 275 L340 275" fill="none" stroke="#CFCDC5" stroke-width="1"/>
+<path d="M325 325 L340 325" fill="none" stroke="#CFCDC5" stroke-width="1"/>
+<path d="M325 375 L340 375" fill="none" stroke="#CFCDC5" stroke-width="1"/>
+<rect x="340" y="258" width="176" height="34" rx="6" fill="#FFFFFF" stroke="#D5D3CC" stroke-width="0.5"/>
+<text x="428" y="275" font-family="system-ui, -apple-system, 'Segoe UI', sans-serif" font-size="12.5" fill="#2C2C2A" text-anchor="middle" dominant-baseline="central">锯齿（5-3-5）</text>
+<text x="528" y="275" font-family="system-ui, -apple-system, 'Segoe UI', sans-serif" font-size="11.5" fill="#6B6A64" dominant-baseline="central">C1 C2 C3</text>
+<rect x="340" y="308" width="176" height="34" rx="6" fill="#FFFFFF" stroke="#D5D3CC" stroke-width="0.5"/>
+<text x="428" y="325" font-family="system-ui, -apple-system, 'Segoe UI', sans-serif" font-size="12.5" fill="#2C2C2A" text-anchor="middle" dominant-baseline="central">平台（3-3-5）</text>
+<text x="528" y="325" font-family="system-ui, -apple-system, 'Segoe UI', sans-serif" font-size="11.5" fill="#6B6A64" dominant-baseline="central">C4 C5 C6</text>
+<rect x="340" y="358" width="176" height="34" rx="6" fill="#FFFFFF" stroke="#D5D3CC" stroke-width="0.5"/>
+<text x="428" y="375" font-family="system-ui, -apple-system, 'Segoe UI', sans-serif" font-size="12.5" fill="#2C2C2A" text-anchor="middle" dominant-baseline="central">三角形（3-3-3-3-3）</text>
+<text x="528" y="375" font-family="system-ui, -apple-system, 'Segoe UI', sans-serif" font-size="11.5" fill="#6B6A64" dominant-baseline="central">C7 C8</text>
+<text x="40" y="410" font-family="system-ui, -apple-system, 'Segoe UI', sans-serif" font-size="11" fill="#854F0B" dominant-baseline="central">同一段走势可同时带多个标签（如 M3+M7）；本图只作导航，不是互斥分类。</text>
+</svg>
+<div class="cap"><b>图 0</b>　标签导航。推动型 7 个标签（标准、三种扩展、两种楔形、失败浪），调整型 8 个（三种锯齿、三种平台、两种三角形）。两个限度：<b>标签不互斥</b>（同一段五浪可以同时是"第三浪扩展"与"第五浪失败"），<b>也不是分类树</b>（本图只回答"有哪些常见形态、各自叫什么"）。<b>实战中出现频率</b>：第三浪扩展与标准锯齿最多，终结楔形最少但最值钱。</div>
+</div>
+
+<h2 id="sec1"><span class="num">1</span>铁律、指引与判据形式化</h2>
+
+<p>波浪的规则分两级，混淆两者是误用的主要来源。<strong>铁律</strong>违反即判定标注错误，没有例外；<strong>指引</strong>只是统计倾向，违反只降低置信度，不构成否决。</p>
+
+<div class="scroll"><table>
+<tr><th class="c" style="width:60px">级别</th><th style="width:200px">内容</th><th>形式化</th><th class="c" style="width:80px">违反后果</th></tr>
+<tr><td class="c">铁律</td><td>浪 2 不吞没浪 1</td><td>$\operatorname{retr}(2)&lt;1$</td><td class="c">判定错误</td></tr>
+<tr><td class="c">铁律</td><td>浪 3 不是最短</td><td>$L_3&gt;\min(L_1,L_5)$</td><td class="c">判定错误</td></tr>
+<tr><td class="c">铁律</td><td>浪 4 不侵入浪 1</td><td>区间无交集（除楔形）</td><td class="c">判定错误</td></tr>
+<tr><td class="c">铁律</td><td>浪 3 越过浪 1 终点</td><td>$P_3^{end}&gt;P_1^{end}$（上升趋势；下降取反向）</td><td class="c">判定错误</td></tr>
+<tr><td class="c">铁律</td><td>子浪结构自洽</td><td>与形态定义一致：推动 5-3-5-3-5；引导楔形 5-3-5-3-5、终结楔形 3-3-3-3-3（经典口径）；锯齿 5-3-5；平台 3-3-5；三角 3-3-3-3-3</td><td class="c">判定错误</td></tr>
+<tr><td class="c">指引</td><td>浪 2 与浪 4 交替</td><td>$\operatorname{type}(2)\ne\operatorname{type}(4)$</td><td class="c">降低置信度</td></tr>
+<tr><td class="c">指引</td><td>浪 2 常回撤 50%–61.8%</td><td>$\operatorname{retr}(2)\in[0.5,0.618]$</td><td class="c">仅作参考</td></tr>
+<tr><td class="c">指引</td><td>浪 3 常为浪 1 的 1.618 倍</td><td>$L_3/L_1\approx1.618$</td><td class="c">仅作参考</td></tr>
+<tr><td class="c">指引</td><td>浪 4 常回撤浪 3 的 38.2%</td><td>$\operatorname{retr}(4)\approx0.382$</td><td class="c">仅作参考</td></tr>
+</table></div>
+
+<div class="callout warn">
+<span class="lab">最重要的一条使用纪律</span>
+把上面所有"常为""大约"的内容，从<b>判据</b>降级为<b>参考</b>。它们不能用来确认结构，只能用来在已确认的结构上估计目标。反过来用——因为价格到了 1.618 就认为是浪 3 顶——是亏损的经典起点。
+</div>
+
+<h2 id="sec2"><span class="num">2</span>推动浪家族</h2>
+
+<p>推动浪的共同特征：五段、顺主趋势、内部无重叠（楔形除外）、第三浪常有成交量放大。五段推动之间的差别在两处——<strong>哪一浪被拉长</strong>、<strong>边界是否收敛</strong>。两个楔形还要加一条<strong>子浪结构与所处位置</strong>；但<strong>失败五浪不靠子浪结构判别</strong>，它看浪 5 是否越过浪 3 顶（并须由跌破浪 4 底来确认），这是位置判据，不是结构判据。</p>
+
+<h3 id="m1"><span class="code">M1</span>标准五浪</h3>
+
+<div class="figure">
+<svg viewBox="0 0 680 300" width="100%" role="img" xmlns="http://www.w3.org/2000/svg">
+<title>标准五浪结构</title>
+<desc>上升五浪推动，浪二回撤约一半，浪三最长，浪四不侵入浪一区间，浪五创新高后进入调整。</desc>
+<polyline points="60,252 140,170 185,205 300,90 350,135 460,75 522,140" fill="none" stroke="#1F1F1F" stroke-width="1.8" stroke-linejoin="round" stroke-linecap="round"/>
+<circle cx="140" cy="170" r="3" fill="#A32D2D"/><text x="140" y="154" font-family="system-ui, -apple-system, 'Segoe UI', sans-serif" font-size="13" font-weight="500" fill="#2C2C2A" text-anchor="middle" dominant-baseline="central">1</text>
+<circle cx="185" cy="205" r="3" fill="#3B6D11"/><text x="185" y="224" font-family="system-ui, -apple-system, 'Segoe UI', sans-serif" font-size="13" font-weight="500" fill="#2C2C2A" text-anchor="middle" dominant-baseline="central">2</text>
+<circle cx="300" cy="90" r="3" fill="#A32D2D"/><text x="300" y="74" font-family="system-ui, -apple-system, 'Segoe UI', sans-serif" font-size="13" font-weight="500" fill="#2C2C2A" text-anchor="middle" dominant-baseline="central">3</text>
+<circle cx="350" cy="135" r="3" fill="#3B6D11"/><text x="350" y="154" font-family="system-ui, -apple-system, 'Segoe UI', sans-serif" font-size="13" font-weight="500" fill="#2C2C2A" text-anchor="middle" dominant-baseline="central">4</text>
+<circle cx="460" cy="75" r="3" fill="#A32D2D"/><text x="460" y="59" font-family="system-ui, -apple-system, 'Segoe UI', sans-serif" font-size="13" font-weight="500" fill="#2C2C2A" text-anchor="middle" dominant-baseline="central">5</text>
+<circle cx="522" cy="140" r="3" fill="#3B6D11"/><text x="522" y="159" font-family="system-ui, -apple-system, 'Segoe UI', sans-serif" font-size="13" font-weight="500" fill="#6B6A64" text-anchor="middle" dominant-baseline="central">A</text>
+<line x1="140" y1="170" x2="460" y2="170" stroke="#185FA5" stroke-width="0.5" stroke-dasharray="4 4"/>
+<text x="470" y="170" font-family="system-ui, -apple-system, 'Segoe UI', sans-serif" font-size="11" fill="#185FA5" dominant-baseline="central">浪4 不破此线</text>
+<text x="248" y="118" font-family="system-ui, -apple-system, 'Segoe UI', sans-serif" font-size="11.5" fill="#6B6A64" dominant-baseline="central">浪3 通常最长</text>
+</svg>
+<div class="cap"><b>图 M1</b>　原型。识别顺序：先看浪 4 是否守住浪 1 顶（蓝虚线），再看浪 3 是否不是最短，最后看子浪是否为 5-3-5-3-5。三条同时成立才叫标准推动。</div>
+</div>
+
+<div class="scroll"><table>
+<tr><th style="width:100px">要点</th><th>说明</th></tr>
+<tr><td>子浪结构</td><td>1、3、5 各为五浪；2、4 各为三浪或复合调整</td></tr>
+<tr><td>成交量</td><td>浪 3 通常最大，浪 5 常小于浪 3（量价背离）。这是<strong>辅助线索</strong>，不是必要条件：缩量的五浪照样成立，量能只能调置信度</td></tr>
+<tr><td>常见误判</td><td>把浪 4 的复杂调整误认为顶部；把浪 3 的第一次回撤误认为浪 4 开始</td></tr>
+<tr><td>实战处置</td><td>浪 2 结束处入场（风险最小），浪 4 结束处加仓或入场（第二机会）</td></tr>
+</table></div>
+
+<h3 id="m2"><span class="code">M2</span>第一浪扩展</h3>
+
+<div class="figure">
+<svg viewBox="0 0 680 280" width="100%" role="img" xmlns="http://www.w3.org/2000/svg">
+<title>第一浪扩展形态</title>
+<desc>浪一内部包含清晰的五个子浪且幅度异常拉长，后续各浪幅度均小于浪一，其中浪三、浪五相对较大。</desc>
+<polyline points="60,248 90,200 112,216 158,112 176,132 200,80 252,162 330,78 366,112 432,60 492,132" fill="none" stroke="#1F1F1F" stroke-width="1.8" stroke-linejoin="round" stroke-linecap="round"/>
+<circle cx="200" cy="80" r="3" fill="#A32D2D"/><text x="200" y="64" font-family="system-ui, -apple-system, 'Segoe UI', sans-serif" font-size="13" font-weight="500" fill="#2C2C2A" text-anchor="middle" dominant-baseline="central">1</text>
+<circle cx="252" cy="162" r="3" fill="#3B6D11"/><text x="252" y="181" font-family="system-ui, -apple-system, 'Segoe UI', sans-serif" font-size="13" font-weight="500" fill="#2C2C2A" text-anchor="middle" dominant-baseline="central">2</text>
+<circle cx="330" cy="78" r="3" fill="#A32D2D"/><text x="330" y="62" font-family="system-ui, -apple-system, 'Segoe UI', sans-serif" font-size="13" font-weight="500" fill="#2C2C2A" text-anchor="middle" dominant-baseline="central">3</text>
+<circle cx="366" cy="112" r="3" fill="#3B6D11"/><text x="366" y="131" font-family="system-ui, -apple-system, 'Segoe UI', sans-serif" font-size="13" font-weight="500" fill="#2C2C2A" text-anchor="middle" dominant-baseline="central">4</text>
+<circle cx="432" cy="60" r="3" fill="#A32D2D"/><text x="432" y="44" font-family="system-ui, -apple-system, 'Segoe UI', sans-serif" font-size="13" font-weight="500" fill="#2C2C2A" text-anchor="middle" dominant-baseline="central">5</text>
+<text x="490" y="122" font-family="system-ui, -apple-system, 'Segoe UI', sans-serif" font-size="11.5" fill="#6B6A64" text-anchor="middle" dominant-baseline="central">A ↓</text>
+<text x="128" y="240" font-family="system-ui, -apple-system, 'Segoe UI', sans-serif" font-size="11" fill="#A32D2D" dominant-baseline="central">浪1 内部五子浪，幅度最长</text>
+</svg>
+<div class="cap"><b>图 M2</b>　第一浪扩展。特征是浪 1 内部子浪清晰可辨且幅度远超后续各浪。实战含义：<b>这种结构的浪 2 回撤往往很深（可达 0.618 甚至 0.786）</b>，不要因为回撤深就否定推动浪假设。</div>
+</div>
+
+<h3 id="m3"><span class="code">M3</span>第三浪扩展 —— 最常见的形态</h3>
+
+<div class="figure">
+<svg viewBox="0 0 680 300" width="100%" role="img" xmlns="http://www.w3.org/2000/svg">
+<title>第三浪扩展形态</title>
+<desc>浪三内部包含五个子浪且幅度最长，是最常见的推动形态，成交量在此期间达到峰值。</desc>
+<polyline points="60,258 110,202 140,230 175,192 196,208 270,112 291,130 356,66 400,122 476,56 540,168" fill="none" stroke="#1F1F1F" stroke-width="1.8" stroke-linejoin="round" stroke-linecap="round"/>
+<circle cx="110" cy="202" r="3" fill="#A32D2D"/><text x="110" y="186" font-family="system-ui, -apple-system, 'Segoe UI', sans-serif" font-size="13" font-weight="500" fill="#2C2C2A" text-anchor="middle" dominant-baseline="central">1</text>
+<circle cx="140" cy="230" r="3" fill="#3B6D11"/><text x="140" y="249" font-family="system-ui, -apple-system, 'Segoe UI', sans-serif" font-size="13" font-weight="500" fill="#2C2C2A" text-anchor="middle" dominant-baseline="central">2</text>
+<circle cx="356" cy="66" r="3" fill="#A32D2D"/><text x="356" y="50" font-family="system-ui, -apple-system, 'Segoe UI', sans-serif" font-size="13" font-weight="500" fill="#2C2C2A" text-anchor="middle" dominant-baseline="central">3</text>
+<circle cx="400" cy="122" r="3" fill="#3B6D11"/><text x="400" y="141" font-family="system-ui, -apple-system, 'Segoe UI', sans-serif" font-size="13" font-weight="500" fill="#2C2C2A" text-anchor="middle" dominant-baseline="central">4</text>
+<circle cx="476" cy="56" r="3" fill="#A32D2D"/><text x="476" y="42" font-family="system-ui, -apple-system, 'Segoe UI', sans-serif" font-size="13" font-weight="500" fill="#2C2C2A" text-anchor="middle" dominant-baseline="central">5</text>
+<text x="540" y="186" font-family="system-ui, -apple-system, 'Segoe UI', sans-serif" font-size="11.5" fill="#6B6A64" text-anchor="middle" dominant-baseline="central">A</text>
+<text x="248" y="216" font-family="system-ui, -apple-system, 'Segoe UI', sans-serif" font-size="10.5" fill="#A32D2D" dominant-baseline="central">浪 3 内部五子浪</text>
+<line x1="110" y1="202" x2="476" y2="202" stroke="#185FA5" stroke-width="0.5" stroke-dasharray="4 4"/>
+<text x="486" y="212" font-family="system-ui, -apple-system, 'Segoe UI', sans-serif" font-size="11" fill="#185FA5" dominant-baseline="central">浪1 顶</text>
+</svg>
+<div class="cap"><b>图 M3</b>　第三浪扩展。浪 3 内部的五子浪清晰，幅度通常为浪 1 的 1.6–2.6 倍（本图约 2.9 倍）。<b>实战含义：这是最值得参与的一段</b>，但也最难在起点确认——因为浪 3 初段与普通反弹无法区分，越过浪 1 顶只能排除“浪 2 反弹”，不能排除“扩张平台的 B 浪”；要等回抽不破浪 1 顶、且内部五浪走完，才升级为确认。</div>
+</div>
+
+<div class="callout ok">
+<span class="lab">为什么第三浪扩展最多见</span>
+因为它对应的是<b>信息扩散最快</b>的阶段：基本面被市场共识确认，资金集中涌入，于是价格单边推进而没有充分回撤。这解释了一个常被忽略的事实——<b>第三浪往往不是"数"出来的，而是被基本面事件推出来的</b>。反过来，如果浪 3 显得犹豫、反复，通常说明你标的不是浪 3。
+</div>
+
+<h3 id="m4"><span class="code">M4</span>第五浪扩展</h3>
+
+<div class="figure">
+<svg viewBox="0 0 680 300" width="100%" role="img" xmlns="http://www.w3.org/2000/svg">
+<title>第五浪扩展形态</title>
+<desc>浪五内部五个子浪且幅度明显长于浪一至浪四，随后进入调整。</desc>
+<line x1="255" y1="181" x2="500" y2="181" stroke="#A32D2D" stroke-width="0.7" stroke-dasharray="5 4"/>
+<text x="505" y="181" font-family="system-ui, -apple-system, 'Segoe UI', sans-serif" font-size="10.5" fill="#A32D2D" dominant-baseline="central">浪 3 顶</text>
+<path d="M60 250 L120 220 L155 236 L255 181 L290 201 L320 183 L335 192 L395 140 L410 152 L490 101 L545 165" fill="none" stroke="#2C2C2A" stroke-width="1.8" stroke-linejoin="round"/>
+<circle cx="60" cy="250" r="2.6" fill="#2C2C2A"/>
+<circle cx="120" cy="220" r="2.6" fill="#2C2C2A"/>
+<circle cx="155" cy="236" r="2.6" fill="#2C2C2A"/>
+<circle cx="255" cy="181" r="2.6" fill="#2C2C2A"/>
+<circle cx="290" cy="201" r="2.6" fill="#2C2C2A"/>
+<circle cx="490" cy="101" r="2.6" fill="#2C2C2A"/>
+<text x="120" y="208" font-family="system-ui, -apple-system, 'Segoe UI', sans-serif" font-size="12" fill="#2C2C2A" text-anchor="middle" dominant-baseline="central">1</text>
+<text x="155" y="248" font-family="system-ui, -apple-system, 'Segoe UI', sans-serif" font-size="12" fill="#2C2C2A" text-anchor="middle" dominant-baseline="central">2</text>
+<text x="255" y="169" font-family="system-ui, -apple-system, 'Segoe UI', sans-serif" font-size="12" fill="#2C2C2A" text-anchor="middle" dominant-baseline="central">3</text>
+<text x="290" y="213" font-family="system-ui, -apple-system, 'Segoe UI', sans-serif" font-size="12" fill="#2C2C2A" text-anchor="middle" dominant-baseline="central">4</text>
+<text x="490" y="89" font-family="system-ui, -apple-system, 'Segoe UI', sans-serif" font-size="12" fill="#2C2C2A" text-anchor="middle" dominant-baseline="central">5</text>
+<text x="318" y="236" font-family="system-ui, -apple-system, 'Segoe UI', sans-serif" font-size="10.5" fill="#5F5E5A" dominant-baseline="central">浪 5 内部五子浪</text>
+<text x="552" y="172" font-family="system-ui, -apple-system, 'Segoe UI', sans-serif" font-size="11" fill="#6B6A64" dominant-baseline="central">A</text>
+</svg>
+<div class="cap"><b>图 M4</b>　第五浪扩展。前四浪每一浪都明显短于浪五，最后一浪突然拉长（本图 $L_5/L_3\approx1.8$）。<b>这是风险最不对称的形态</b>：它看起来最强，实际已接近终点。识别线索是<b>量价背离</b>（价格新高但成交量与动量指标不新高）以及<b>内部结构走完五段</b>。</div>
+</div>
+
+<h3 id="m5"><span class="code">M5</span>引导楔形（Leading Diagonal）</h3>
+
+<div class="figure">
+<svg viewBox="0 0 680 290" width="100%" role="img" xmlns="http://www.w3.org/2000/svg">
+<title>引导楔形结构</title>
+<desc>五浪推动但呈收敛楔形，浪四侵入浪一价格区间，子浪为五三五三五结构，出现在趋势起始位置。</desc>
+<polyline points="58,255 140,150 182,225 288,115 328,178 408,90 460,205" fill="none" stroke="#1F1F1F" stroke-width="1.8" stroke-linejoin="round" stroke-linecap="round"/>
+<line x1="130" y1="152.4" x2="420" y2="83.7" stroke="#185FA5" stroke-width="0.8" stroke-dasharray="5 4"/>
+<line x1="170" y1="228.9" x2="420" y2="148.3" stroke="#185FA5" stroke-width="0.8" stroke-dasharray="5 4"/>
+<circle cx="140" cy="150" r="3" fill="#A32D2D"/><text x="140" y="134" font-family="system-ui, -apple-system, 'Segoe UI', sans-serif" font-size="13" font-weight="500" fill="#2C2C2A" text-anchor="middle" dominant-baseline="central">1</text>
+<circle cx="182" cy="225" r="3" fill="#3B6D11"/><text x="182" y="244" font-family="system-ui, -apple-system, 'Segoe UI', sans-serif" font-size="13" font-weight="500" fill="#2C2C2A" text-anchor="middle" dominant-baseline="central">2</text>
+<circle cx="288" cy="115" r="3" fill="#A32D2D"/><text x="288" y="99" font-family="system-ui, -apple-system, 'Segoe UI', sans-serif" font-size="13" font-weight="500" fill="#2C2C2A" text-anchor="middle" dominant-baseline="central">3</text>
+<circle cx="328" cy="178" r="3" fill="#3B6D11"/><text x="312" y="168" font-family="system-ui, -apple-system, 'Segoe UI', sans-serif" font-size="12" fill="#2C2C2A" text-anchor="middle" dominant-baseline="central">4</text>
+<circle cx="408" cy="90" r="3" fill="#A32D2D"/><text x="408" y="74" font-family="system-ui, -apple-system, 'Segoe UI', sans-serif" font-size="13" font-weight="500" fill="#2C2C2A" text-anchor="middle" dominant-baseline="central">5</text>
+<text x="470" y="218" font-family="system-ui, -apple-system, 'Segoe UI', sans-serif" font-size="11.5" fill="#6B6A64" text-anchor="middle" dominant-baseline="central">A</text>
+<line x1="140" y1="150" x2="356" y2="150" stroke="#A32D2D" stroke-width="0.6" stroke-dasharray="3 3"/>
+<line x1="328" y1="150" x2="328" y2="178" stroke="#A32D2D" stroke-width="1.1"/>
+<text x="336" y="198" font-family="system-ui, -apple-system, 'Segoe UI', sans-serif" font-size="10" fill="#A32D2D" dominant-baseline="central">浪4 侵入浪1 区间</text>
+</svg>
+<div class="cap"><b>图 M5</b>　引导楔形。关键特征有三：<b>浪 4 侵入浪 1 区间</b>（红色虚线与短竖线，与终结楔形一样，是允许浪 4 与浪 1 重叠的推动形态）、<b>边界收敛</b>（蓝色虚线）、<b>内部子浪仍是五三五三五</b>。它出现在浪 1 或 A 的位置，意味着趋势刚起步。</div>
+</div>
+
+<div class="scroll"><table>
+<tr><th style="width:110px">项目</th><th>说明</th></tr>
+<tr><td>出现位置</td><td>浪 1 或浪 A 的起点，是趋势的"第一声"</td></tr>
+<tr><td>子浪结构</td><td>5-3-5-3-5（与终结楔形的 3-3-3-3-3 区分）</td></tr>
+<tr><td>实战处置</td><td>楔形结束后常出现深度回撤（回到楔形起点附近），这是<b>浪 2 的正常行为</b>，不要因此否定趋势</td></tr>
+<tr><td>鉴别难点</td><td>与终结楔形外形相似，靠<b>位置</b>与<b>子浪结构</b>区分，不靠形状</td></tr>
+</table></div>
+
+<h3 id="m6"><span class="code">M6</span>终结楔形（Ending Diagonal）</h3>
+
+<div class="figure">
+<svg viewBox="0 0 680 300" width="100%" role="img" xmlns="http://www.w3.org/2000/svg">
+<title>终结楔形结构</title>
+<desc>五段三浪结构，边界收敛，浪四低于浪一顶点形成重叠，结束后常快速回到楔形起点。</desc>
+<line x1="185" y1="170" x2="400" y2="91.5" stroke="#185FA5" stroke-width="0.8" stroke-dasharray="5 4"/>
+<line x1="140" y1="110" x2="400" y2="59.1" stroke="#185FA5" stroke-width="0.8" stroke-dasharray="5 4"/>
+<line x1="70" y1="250" x2="460" y2="250" stroke="#3B6D11" stroke-width="0.5" stroke-dasharray="4 4"/>
+<path d="M70 250 L140 110 L185 170 L255 87 L300 128 L365 80 L438 246" fill="none" stroke="#2C2C2A" stroke-width="1.8" stroke-linejoin="round"/>
+<circle cx="70" cy="250" r="3" fill="#2C2C2A"/>
+<circle cx="140" cy="110" r="3" fill="#2C2C2A"/>
+<circle cx="185" cy="170" r="3" fill="#2C2C2A"/>
+<circle cx="255" cy="87" r="3" fill="#2C2C2A"/>
+<circle cx="300" cy="128" r="3" fill="#2C2C2A"/>
+<circle cx="365" cy="80" r="3" fill="#2C2C2A"/>
+<line x1="140" y1="110" x2="315" y2="110" stroke="#A32D2D" stroke-width="0.6" stroke-dasharray="3 3"/>
+<text x="332" y="132" font-family="system-ui, -apple-system, 'Segoe UI', sans-serif" font-size="10" fill="#A32D2D" dominant-baseline="central">浪 1 顶</text>
+<text x="140" y="96" font-family="system-ui, -apple-system, 'Segoe UI', sans-serif" font-size="12" fill="#2C2C2A" text-anchor="middle" dominant-baseline="central">1</text>
+<text x="196" y="184" font-family="system-ui, -apple-system, 'Segoe UI', sans-serif" font-size="12" fill="#2C2C2A" text-anchor="middle" dominant-baseline="central">2</text>
+<text x="255" y="75" font-family="system-ui, -apple-system, 'Segoe UI', sans-serif" font-size="12" fill="#2C2C2A" text-anchor="middle" dominant-baseline="central">3</text>
+<text x="308" y="142" font-family="system-ui, -apple-system, 'Segoe UI', sans-serif" font-size="12" fill="#2C2C2A" text-anchor="middle" dominant-baseline="central">4</text>
+<text x="378" y="80" font-family="system-ui, -apple-system, 'Segoe UI', sans-serif" font-size="12" fill="#2C2C2A" text-anchor="start" dominant-baseline="central">5</text>
+<text x="400" y="264" font-family="system-ui, -apple-system, 'Segoe UI', sans-serif" font-size="10.5" fill="#3B6D11" text-anchor="middle" dominant-baseline="central">楔形起点（反转目标）</text>
+<text x="440" y="120" font-family="system-ui, -apple-system, 'Segoe UI', sans-serif" font-size="10.5" fill="#3B6D11" dominant-baseline="central">反转常回到楔形起点</text>
+</svg>
+<div class="cap"><b>图 M6</b>　终结楔形。与引导楔形外形几乎一样，区别在两点：<b>位置在浪 5 或 C（趋势末端）</b>，<b>内部子浪是三三三三三（3-3-3-3-3）</b>。它的价值极高——结束后通常快速回到楔形起点，是风险收益比最好的反转交易之一。</div>
+</div>
+
+<div class="callout">
+<span class="lab">楔形鉴别速记</span>
+外形相同，靠两件事区分：<b>在哪</b>（浪 1 还是浪 5）、<b>内部几段</b>（5-3-5-3-5 还是 3-3-3-3-3）。永远不要靠倾斜角度或视觉印象判断——这是楔形误判最常见的来源。
+</div>
+
+<h3 id="m7"><span class="code">M7</span>失败五浪（Truncated Fifth）</h3>
+
+<div class="figure">
+<svg viewBox="0 0 680 290" width="100%" role="img" xmlns="http://www.w3.org/2000/svg">
+<title>失败五浪结构</title>
+<desc>浪五未能越过浪三顶点即转向，是趋势衰竭的强烈信号，随后出现快速下跌。</desc>
+<polyline points="60,250 130,175 170,210 300,80 345,132 412,108 470,205" fill="none" stroke="#1F1F1F" stroke-width="1.8" stroke-linejoin="round" stroke-linecap="round"/>
+<line x1="60" y1="80" x2="520" y2="80" stroke="#A32D2D" stroke-width="0.7" stroke-dasharray="5 4"/>
+<circle cx="130" cy="175" r="3" fill="#A32D2D"/><text x="130" y="159" font-family="system-ui, -apple-system, 'Segoe UI', sans-serif" font-size="13" font-weight="500" fill="#2C2C2A" text-anchor="middle" dominant-baseline="central">1</text>
+<circle cx="170" cy="210" r="3" fill="#3B6D11"/><text x="170" y="229" font-family="system-ui, -apple-system, 'Segoe UI', sans-serif" font-size="13" font-weight="500" fill="#2C2C2A" text-anchor="middle" dominant-baseline="central">2</text>
+<circle cx="300" cy="80" r="3" fill="#A32D2D"/><text x="300" y="64" font-family="system-ui, -apple-system, 'Segoe UI', sans-serif" font-size="13" font-weight="500" fill="#2C2C2A" text-anchor="middle" dominant-baseline="central">3</text>
+<circle cx="345" cy="132" r="3" fill="#3B6D11"/><text x="345" y="151" font-family="system-ui, -apple-system, 'Segoe UI', sans-serif" font-size="13" font-weight="500" fill="#2C2C2A" text-anchor="middle" dominant-baseline="central">4</text>
+<circle cx="412" cy="108" r="3" fill="#A32D2D"/><text x="412" y="92" font-family="system-ui, -apple-system, 'Segoe UI', sans-serif" font-size="13" font-weight="500" fill="#2C2C2A" text-anchor="middle" dominant-baseline="central">5</text>
+<text x="470" y="225" font-family="system-ui, -apple-system, 'Segoe UI', sans-serif" font-size="11.5" fill="#6B6A64" text-anchor="middle" dominant-baseline="central">A</text>
+<text x="450" y="72" font-family="system-ui, -apple-system, 'Segoe UI', sans-serif" font-size="11" fill="#A32D2D" text-anchor="middle" dominant-baseline="central">浪3 顶</text>
+<text x="428" y="126" font-family="system-ui, -apple-system, 'Segoe UI', sans-serif" font-size="10.5" fill="#A32D2D" dominant-baseline="central">未创新高</text>
+</svg>
+<div class="cap"><b>图 M7</b>　失败五浪。浪 5 未能越过浪 3 顶点就转向。这是<b>趋势衰竭最强的信号之一</b>：多头连最后一段创新高的力气都没有了。实战上它常伴随量能萎缩与动量背离，随后下跌往往比正常五浪结束更急。</div>
+</div>
+
+<div class="callout warn">
+<span class="lab">失败浪的最大陷阱</span>
+在浪 5 尚未完成时，"会不会失败"是无法判断的——必须等价格明确转向并跌破浪 4 底才能确认。所以<b>不能把"预期失败"当作提前做空的理由</b>，只能把"已经失败"当作离场或反手的确认。这个区别决定了你是抓顶还是被顶抓。
+</div>
+
+<hr>
+
+<h2 id="sec3"><span class="num">3</span>调整浪家族</h2>
+
+<p>调整浪是最容易出错的部分，因为它看似混乱。但只要抓住一个变量——<strong>纵向幅度与横向时间的比例</strong>——八种形态会自动分成三族：</p>
+
+<div class="scroll"><table>
+<tr><th style="width:130px">族</th><th style="width:120px">子浪结构</th><th style="width:170px">几何特征</th><th>本质</th></tr>
+<tr><td>锯齿族（C1–C3）</td><td class="c">5-3-5</td><td>深、快、方向明确</td><td>用幅度消化，时间短</td></tr>
+<tr><td>平台族（C4–C6）</td><td class="c">3-3-5</td><td>平、宽、方向模糊</td><td>用时间消化，幅度浅</td></tr>
+<tr><td>三角族（C7–C8）</td><td class="c">3-3-3-3-3</td><td>收敛或扩散、五段</td><td>多空力量趋于平衡</td></tr>
+</table></div>
+
+<h3 id="c1"><span class="code">C1</span>锯齿形（Zigzag）</h3>
+
+<div class="figure">
+<svg viewBox="0 0 680 300" width="100%" role="img" xmlns="http://www.w3.org/2000/svg">
+<title>锯齿形调整结构</title>
+<desc>下跌锯齿由五浪的A、三浪的B和五浪的C构成，B回撤约百分之五十，C跌破A底。</desc>
+<polyline points="60,70 200,220 320,130 450,250 560,90" fill="none" stroke="#1F1F1F" stroke-width="1.8" stroke-linejoin="round" stroke-linecap="round"/>
+<circle cx="200" cy="220" r="3" fill="#3B6D11"/><text x="200" y="240" font-family="system-ui, -apple-system, 'Segoe UI', sans-serif" font-size="13" font-weight="500" fill="#2C2C2A" text-anchor="middle" dominant-baseline="central">A</text>
+<circle cx="320" cy="130" r="3" fill="#A32D2D"/><text x="320" y="114" font-family="system-ui, -apple-system, 'Segoe UI', sans-serif" font-size="13" font-weight="500" fill="#2C2C2A" text-anchor="middle" dominant-baseline="central">B</text>
+<circle cx="450" cy="250" r="3" fill="#3B6D11"/><text x="450" y="270" font-family="system-ui, -apple-system, 'Segoe UI', sans-serif" font-size="13" font-weight="500" fill="#2C2C2A" text-anchor="middle" dominant-baseline="central">C</text>
+<line x1="60" y1="220" x2="560" y2="220" stroke="#CFCDC5" stroke-width="0.5" stroke-dasharray="4 4"/>
+<text x="510" y="234" font-family="system-ui, -apple-system, 'Segoe UI', sans-serif" font-size="11" fill="#6B6A64" dominant-baseline="central">A 底</text>
+<text x="252" y="160" font-family="system-ui, -apple-system, 'Segoe UI', sans-serif" font-size="11" fill="#A32D2D" dominant-baseline="central">B 回撤 38–62%</text>
+<text x="200" y="285" font-family="system-ui, -apple-system, 'Segoe UI', sans-serif" font-size="11" fill="#6B6A64" dominant-baseline="central">C 越过 A 底（经典口径）</text>
+</svg>
+<div class="cap"><b>图 C1</b>　锯齿形。子浪 5-3-5：A 五浪、B 三浪、C 五浪。<b>经典口径要求 C 越过 A 的终点</b>（本书采用该口径；若允许截断型 C，须注明流派）。但 <b>C 越过 A 终点并不能单独证明这是锯齿</b>——扩张平台的 C 同样破 A 底。所以顺序是：先看 A 的内部结构（A 五浪 → 锯齿；A 三浪 → 平台），再用 C 的位置做组合条件。反过来用，就会把扩张平台判成锯齿。</div>
+</div>
+
+<div class="scroll"><table>
+<tr><th style="width:110px">项目</th><th>说明</th></tr>
+<tr><td>B 的回撤</td><td>通常 38.2%–61.8%，极端可达 78.6%，<strong>但不得超过 A 的起点</strong></td></tr>
+<tr><td>出现位置</td><td>浪 2 最常见；浪 4 较少（浪 4 多为平台或三角）</td></tr>
+<tr><td>交易含义</td><td>锯齿的 C 浪终点是<b>高质量入场点</b>，因为调整结构完整且方向明确</td></tr>
+<tr><td>鉴别</td><td>三步，按优先级：① <strong>内部结构</strong> A/B/C 是否为 5-3-5（平台是 3-3-5）——这一步是决定性的；② C 是否越过 A 的终点（经典口径下的必要条件，但不充分）；③ B 的回撤深度——$B&lt;0.9A$ 偏锯齿，$B\ge0.9A$ 偏平台，只作倾向</td></tr>
+</table></div>
+
+<h3 id="c2"><span class="code">C2</span>双锯齿（Double Zigzag，W-X-Y）</h3>
+
+<div class="figure">
+<svg viewBox="0 0 680 300" width="100%" role="img" xmlns="http://www.w3.org/2000/svg">
+<title>双锯齿结构调整</title>
+<desc>两个独立的五三五锯齿由一段连接浪 X 相连，整体下跌幅度更深；X 可为任意调整形态，最常见是三浪锯齿。</desc>
+<polyline points="60,60 170,175 240,105 380,235 490,120" fill="none" stroke="#1F1F1F" stroke-width="1.8" stroke-linejoin="round" stroke-linecap="round"/>
+<circle cx="170" cy="175" r="3" fill="#3B6D11"/><text x="170" y="195" font-family="system-ui, -apple-system, 'Segoe UI', sans-serif" font-size="13" font-weight="500" fill="#2C2C2A" text-anchor="middle" dominant-baseline="central">W</text>
+<circle cx="240" cy="105" r="3" fill="#A32D2D"/><text x="240" y="89" font-family="system-ui, -apple-system, 'Segoe UI', sans-serif" font-size="13" font-weight="500" fill="#2C2C2A" text-anchor="middle" dominant-baseline="central">X</text>
+<circle cx="380" cy="235" r="3" fill="#3B6D11"/><text x="380" y="255" font-family="system-ui, -apple-system, 'Segoe UI', sans-serif" font-size="13" font-weight="500" fill="#2C2C2A" text-anchor="middle" dominant-baseline="central">Y</text>
+<text x="204" y="160" font-family="system-ui, -apple-system, 'Segoe UI', sans-serif" font-size="10.5" fill="#6B6A64" dominant-baseline="central">连接浪</text>
+<text x="500" y="112" font-family="system-ui, -apple-system, 'Segoe UI', sans-serif" font-size="11.5" fill="#2C2C2A" dominant-baseline="central">趋势恢复 →</text>
+</svg>
+<div class="cap"><b>图 C2</b>　双锯齿。两个独立锯齿由 X 浪连接；X 可以是任意调整形态，最常见为锯齿（故常呈三浪），三角形也可担任复合调整的最后一个 X。<b>实战意义：它解释了"为什么跌得比预期深"</b>——你以为一个锯齿就结束，实际走了两个。这也是"调整还没完"最常见的形态学理由。</div>
+</div>
+
+<h3 id="c3"><span class="code">C3</span>三锯齿与复合调整（W-X-Y-X-Z）</h3>
+
+<p>三锯齿是双锯齿再叠加一次，结构为 W-X-Y-X-Z。它比双锯齿更少见，但有一个重要的实战含义：<strong>当调整持续时间远超预期、幅度却始终不够时，应当怀疑进入了三重结构。</strong></p>
+
+<p>同样是 W-X-Y-X-Z，若三段里有平台或三角，叫<b>三三组合</b>（triple three），不叫三锯齿。两者的顶层字母、段数完全一样，区别只在<b>每一段是什么</b>：全为锯齿 → 三锯齿；有一段不是锯齿 → 三三。<b>这也决定了能不能写展开段数</b>——三锯齿在两个 X 都取三浪时可写成 11 段（5-3-5｜3｜5-3-5｜3｜5-3-5），三三不能：平台是 3-3-5、三角是 3-3-3-3-3，混在一起段数随组成变。同理，双锯齿与双三（W-X-Y）也只在"W、Y 全为锯齿"时才可写成 7 段。</p>
+
+<div class="figure">
+<svg viewBox="0 0 680 300" width="100%" role="img" xmlns="http://www.w3.org/2000/svg">
+<title>三锯齿与复合调整结构</title>
+<desc>三个锯齿由两段 X 浪相连，构成 W-X-Y-X-Z，整体逐段创出新低。</desc>
+<polyline points="60,42 150,142 215,92 320,197 385,147 480,247 545,165" fill="none" stroke="#1F1F1F" stroke-width="1.8" stroke-linejoin="round" stroke-linecap="round"/>
+<circle cx="150" cy="142" r="3" fill="#3B6D11"/><text x="150" y="162" font-family="system-ui, -apple-system, 'Segoe UI', sans-serif" font-size="13" font-weight="500" fill="#2C2C2A" text-anchor="middle" dominant-baseline="central">W</text>
+<circle cx="215" cy="92" r="3" fill="#A32D2D"/><text x="215" y="76" font-family="system-ui, -apple-system, 'Segoe UI', sans-serif" font-size="13" font-weight="500" fill="#2C2C2A" text-anchor="middle" dominant-baseline="central">X</text>
+<circle cx="320" cy="197" r="3" fill="#3B6D11"/><text x="320" y="217" font-family="system-ui, -apple-system, 'Segoe UI', sans-serif" font-size="13" font-weight="500" fill="#2C2C2A" text-anchor="middle" dominant-baseline="central">Y</text>
+<circle cx="385" cy="147" r="3" fill="#A32D2D"/><text x="385" y="131" font-family="system-ui, -apple-system, 'Segoe UI', sans-serif" font-size="13" font-weight="500" fill="#2C2C2A" text-anchor="middle" dominant-baseline="central">X</text>
+<circle cx="480" cy="247" r="3" fill="#3B6D11"/><text x="480" y="267" font-family="system-ui, -apple-system, 'Segoe UI', sans-serif" font-size="13" font-weight="500" fill="#2C2C2A" text-anchor="middle" dominant-baseline="central">Z</text>
+<text x="392" y="44" font-family="system-ui, -apple-system, 'Segoe UI', sans-serif" font-size="10.5" fill="#6B6A64" dominant-baseline="central">X 可为任意调整形态</text>
+</svg>
+<div class="cap"><b>图 C3</b>　三锯齿（W-X-Y-X-Z）。三个锯齿由两段 X 连接，每一段都创出新低，而每段结尾都出现一次"像是结束了"的反弹。三个锯齿的幅度常相近，或按 0.618 递减。</div>
+</div>
+
+
+
+<div class="scroll"><table>
+<tr><th style="width:96px">形态</th><th style="width:272px">结构</th><th>识别线索</th></tr>
+<tr><td>单锯齿</td><td class="c">5-3-5</td><td>调整干脆，C 浪一破 A 底即为候选完成信号</td></tr>
+<tr><td>双锯齿</td><td class="c">5-3-5 → X → 5-3-5</td><td><b>W、Y 必须都是锯齿</b>，X 多为三浪锯齿。可写成 7 段。看见连接浪只说明"可能还有一段"，不能断定</td></tr>
+<tr><td>双三</td><td class="c">W-X-Y<br>（W、Y 至少一段为平台 / 三角）</td><td>横向、价格推进慢，常见"一段锯齿接一段平台"（后者亦称复合平台）。<b>无固定展开</b></td></tr>
+<tr><td>三锯齿</td><td class="c">5-3-5 → X → 5-3-5 → X → 5-3-5</td><td><b>W、Y、Z 全是锯齿</b>；连续两次"看似结束却继续"。可写成 11 段</td></tr>
+<tr><td>三三</td><td class="c">W-X-Y-X-Z<br>（三段中至少一段为平台 / 三角）</td><td>比双三更久、更横向。<b>无固定展开</b>：段数随组成变</td></tr>
+</table></div>
+
+<div class="callout">
+<span class="lab">复合调整的识别法则</span>
+单锯齿与双锯齿<b>不能靠"第一次反弹是三浪还是五浪"直接分开</b>：那段反弹既可能是单锯齿内部的 B 浪，也可能是第一组锯齿之后的 X 浪，还可能是平台 B 浪或更大级别结构的一段。可靠的做法是等第一组 5-3-5 <b>完整走完</b>，再看后面接的是不是一段更小的调整（X）以及第二组 5-3-5，两组都成立才升级为双锯齿候选。<b>所以它不是"当时就能定性"的判据，只能用来更新候选。</b>
+</div>
+
+<h3 id="c4"><span class="code">C4</span>规则平台（Regular Flat）</h3>
+
+<div class="figure">
+<svg viewBox="0 0 680 300" width="100%" role="img" xmlns="http://www.w3.org/2000/svg">
+<title>规则平台调整结构</title>
+<desc>三三五结构，B浪几乎完全回撤A浪，C浪回到A底附近但不显著跌破。</desc>
+<polyline points="60,90 210,215 370,100 510,210" fill="none" stroke="#1F1F1F" stroke-width="1.8" stroke-linejoin="round" stroke-linecap="round"/>
+<circle cx="210" cy="215" r="3" fill="#3B6D11"/><text x="210" y="235" font-family="system-ui, -apple-system, 'Segoe UI', sans-serif" font-size="13" font-weight="500" fill="#2C2C2A" text-anchor="middle" dominant-baseline="central">A</text>
+<circle cx="370" cy="100" r="3" fill="#A32D2D"/><text x="370" y="84" font-family="system-ui, -apple-system, 'Segoe UI', sans-serif" font-size="13" font-weight="500" fill="#2C2C2A" text-anchor="middle" dominant-baseline="central">B</text>
+<circle cx="510" cy="210" r="3" fill="#3B6D11"/><text x="510" y="230" font-family="system-ui, -apple-system, 'Segoe UI', sans-serif" font-size="13" font-weight="500" fill="#2C2C2A" text-anchor="middle" dominant-baseline="central">C</text>
+<line x1="60" y1="90" x2="560" y2="90" stroke="#CFCDC5" stroke-width="0.5" stroke-dasharray="4 4"/>
+<line x1="60" y1="215" x2="560" y2="215" stroke="#CFCDC5" stroke-width="0.5" stroke-dasharray="4 4"/>
+<text x="548" y="82" font-family="system-ui, -apple-system, 'Segoe UI', sans-serif" font-size="10.5" fill="#6B6A64" text-anchor="end" dominant-baseline="central">起点</text>
+<text x="548" y="207" font-family="system-ui, -apple-system, 'Segoe UI', sans-serif" font-size="10.5" fill="#6B6A64" text-anchor="end" dominant-baseline="central">A 底</text>
+<text x="292" y="150" font-family="system-ui, -apple-system, 'Segoe UI', sans-serif" font-size="11" fill="#A32D2D" dominant-baseline="central">B 回到起点附近（≥90%）</text>
+</svg>
+<div class="cap"><b>图 C4</b>　规则平台。子浪 3-3-5。<b>B 浪回撤达 A 的 90% 以上，C 浪回到 A 底附近</b>。它的实战特征是"看起来像要突破，实际只是回到原点"——这是最消耗耐心的形态，也是最容易被误判为趋势延续的地方。</div>
+</div>
+
+<h3 id="c5"><span class="code">C5</span>扩张平台（Expanded Flat）</h3>
+
+<div class="figure">
+<svg viewBox="0 0 680 300" width="100%" role="img" xmlns="http://www.w3.org/2000/svg">
+<title>扩张平台调整结构</title>
+<desc>三三五结构，B浪越过A浪起点创新高，C浪跌破A底，振幅逐浪扩大。</desc>
+<polyline points="60,100 200,215 355,55 510,235 570,140" fill="none" stroke="#1F1F1F" stroke-width="1.8" stroke-linejoin="round" stroke-linecap="round"/>
+<circle cx="200" cy="215" r="3" fill="#3B6D11"/><text x="200" y="235" font-family="system-ui, -apple-system, 'Segoe UI', sans-serif" font-size="13" font-weight="500" fill="#2C2C2A" text-anchor="middle" dominant-baseline="central">A</text>
+<circle cx="355" cy="55" r="3" fill="#A32D2D"/><text x="355" y="39" font-family="system-ui, -apple-system, 'Segoe UI', sans-serif" font-size="13" font-weight="500" fill="#2C2C2A" text-anchor="middle" dominant-baseline="central">B</text>
+<circle cx="510" cy="235" r="3" fill="#3B6D11"/><text x="510" y="255" font-family="system-ui, -apple-system, 'Segoe UI', sans-serif" font-size="13" font-weight="500" fill="#2C2C2A" text-anchor="middle" dominant-baseline="central">C</text>
+<line x1="60" y1="100" x2="580" y2="100" stroke="#A32D2D" stroke-width="0.6" stroke-dasharray="4 4"/>
+<line x1="60" y1="215" x2="580" y2="215" stroke="#A32D2D" stroke-width="0.6" stroke-dasharray="4 4"/>
+<text x="586" y="88" font-family="system-ui, -apple-system, 'Segoe UI', sans-serif" font-size="10.5" fill="#A32D2D" dominant-baseline="central">起点</text>
+<text x="586" y="208" font-family="system-ui, -apple-system, 'Segoe UI', sans-serif" font-size="10.5" fill="#A32D2D" dominant-baseline="central">A 底</text>
+</svg>
+<div class="cap"><b>图 C5</b>　扩张平台。<b>B 越过 A 起点、C 跌破 A 底</b>，两端都扩张（本图 $C/A\approx1.57$，落在 1.0–1.618 的常见区间内）。这是很容易骗人的形态：B 的创新高会让你以为是新趋势启动，随后的 C 却直接破底。<b>扩张平台是假突破的主要产地。</b></div>
+</div>
+
+<h3 id="c6"><span class="code">C6</span>强势平台（Running Flat）</h3>
+
+<div class="figure">
+<svg viewBox="0 0 680 300" width="100%" role="img" xmlns="http://www.w3.org/2000/svg">
+<title>强势平台调整结构</title>
+<desc>三三五结构，B浪越过起点创新高，但C浪未能回到A底，显示原趋势力量强劲。</desc>
+<polyline points="60,100 200,205 355,55 510,180 575,85" fill="none" stroke="#1F1F1F" stroke-width="1.8" stroke-linejoin="round" stroke-linecap="round"/>
+<circle cx="200" cy="205" r="3" fill="#3B6D11"/><text x="200" y="225" font-family="system-ui, -apple-system, 'Segoe UI', sans-serif" font-size="13" font-weight="500" fill="#2C2C2A" text-anchor="middle" dominant-baseline="central">A</text>
+<circle cx="355" cy="55" r="3" fill="#A32D2D"/><text x="355" y="39" font-family="system-ui, -apple-system, 'Segoe UI', sans-serif" font-size="13" font-weight="500" fill="#2C2C2A" text-anchor="middle" dominant-baseline="central">B</text>
+<circle cx="510" cy="180" r="3" fill="#3B6D11"/><text x="510" y="200" font-family="system-ui, -apple-system, 'Segoe UI', sans-serif" font-size="13" font-weight="500" fill="#2C2C2A" text-anchor="middle" dominant-baseline="central">C</text>
+<line x1="60" y1="100" x2="580" y2="100" stroke="#CFCDC5" stroke-width="0.5" stroke-dasharray="4 4"/>
+<line x1="60" y1="205" x2="580" y2="205" stroke="#3B6D11" stroke-width="0.7" stroke-dasharray="4 4"/>
+<text x="572" y="92" font-family="system-ui, -apple-system, 'Segoe UI', sans-serif" font-size="10.5" fill="#6B6A64" text-anchor="end" dominant-baseline="central">起点</text>
+<text x="572" y="197" font-family="system-ui, -apple-system, 'Segoe UI', sans-serif" font-size="10.5" fill="#3B6D11" text-anchor="end" dominant-baseline="central">A 底（C 未触及）</text>
+<text x="440" y="148" font-family="system-ui, -apple-system, 'Segoe UI', sans-serif" font-size="11" fill="#3B6D11" dominant-baseline="central">C 停在半途 → 强势</text>
+</svg>
+<div class="cap"><b>图 C6</b>　强势平台。<b>B 创新高，但 C 未能回到 A 底就转向</b>。这个"没走完"恰恰是信息：空头连 C 浪都打不到位，说明原趋势力量极强。<b>强势平台的后续往往是最猛烈的一段推进。</b></div>
+</div>
+
+<p>三种平台只差两个端点，用一张表锁死区别：</p>
+
+<div class="scroll"><table>
+<tr><th style="width:150px">形态</th><th class="c" style="width:170px">B 相对起点</th><th class="c" style="width:170px">C 相对 A 底</th><th>含义</th></tr>
+<tr><td>规则平台</td><td class="c">B 回到起点附近（≥90%）</td><td class="c">C 到达但不显著跌破</td><td>多空均衡</td></tr>
+<tr><td>扩张平台</td><td class="c">B <strong>越过</strong>起点</td><td class="c">C <strong>跌破</strong> A 底</td><td>波动放大，假突破多</td></tr>
+<tr><td>强势平台</td><td class="c">B <strong>越过</strong>起点</td><td class="c">C <strong>未达</strong> A 底</td><td>原趋势极强</td></tr>
+</table></div>
+
+<h3 id="c7"><span class="code">C7</span>收敛三角形（Contracting Triangle）</h3>
+
+<div class="figure">
+<svg viewBox="0 0 680 310" width="100%" role="img" xmlns="http://www.w3.org/2000/svg">
+<title>收敛三角形结构</title>
+<desc>五段三浪结构的ABCDE收敛三角形，振幅逐段收窄，突破后沿原趋势方向运行。</desc>
+<line x1="230" y1="110" x2="530" y2="170" stroke="#185FA5" stroke-width="0.8" stroke-dasharray="5 4"/>
+<line x1="140" y1="230" x2="530" y2="162" stroke="#185FA5" stroke-width="0.8" stroke-dasharray="5 4"/>
+<polyline points="60,80 140,230 230,110 310,200 380,140 440,175 520,70" fill="none" stroke="#1F1F1F" stroke-width="1.8" stroke-linejoin="round" stroke-linecap="round"/>
+<circle cx="140" cy="230" r="3" fill="#3B6D11"/><text x="140" y="250" font-family="system-ui, -apple-system, 'Segoe UI', sans-serif" font-size="13" font-weight="500" fill="#2C2C2A" text-anchor="middle" dominant-baseline="central">A</text>
+<circle cx="230" cy="110" r="3" fill="#A32D2D"/><text x="230" y="94" font-family="system-ui, -apple-system, 'Segoe UI', sans-serif" font-size="13" font-weight="500" fill="#2C2C2A" text-anchor="middle" dominant-baseline="central">B</text>
+<circle cx="310" cy="200" r="3" fill="#3B6D11"/><text x="310" y="220" font-family="system-ui, -apple-system, 'Segoe UI', sans-serif" font-size="13" font-weight="500" fill="#2C2C2A" text-anchor="middle" dominant-baseline="central">C</text>
+<circle cx="380" cy="140" r="3" fill="#A32D2D"/><text x="380" y="124" font-family="system-ui, -apple-system, 'Segoe UI', sans-serif" font-size="13" font-weight="500" fill="#2C2C2A" text-anchor="middle" dominant-baseline="central">D</text>
+<circle cx="440" cy="175" r="3" fill="#3B6D11"/><text x="440" y="195" font-family="system-ui, -apple-system, 'Segoe UI', sans-serif" font-size="13" font-weight="500" fill="#2C2C2A" text-anchor="middle" dominant-baseline="central">E</text>
+<text x="530" y="58" font-family="system-ui, -apple-system, 'Segoe UI', sans-serif" font-size="11" fill="#3B6D11" dominant-baseline="central">突破</text>
+<text x="336" y="286" font-family="system-ui, -apple-system, 'Segoe UI', sans-serif" font-size="11" fill="#6B6A64" dominant-baseline="central">振幅逐段收窄 → 突破距离约为三角形最宽处的 0.618–1.0 倍</text>
+</svg>
+<div class="cap"><b>图 C7</b>　收敛三角形。五段 3-3-3-3-3，A 到 E 振幅递减。<b>它几乎只出现在浪 4 或 B 浪</b>，且突破方向通常与原趋势一致。<b>E 浪终点是候选入场区（入场价要等突破回抽确认）</b>，因为止损可放在三角形外缘，距离极近。</div>
+</div>
+
+<div class="scroll"><table>
+<tr><th style="width:120px">项目</th><th>说明</th></tr>
+<tr><td>五段结构</td><td>A-B-C-D-E，每段都是三浪（不是五浪）</td></tr>
+<tr><td>边界</td><td>上界连 B、D，下界连 A、C，两线收敛</td></tr>
+<tr><td>突破幅度</td><td>约为三角形最宽处高度的 0.618–1.0 倍</td></tr>
+<tr><td>陷阱</td><td>E 浪常假突破边缘后再反转；<b>必须等收盘确认</b></td></tr>
+</table></div>
+
+<h3 id="c8"><span class="code">C8</span>扩散三角形（Expanding Triangle）</h3>
+
+<div class="figure">
+<svg viewBox="0 0 680 320" width="100%" role="img" xmlns="http://www.w3.org/2000/svg">
+<title>扩散三角形结构</title>
+<desc>五段三浪结构，高点递升、低点递降，各段振幅逐段扩大，之后常出现急速单边行情。</desc>
+<line x1="200" y1="100" x2="470" y2="52" stroke="#185FA5" stroke-width="0.8" stroke-dasharray="5 4"/>
+<line x1="130" y1="195" x2="450" y2="309" stroke="#185FA5" stroke-width="0.8" stroke-dasharray="5 4"/>
+<path d="M60 150 L130 195 L200 100 L270 245 L340 75 L410 270 L455 300" fill="none" stroke="#2C2C2A" stroke-width="1.8" stroke-linejoin="round"/>
+<circle cx="60" cy="150" r="2.6" fill="#2C2C2A"/>
+<circle cx="130" cy="195" r="2.6" fill="#2C2C2A"/>
+<circle cx="200" cy="100" r="2.6" fill="#2C2C2A"/>
+<circle cx="270" cy="245" r="2.6" fill="#2C2C2A"/>
+<circle cx="340" cy="75" r="2.6" fill="#2C2C2A"/>
+<circle cx="410" cy="270" r="2.6" fill="#2C2C2A"/>
+<text x="122" y="205" font-family="system-ui, -apple-system, 'Segoe UI', sans-serif" font-size="12" fill="#2C2C2A" text-anchor="middle" dominant-baseline="central">A</text>
+<text x="200" y="88" font-family="system-ui, -apple-system, 'Segoe UI', sans-serif" font-size="12" fill="#2C2C2A" text-anchor="middle" dominant-baseline="central">B</text>
+<text x="272" y="258" font-family="system-ui, -apple-system, 'Segoe UI', sans-serif" font-size="12" fill="#2C2C2A" text-anchor="middle" dominant-baseline="central">C</text>
+<text x="340" y="63" font-family="system-ui, -apple-system, 'Segoe UI', sans-serif" font-size="12" fill="#2C2C2A" text-anchor="middle" dominant-baseline="central">D</text>
+<text x="415" y="283" font-family="system-ui, -apple-system, 'Segoe UI', sans-serif" font-size="12" fill="#2C2C2A" text-anchor="middle" dominant-baseline="central">E</text>
+<text x="60" y="300" font-family="system-ui, -apple-system, 'Segoe UI', sans-serif" font-size="10.5" fill="#5F5E5A" dominant-baseline="central">振幅：45 → 95 → 145 → 170 → 195（逐段扩大）</text>
+</svg>
+<div class="cap"><b>图 C8</b>　扩散三角形。振幅逐段扩大，情绪失控的典型图形。<b>它几乎只出现在 B 浪或浪 4</b>，之后往往出现急速的单边行情。<b>这是最难交易的形态</b>：止损空间必须放宽，因此仓位必须相应压缩。</div>
+</div>
+
+<div class="callout warn">
+<span class="lab">三角形的仓位原则</span>
+三角形的本质是<b>不确定性上升</b>。收敛三角形的不确定性在下降（波动收窄），所以可以用正常仓位；<b>扩散三角形的不确定性在上升</b>（波动扩大），必须主动压缩仓位。同一个"三角形"名下，两者的仓位系数应当相差一倍以上。
+</div>
+
+<p class="note" style="font-size:13px;color:#5F5E5A">说明：本谱系未单列<b>屏障三角形</b>（barrier triangle，水平上界 + 上升下界）与<b>一般双三 / 三三组合</b>，它们分别可看作 C7 的变体与 C3 的扩展；本书只在决策树与 C3 里提示其位置，不另配图——<b>所以标题叫"谱系"，不叫"全谱"</b>。</p>
+
+<h2 id="sec4"><span class="num">4</span>组合法则</h2>
+
+<h3>交替律（Alternation）</h3>
+
+<div class="figure">
+<svg viewBox="0 0 680 300" width="100%" role="img" xmlns="http://www.w3.org/2000/svg">
+<title>交替律：浪二与浪四形态互补</title>
+<desc>浪二为深而简单的锯齿，浪四为浅而复杂的横向平台，浪四不侵入浪一价格区间。</desc>
+<line x1="135" y1="185" x2="505" y2="185" stroke="#185FA5" stroke-width="0.6" stroke-dasharray="4 4"/>
+<path d="M55 250 L135 185 L155 205 L170 195 L185 225 L300 110 L330 148 L350 114 L368 152 L520 60 L580 120" fill="none" stroke="#2C2C2A" stroke-width="1.8" stroke-linejoin="round"/>
+<circle cx="55" cy="250" r="2.6" fill="#2C2C2A"/>
+<circle cx="135" cy="185" r="2.6" fill="#2C2C2A"/>
+<circle cx="185" cy="225" r="2.6" fill="#2C2C2A"/>
+<circle cx="300" cy="110" r="2.6" fill="#2C2C2A"/>
+<circle cx="368" cy="152" r="2.6" fill="#2C2C2A"/>
+<circle cx="520" cy="60" r="2.6" fill="#2C2C2A"/>
+<text x="135" y="173" font-family="system-ui, -apple-system, 'Segoe UI', sans-serif" font-size="12" fill="#2C2C2A" text-anchor="middle" dominant-baseline="central">1</text>
+<text x="194" y="236" font-family="system-ui, -apple-system, 'Segoe UI', sans-serif" font-size="12" fill="#2C2C2A" text-anchor="middle" dominant-baseline="central">2</text>
+<text x="300" y="98" font-family="system-ui, -apple-system, 'Segoe UI', sans-serif" font-size="12" fill="#2C2C2A" text-anchor="middle" dominant-baseline="central">3</text>
+<text x="376" y="166" font-family="system-ui, -apple-system, 'Segoe UI', sans-serif" font-size="12" fill="#2C2C2A" text-anchor="middle" dominant-baseline="central">4</text>
+<text x="520" y="48" font-family="system-ui, -apple-system, 'Segoe UI', sans-serif" font-size="12" fill="#2C2C2A" text-anchor="middle" dominant-baseline="central">5</text>
+<text x="110" y="238" font-family="system-ui, -apple-system, 'Segoe UI', sans-serif" font-size="10.5" fill="#A32D2D" dominant-baseline="central">深 · 简单 · 锯齿</text>
+<text x="300" y="205" font-family="system-ui, -apple-system, 'Segoe UI', sans-serif" font-size="10.5" fill="#185FA5" dominant-baseline="central">浅 · 复杂 · 横向</text>
+<text x="440" y="170" font-family="system-ui, -apple-system, 'Segoe UI', sans-serif" font-size="10" fill="#185FA5" dominant-baseline="central">浪 4 不破浪 1 顶</text>
+</svg>
+<div class="cap"><b>图 4.1</b>　交替律。浪 2 若为深而简单的锯齿，浪 4 大概率是浅而复杂的横向结构（反之亦然）。<b>实战用途：它让你在浪 4 开始时就知道该期待什么</b>——不会因为"这次回撤这么浅"而误以为趋势更强。</div>
+</div>
+
+<h3>通道与比例</h3>
+
+<div class="figure">
+<svg viewBox="0 0 680 330" width="100%" role="img" xmlns="http://www.w3.org/2000/svg">
+<title>通道构造：2–4 连线与过浪 3 的平行线</title>
+<desc>浪二与浪四低点连线为下轨，其平移过浪三顶点的平行线为上轨，浪五终点常落在上轨附近。</desc>
+<line x1="200" y1="210" x2="505" y2="108.3" stroke="#185FA5" stroke-width="0.9"/>
+<line x1="320" y1="100" x2="520" y2="33.3" stroke="#185FA5" stroke-width="0.8" stroke-dasharray="5 4"/>
+<path d="M60 255 L150 160 L200 210 L320 100 L380 150 L480 47 L540 135" fill="none" stroke="#2C2C2A" stroke-width="1.8" stroke-linejoin="round"/>
+<circle cx="60" cy="255" r="2.6" fill="#2C2C2A"/>
+<circle cx="150" cy="160" r="2.6" fill="#2C2C2A"/>
+<circle cx="200" cy="210" r="2.6" fill="#2C2C2A"/>
+<circle cx="320" cy="100" r="2.6" fill="#2C2C2A"/>
+<circle cx="380" cy="150" r="2.6" fill="#2C2C2A"/>
+<circle cx="480" cy="47" r="2.6" fill="#2C2C2A"/>
+<text x="150" y="148" font-family="system-ui, -apple-system, 'Segoe UI', sans-serif" font-size="12" fill="#2C2C2A" text-anchor="middle" dominant-baseline="central">1</text>
+<text x="206" y="222" font-family="system-ui, -apple-system, 'Segoe UI', sans-serif" font-size="12" fill="#2C2C2A" text-anchor="middle" dominant-baseline="central">2</text>
+<text x="320" y="88" font-family="system-ui, -apple-system, 'Segoe UI', sans-serif" font-size="12" fill="#2C2C2A" text-anchor="middle" dominant-baseline="central">3</text>
+<text x="386" y="160" font-family="system-ui, -apple-system, 'Segoe UI', sans-serif" font-size="12" fill="#2C2C2A" text-anchor="middle" dominant-baseline="central">4</text>
+<text x="480" y="35" font-family="system-ui, -apple-system, 'Segoe UI', sans-serif" font-size="12" fill="#2C2C2A" text-anchor="middle" dominant-baseline="central">5</text>
+<line x1="60" y1="292" x2="92" y2="292" stroke="#185FA5" stroke-width="0.8" stroke-dasharray="5 4"/>
+<text x="100" y="292" font-family="system-ui, -apple-system, 'Segoe UI', sans-serif" font-size="10.5" fill="#185FA5" dominant-baseline="central">上轨：2–4 的平移线并过浪 3 → 用来估浪 5</text>
+<line x1="60" y1="312" x2="92" y2="312" stroke="#185FA5" stroke-width="0.9"/>
+<text x="100" y="312" font-family="system-ui, -apple-system, 'Segoe UI', sans-serif" font-size="10.5" fill="#185FA5" dominant-baseline="central">下轨：2–4 连线 → 它由浪 4 定义，不能反过来预测浪 4</text>
+</svg>
+<div class="cap"><b>图 4.2</b>　通道法，<b>分两个阶段用，不能混</b>。<b>第一阶段（浪 4 还在走）</b>：连 1–3 作一条线，过浪 2 作平行线，浪 4 常落在下轨附近——这才是可预测的那一半。<b>第二阶段（浪 4 已结束、要估浪 5）</b>：改连 2–4 作下轨，平移过浪 3 得平行线，浪 5 常在上轨附近结束（本图上轨约 46.6，浪 5 为 47，两者相差不到 1 像素）。<b>把 2–4 连线说成"预测浪 4 的终点"是循环论证</b>，浪 4 正是这条线的锚点。另外，浪 3 异常强、近乎垂直时，过浪 3 的平行线会偏高，此时改用过浪 1 顶的平行线；这并不等于浪 5 会向上穿越过浪 3 的那条线。</div>
+</div>
+
+<div class="scroll"><table>
+<tr><th style="width:130px">比例</th><th style="width:170px">对象</th><th>含义</th></tr>
+<tr><td class="c">0.382 / 0.618</td><td>浪 2 回撤浪 1</td><td>最常见的两个深度，超过 0.786 需警惕</td></tr>
+<tr><td class="c">1.618 / 2.618</td><td>浪 3 相对浪 1</td><td>扩展浪的目标倍数，<strong>仅用于估目标，不用于确认</strong></td></tr>
+<tr><td class="c">0.382</td><td>浪 4 回撤浪 3</td><td>浪 4 常较浅，与浪 2 的深度形成交替</td></tr>
+<tr><td class="c">0.618 / 1.0</td><td>浪 5 相对浪 1</td><td>浪 5 常等于浪 1，或为其 0.618 倍</td></tr>
+<tr><td class="c">0.382–0.618</td><td>B 浪回撤 A（锯齿）</td><td>锯齿的 B 常落在这一区间；平台要求 $B\ge0.9A$。<strong>回撤深度只作倾向；判据以 A/B/C 的内部结构为主，C 的位置是必要条件而非充分条件</strong></td></tr>
+<tr><td class="c">1.0–1.618</td><td>C 浪相对 A 浪（平台）</td><td>扩张平台的 $C$ 常见 $1.0A\sim1.618A$；显著超过 1.618 应考虑降级重标</td></tr>
+</table></div>
+
+<h2 id="sec5"><span class="num">5</span>快速识别：两条判定链</h2>
+
+<p>实盘中你没有时间逐个比对。下面把上面这套标签压成两条判定链，每一步只问一个可否证的问题，<strong>任一步无法回答就判为"不可判定"并停手</strong>（对应三态判定的状态 0）。</p>
+
+<p><strong>第 0 步只做一件事：把这一段拆成顶层若干段，再逐段展开到下一级。</strong><b>顶层字母数不能直接决定家族</b>——三锯齿的 <i>W-X-Y-X-Z</i> 与三角形、终结楔形都是五段；把 W、X、Y、X、Z 顺次读成 1–5，它们连"奇数段同向、偶数段反向"都满足。但展开到下一级，差别立刻出现：<b>W 是一个锯齿（A-B-C 三浪），不是五浪推动</b>。</p>
+
+<div class="scroll"><table>
+<tr><th style="width:160px">结构</th><th class="c" style="width:72px">顶层段数</th><th style="width:230px">组成（W / X / Y / Z 各是什么）</th><th style="width:250px">能否写成固定展开</th></tr>
+<tr><td>推动浪 M1–M4、M7</td><td class="c">5</td><td>1、3、5 各五浪；2、4 各三浪</td><td>固定：5-3-5-3-5</td></tr>
+<tr><td>引导楔形 M5</td><td class="c">5</td><td>同上（经典口径）</td><td>固定：5-3-5-3-5</td></tr>
+<tr><td>双锯齿 C2</td><td class="c">3</td><td><b>W、Y 均为锯齿</b>（各 5-3-5）；<br>X 取任意调整（三浪最常见）</td><td><b>仅当 X 为三浪</b>：5-3-5｜3｜5-3-5（7 段）</td></tr>
+<tr><td>双三</td><td class="c">3</td><td><b>W、Y 至少一段是平台或三角</b>；<br>X 取任意调整</td><td><b>不可固定</b>：随 W / Y / X 变</td></tr>
+<tr><td>三锯齿 C3</td><td class="c">5</td><td><b>W、Y、Z 均为锯齿</b>；两个 X 各取任意调整</td><td><b>仅当两个 X 均为三浪</b>：三组 5-3-5 夹两个 3（11 段）</td></tr>
+<tr><td>三三</td><td class="c">5</td><td><b>W、Y、Z 至少一段是平台或三角</b>；<br>两个 X 各取任意调整</td><td><b>不可固定</b>：同上</td></tr>
+<tr><td>收敛 / 扩散三角形 C7 C8</td><td class="c">5</td><td>五段皆三浪</td><td>固定：3-3-3-3-3</td></tr>
+<tr><td>终结楔形 M6</td><td class="c">5</td><td>五段皆三浪</td><td>固定：3-3-3-3-3</td></tr>
+</table></div>
+
+<p>所以第 0 步要问的是<b>两个问题</b>，不是一条判据：<b>① 顶层数得出几段？② 这五段中是否没有任何一段是五浪推动？</b><br>
+　<b>数不出五段</b>（三段或更少）→ 进调整链，从 ① 起走；<b>双锯齿与双三的顶层就是 W-X-Y 三段</b>，在 ⑦ 识别。<br>
+　<b>五段、且没有任何一段是五浪推动</b>（每段要么是三段的调整——锯齿、平台；要么是三角形——它顶层虽五段，但段段三浪、自身不含推动）→ <b>候选池</b>：C7 / C8 三角、M6 终结楔形、C3 三锯齿、三三。<br>
+　<b>五段、有推动段，且 1、3、5 各五浪而 2、4 各三浪</b> → <b>推动候选</b>（M1–M5、M7，<b>M6 不在此列</b>）。<br>
+　<b>五段、有推动段但排布不合规</b> → 状态 0，回头重标。</p>
+
+<p>口径是<b>"没有五浪推动段"，不是"段段皆三浪"</b>。差别全在三角形：它顶层五段、段段三浪，自身不含推动，所以出现在复合调整的 <b>X 位</b>（或 W / Y / Z 位）时，不该把整个结构踢出候选池——<b>W-X-Y-X-Z 里 X 取三角，顶层读作 3-5-3-3-3</b>，仍然进池，只是<b>没有固定展开式</b>。上一版写"段段皆三浪"，这种合法结构会被三条入口同时拒掉：<b>①</b> "段段皆三浪"不成立（X 那一段是五段）；<b>②</b> "1、3、5 各五浪"不成立（W、Y、Z 是锯齿，不是五浪推动）；<b>③</b> 顶层是五段，也进不了 W-X-Y 的三段分支——三条都堵，只能落进状态 0。</p>
+
+<p>进了池子之后才是<b>两段筛</b>——第一段是<b>形状层</b>：按<b>边界</b>（段幅是否单调收窄或放大）与<b>位置</b>（浪 4 / B，还是浪 5 / C 末）把三角与楔形拿走；第二段是<b>族内层</b>：在剩下的里面按<b>组成</b>（W、Y、Z 是否全为锯齿）与<b>极值</b>（是否逐段创同向极值）区分锯齿族与三三。<b>命中多个就全部保留</b>，按"位置 &gt; 边界 &gt; 组成"排序、等后续确认，<b>不许取第一个命中的格子定型</b>。</p>
+
+<div class="callout">
+<span class="lab">为什么三角必须先拿走，不能先问极值</span>
+拿"是否逐段创同向极值"当第一道闸，两个三角形都会被前面的分支截走，而且是朝<b>相反</b>的方向截：<br>
+<b>C7 收敛三角</b>横向、净位移小、E 点不越 A 点——正好落在"不创新极值"那一边，会被判成三三；<br>
+<b>C8 扩散三角</b>高点递升、低点递降，五段逐段创出同向极值——正好落在"创极值"那一边，会被判成三锯齿。<br>
+三角形的判别力不在极值，在<b>边界</b>加<b>位置</b>：上下各段终点连成的包络线<b>收敛</b>（C7）或<b>扩张</b>（C8），且几乎只出现在<b>浪 4 / B</b>。M6 终结楔形同样是 3-3-3-3-3、同样常呈收敛，与 C7 只能靠<b>位置</b>分开（浪 5 / C 末，而非浪 4 / B）——这就是"位置排在边界之后、组成之前"的原因。<br>
+反过来说，<b>边界也不是铁判据</b>：三段大致等长、整体略呈放大的三锯齿，也可能撞上 C8 的扩张边界。所以第 ① 条只把三角列为<b>候选</b>——真正的分水岭在 E 点之后：<b>反向突破边界</b>才是三角，<b>继续沿原方向创极值</b>就是三锯齿。结构候选当场只标注、不定案。<br>
+这里判的是<b>整个复合结构</b>还在不在创同向极值，<b>不否定三角形可以担任其中的 X</b>：那一段三角形仍是三角形，只是作为连接段嵌进了更大的结构——它的独立形态属性不因"被算进复合"而消失，两个标注本来就该并存（如 <i>C7 → X</i>、<i>C3（含 C7 作 X）</i>）。
+</div>
+
+<p>表里最后两列不是同一件事：<b>顶层段数只由字母个数决定</b>（W-X-Y 三段、W-X-Y-X-Z 五段），与组成无关；<b>展开段数只在"组段全为锯齿、且每个 X 都为三浪"时才有定值</b>。双三与三三的 W、Y、Z 可以是平台（3-3-5）或三角（3-3-3-3-3），段数随组成变，<b>本书不给它们写固定展开式</b>——共用"7 段 / 11 段"会让读者以为这两种结构只有一种内部构造。</p>
+
+<p>任何一问答不出、或四格都不落，就是<b>状态 0</b>。<b>方向关系只用来给候选排序和标位置，不能用来排除</b>；<b>位置与后续（是否被完全回撤）只能作辅助证据，不能替代展开检查</b>——上一版正是把"看起来五段"当成了结构结论，才得出"推动与三锯齿同构"这个错论断。</p>
+
+<div class="figure">
+<svg viewBox="0 0 680 524" width="100%" role="img" xmlns="http://www.w3.org/2000/svg">
+<title>第 0 步：按顶层段数与有无推动段分流</title>
+<desc>先把这一段拆成顶层若干段：数不出五段进调整链（双锯齿、双三在 ⑦）；五段且没有任何一段是五浪推动（各段为三浪，或三角形这种段段三浪的结构）进候选池，再按边界、位置、组成、极值筛出 C7 / C8、M6、C3、三三；五段且 1、3、5 各五浪、2、4 各三浪进推动候选；其余为状态 0。</desc>
+<rect x="30" y="14" width="320" height="36" rx="8" fill="#F4F2EC" stroke="#CFCDC5" stroke-width="0.5"/>
+<text x="190" y="32" font-family="system-ui, -apple-system, 'Segoe UI', sans-serif" font-size="12.5" fill="#2C2C2A" text-anchor="middle" dominant-baseline="central">待判定的这一段走势</text>
+<path d="M190 50 L190 72" fill="none" stroke="#CFCDC5" stroke-width="1.2"/>
+<polygon points="190,76 186,68 194,68" fill="#CFCDC5"/>
+<rect x="30" y="76" width="320" height="42" rx="7" fill="#FFFFFF" stroke="#CFCDC5" stroke-width="0.6"/>
+<text x="190" y="97" font-family="system-ui, -apple-system, 'Segoe UI', sans-serif" font-size="11.5" fill="#2C2C2A" text-anchor="middle" dominant-baseline="central">&#9312; 顶层能否数出五段？</text>
+<path d="M350 97 L380 97" fill="none" stroke="#3B6D11" stroke-width="1.2"/>
+<text x="356" y="86" font-family="system-ui, -apple-system, 'Segoe UI', sans-serif" font-size="10.5" fill="#3B6D11" dominant-baseline="central">否</text>
+<rect x="380" y="70" width="280" height="62" rx="7" fill="#F2F7EC" stroke="#3B6D11" stroke-width="0.6"/>
+<text x="520" y="90" font-family="system-ui, -apple-system, 'Segoe UI', sans-serif" font-size="12.5" fill="#173404" text-anchor="middle" dominant-baseline="central">三段或更少 → 调整链</text>
+<text x="520" y="112" font-family="system-ui, -apple-system, 'Segoe UI', sans-serif" font-size="10" fill="#173404" text-anchor="middle" dominant-baseline="central">从 ① 起走；双锯齿 / 双三在 ⑦ 识别</text>
+<path d="M190 118 L190 162" fill="none" stroke="#CFCDC5" stroke-width="1.2"/>
+<polygon points="190,166 186,158 194,158" fill="#CFCDC5"/>
+<rect x="30" y="170" width="320" height="42" rx="7" fill="#FFFFFF" stroke="#CFCDC5" stroke-width="0.6"/>
+<text x="190" y="191" font-family="system-ui, -apple-system, 'Segoe UI', sans-serif" font-size="11.5" fill="#2C2C2A" text-anchor="middle" dominant-baseline="central">&#9313; 五段中是否没有任何一段是五浪推动？</text>
+<path d="M350 191 L380 191" fill="none" stroke="#A32D2D" stroke-width="1.2"/>
+<text x="356" y="180" font-family="system-ui, -apple-system, 'Segoe UI', sans-serif" font-size="10.5" fill="#A32D2D" dominant-baseline="central">是</text>
+<rect x="380" y="150" width="280" height="146" rx="7" fill="#FCEBEB" stroke="#A32D2D" stroke-width="0.6"/>
+<text x="520" y="168" font-family="system-ui, -apple-system, 'Segoe UI', sans-serif" font-size="12" fill="#501313" text-anchor="middle" dominant-baseline="central">五段 · 无推动段 · 候选池</text>
+<text x="520" y="188" font-family="system-ui, -apple-system, 'Segoe UI', sans-serif" font-size="9.5" fill="#8A3B3B" text-anchor="middle" dominant-baseline="central">边界 → 位置 → 组成；逐层排除，不取首个命中</text>
+<text x="520" y="210" font-family="system-ui, -apple-system, 'Segoe UI', sans-serif" font-size="10" fill="#501313" text-anchor="middle" dominant-baseline="central">&#9312; 边界收敛/扩张、位 4/B → C7 / C8 三角</text>
+<text x="520" y="232" font-family="system-ui, -apple-system, 'Segoe UI', sans-serif" font-size="10" fill="#501313" text-anchor="middle" dominant-baseline="central">&#9313; 覆盖全程、位 5/C 末 → M6 终结楔形</text>
+<path d="M400 243 L640 243" fill="none" stroke="#E3C4C4" stroke-width="0.8" stroke-dasharray="3 3"/>
+<text x="520" y="254" font-family="system-ui, -apple-system, 'Segoe UI', sans-serif" font-size="10" fill="#501313" text-anchor="middle" dominant-baseline="central">&#9314; 全为锯齿、逐段创极值 → C3 三锯齿</text>
+<text x="520" y="276" font-family="system-ui, -apple-system, 'Segoe UI', sans-serif" font-size="10" fill="#501313" text-anchor="middle" dominant-baseline="central">&#9315; 含平台/三角、横向不创极值 → 三三</text>
+<path d="M190 212 L190 322" fill="none" stroke="#CFCDC5" stroke-width="1.2"/>
+<polygon points="190,326 186,318 194,318" fill="#CFCDC5"/>
+<rect x="30" y="330" width="320" height="42" rx="7" fill="#FFFFFF" stroke="#CFCDC5" stroke-width="0.6"/>
+<text x="190" y="351" font-family="system-ui, -apple-system, 'Segoe UI', sans-serif" font-size="11.5" fill="#2C2C2A" text-anchor="middle" dominant-baseline="central">&#9314; 1、3、5 各五浪、2、4 各三浪？</text>
+<path d="M350 351 L380 351" fill="none" stroke="#185FA5" stroke-width="1.2"/>
+<text x="356" y="340" font-family="system-ui, -apple-system, 'Segoe UI', sans-serif" font-size="10.5" fill="#185FA5" dominant-baseline="central">是</text>
+<rect x="380" y="320" width="280" height="62" rx="7" fill="#E6F1FB" stroke="#185FA5" stroke-width="0.6"/>
+<text x="520" y="340" font-family="system-ui, -apple-system, 'Segoe UI', sans-serif" font-size="12.5" fill="#042C53" text-anchor="middle" dominant-baseline="central">推动候选（5-3-5-3-5）</text>
+<text x="520" y="364" font-family="system-ui, -apple-system, 'Segoe UI', sans-serif" font-size="10" fill="#042C53" text-anchor="middle" dominant-baseline="central">M1–M5、M7（M6 在候选池）</text>
+<path d="M190 372 L190 412" fill="none" stroke="#854F0B" stroke-width="1.2"/>
+<polygon points="190,416 186,408 194,408" fill="#854F0B"/>
+<rect x="30" y="420" width="320" height="40" rx="7" fill="#FAEEDA" stroke="#854F0B" stroke-width="0.6"/>
+<text x="190" y="440" font-family="system-ui, -apple-system, 'Segoe UI', sans-serif" font-size="12" fill="#412402" text-anchor="middle" dominant-baseline="central">排布不合规、或两轴矛盾 → 状态 0：不交易</text>
+<text x="30" y="486" font-family="system-ui, -apple-system, 'Segoe UI', sans-serif" font-size="10.5" fill="#6B6A64" dominant-baseline="central">段数按顶层字母算：W-X-Y 三段、W-X-Y-X-Z 五段；只有 W、Y、Z 全为锯齿、且两个 X 都为三浪时，展开才是 7 段 / 11 段。</text>
+<text x="30" y="504" font-family="system-ui, -apple-system, 'Segoe UI', sans-serif" font-size="10.5" fill="#3B6D11" dominant-baseline="central">三角形可作 X：W-X-Y-X-Z 的顶层可读作 3-5-3-3-3——它仍进候选池，只是没有固定展开式。</text>
+</svg>
+<div class="cap"><b>图 5.1</b>　第 0 步只定结构类型，不定形态。<b>入口有两问——段数、以及有没有推动段</b>，不是"段段皆三浪"：三锯齿、三角形、终结楔形都是五段，区别全在下一级（3-3-3-3-3 还是 5-3-5-3-5）；而三角形作 X 时顶层会出现 <b>3-5-3-3-3</b> 这种段序，<b>照样进候选池</b>——判据是"没有任何一段是五浪推动"，不是"每段都恰好三浪"。<br><br>
+候选池内<b>不是 if-else，是两段筛</b>（形状层 → 族内层，各两条）：<b>①</b> 边界收敛或扩张 + 位于浪 4 / B → C7 / C8；<b>②</b> 覆盖本级别全程 + 位于浪 5 / C 末 → M6（终结楔形自身常常也是收敛的，与 C7 只能靠位置分开）；<b>③</b> 剩下里 W、Y、Z 全为锯齿 + 逐段创同向极值 → C3；<b>④</b> 至少一段为平台或三角 + 横向不创极值 → 三三。<b>顺序不能倒</b>：C7 横向不创极值、C8 逐段创同向极值，若先问极值，这两个会被分别误送进三三与 C3。双三的顶层只有 W-X-Y 三段，落在调整链那一支，<b>不在候选池</b>。<br><br>
+多个候选同时命中就全部保留，按"位置 &gt; 边界 &gt; 组成"排序、等后续确认；两轴互相矛盾、或任一问答不出，即状态 0。这里不用"1–4 是否重叠"——三角形内部各段本来就互相重叠，那条判据没有区分力。这些是形状描述，不是斐波那契目标值，因此不违反 §1 那条纪律。宁可空仓，不要硬选一格。</div>
+</div>
+
+<h3>推动链（结构上呈五段推进时进入）</h3>
+
+<div class="scroll"><table>
+<tr><th class="c" style="width:42px">步</th><th style="width:206px">问题</th><th style="width:252px">答"是"</th><th>答"否"</th></tr>
+<tr><td class="c">①</td><td>浪 2 是否吞没浪 1 起点？</td><td>弃权：这不构成推动浪</td><td>进入 ②</td></tr>
+<tr><td class="c">②</td><td>浪 3 是否为 1、3、5 中最短？</td><td>弃权：违反铁律，先怀疑标注</td><td>进入 ③</td></tr>
+<tr><td class="c">③</td><td>浪 3 是否越过浪 1 终点？</td><td>进入 ④</td><td>状态 0：浪 3 未越浪 1 终点即违反必要条件，回头重标。<b>失败五浪是浪 5 的事，留到 ⑤ 判</b></td></tr>
+<tr><td class="c">④</td><td>浪 4 是否与浪 1 重叠？</td><td>转 ⑥ 楔形分支</td><td>进入 ⑤</td></tr>
+<tr><td class="c">⑤</td><td>子浪是否 5-3-5-3-5？</td><td>先记 M1，再定扩展（M2 / M3 / M4，判据见表下注）；浪 5 未过浪 3 顶 → <b>另加</b>标签 M7（须跌破浪 4 底才确认）。标签可叠加，如 M3+M7</td><td>弃权；或回调整链复查它是否本就是调整结构</td></tr>
+<tr><td class="c">⑥</td><td>结构是 5-3-5-3-5 还是 3-3-3-3-3？位置在浪 1 / A 还是浪 5 / C？</td><td>5-3-5-3-5 且位 1 / A → M5；3-3-3-3-3 且位 5 / C → M6</td><td>弃权：其余组合既不是引导也不是终结楔形</td></tr>
+</table></div>
+
+<div class="callout">
+<span class="lab">"扩展"怎么定，为什么不用 1.618 卡</span>
+扩展（M2 / M3 / M4）说的是某一推动浪被<b>异常拉长</b>，并呈现<b>更夸张、更充分的低级别细分</b>：它的子浪层次比同级其余推动浪更多、更完整、走得更充分。<br>
+<b>这三个词都是程度，不是门槛。</b>"完整五浪"是每一个推动浪的底线，不是扩展的特征——拿它当判据，等于说"是推动浪的就算扩展"。持续时间、价格比例同理：它们只是辅助特征，本书不给扩展设统一硬阈值，也不要求"每个子浪里还套着三浪"（扩展的内部并非一律三浪）。<br>
+而"某浪 ≥ 其余较长者的 1.618 倍"只是常见的口头说法：经典体系里没有这条硬定义，比例也不是独立否决线。本书因此<b>不拿它单独定案</b>——否则就违反了 §1 那条纪律（比例只能估目标，不能确认结构）。落到盘面上可操作的只有一句：<b>标记"这一浪比同级其他推动浪明显更长、细分更充分"，再按 M2 / M3 / M4 的位置对号</b>，不因为到了某个倍数就改判。
+</div>
+
+<h3>调整链（只能拆出三浪、或呈横向重叠时进入）</h3>
+
+<div class="scroll"><table>
+<tr><th class="c" style="width:42px">步</th><th style="width:206px">问题</th><th style="width:252px">答"是"</th><th>答"否"</th></tr>
+<tr><td class="c">①</td><td>第一段的内部是五浪推动，还是调整（三浪 / 三角形）？（若这一段本身已是完整锯齿——5-3-5 且 C 越过 A 终点——它是 W，不是 A；<b>若它本身是三角形（五段皆三浪、无推动段），同样按 W 处理、转 ⑦，不要硬拆成五浪</b>）</td><td>五浪推动 → 进入 ②</td><td>三浪 → 进入 ④；<b>若这一段是完整锯齿或三角形 → 转 ⑦ 查 X-Y</b></td></tr>
+<tr><td class="c">②</td><td>B 是否为三浪、C 是否为五浪？</td><td>进入 ③</td><td>状态 0：结构不符，回头重标</td></tr>
+<tr><td class="c">③</td><td>C 是否越过 A 的终点？</td><td>C1 候选（仍须 A、C 各为五浪）→ 单形态完成，转 ⑦ 查复合</td><td>经典口径下不成立。<b>不能回 ④</b>：A 已在 ① 被定为五浪，回头按三浪平台重标等于自相矛盾 → 状态 0（若要保留，只能标"C 失败"并降置信度）</td></tr>
+<tr><td class="c">④</td><td>A 为三浪（承接 ① 的三浪分支）。B 是否为三浪？</td><td>进入 ⑤</td><td>状态 0：A 三浪而 B 非三浪的组合不在本谱系内</td></tr>
+<tr><td class="c">⑤</td><td>是否五段、边界收敛或扩张，且各段均为三浪？</td><td>C7 / C8 → 单形态完成，转 ⑦ 查复合</td><td>进入 ⑥</td></tr>
+<tr><td class="c">⑥</td><td>B 是否越过起点？C 是否破 A 底？</td><td>越＋破 → C5；越＋未达 → C6。两者均为单形态完成，转 ⑦</td><td>再看 B 回撤 ≥90% 且 C 落在 A 终点附近 → C4（转 ⑦）；都不满足 → 状态 0</td></tr>
+<tr><td class="c">⑦</td><td>上一形态完成后，是否又出现一段调整（X），再接一组同向推进？</td><td>两轴同时看：<b>组成</b>——W、Y（、Z）全为锯齿，还是至少一段为平台 / 三角；<b>极值</b>——逐段创同向极值，还是横向不创极值。<b>全为锯齿 + 创极值 → C2 / C3</b>；<b>含平台或三角 + 横向不创极值 → 双三 / 三三</b>（本书未单列）。两轴指向不一致 → 状态 0。均须后续确认，不得当场定型</td><td>单形态即为当前级别的调整标注；调整是否结束仍待后续确认，不能据此判"已结束"</td></tr>
+</table></div>
+
+<p><strong>路由规则（四条，缺一条这张表就有洞）</strong>：① C1 与 C4–C8 都是<b>单形态候选完成</b>，不是终点——若其后又出现连接段（X）与新的同向推进，一律回到 ⑦ 做复合检查，否则永远发现不了双锯齿；② ③ 的锯齿分支与 ④–⑥ 的平台分支<b>互斥</b>，不互相跳转，A 的内部结构一旦定了就定了；③ 任一步给出"状态 0"即停止，不许换另一条链去找一个能通过的答案；④ 第 0 步分出的<b>候选池</b>（五段、无五浪推动段）不必从任何一条链的起点走：<b>M6</b> 进<b>推动链 ⑥</b>，<b>C7 / C8</b> 进<b>调整链 ⑤</b>，<b>C3 / 三三</b> 进<b>调整链 ⑦</b>；<b>多个候选同时成立就全部保留</b>，按"位置 → 边界 → 组成"排序等确认，<b>不得取先命中的那一个</b>；<b>含三角形段的复合结构（含 X 取三角的 3-5-3-3-3）同样走这一支</b>——它们进候选池的条件是"没有五浪推动段"，不是"段段皆三浪"；三段或更少的进入调整链，从 ① 起走（双锯齿在 ① 就会被识别为 W 并转 ⑦）。</p>
+
+<div class="callout warn">
+<span class="lab">四条必须记住的边界</span>
+一是<b>口径</b>：本书采用经典口径，引导楔形 5-3-5-3-5、终结楔形 3-3-3-3-3。若你采用允许三浪型引导楔形的宽口径，第 ⑥ 步要相应放宽，否则这张表会拒掉该变体——两套口径不能混用。<br>
+二是<b>三角形的位置</b>：三角形常充当复合调整的连接浪——在 W-X-Y-X-Z 里它是 Z 之前的那个 X，在 W-X-Y 里它是 Y 之前的 X（"末位"是 Z，不是 X）。此时它属于 C2 / C3 的内部结构，<b>不单独成形态，但它的独立形态属性不消失</b>——两种标注该并存（如 <i>C7 → X</i>、<i>C3（含 C7 作 X）</i>）。<b>X 位允许任意合法调整形态</b>（三浪、平台、三角形），所以这类复合结构的顶层段序可以是 <b>3-5-3-3-3</b>：第 0 步按"没有五浪推动段"放行，<b>但没有固定展开式</b>——11 段只在两个 X 都为三浪时成立。<br>
+三是<b>候选不等于确认</b>：走完整条链只说明"尚未被否决"，下单还要等触发条件（§6 的突破回抽），两件事不能合并。<br>
+四是<b>顶层字母数不代表子浪结构</b>：W-X-Y 是三段、W-X-Y-X-Z 是五段。<b>W 若为锯齿，只数得出三浪（5-3-5），不是五浪推动</b>；它也可以是平台（3-3-5）或三角（3-3-3-3-3）。<b>"7 段 / 11 段"只在 W、Y、Z 全为锯齿、且两个 X 都为三浪时成立</b>，双三 / 三三的展开段数随组成变，没有统一写法。所以"看起来五段"只是入口，必须逐段展开到下一级才能定结构；位置与后续只能作辅助证据，不能替代展开。
+</div>
+
+<h2 id="sec6"><span class="num">6</span>实战执行：从结构到仓位</h2>
+
+<h3>入场点的优先级</h3>
+
+<p>不是所有确认过的结构都值得交易。下表按<b>风险收益比</b>排序：前两类是首选，第 3、4 类仅在条件满足时做，带 × 的一律不做。<b>入场价与失效价必须是两个不同的价格</b>——把止损放在入场点自身，等于没有止损。</p>
+
+<div class="scroll"><table>
+<tr><th class="c" style="width:56px">优先</th><th style="width:150px">位置</th><th style="width:170px">确认条件</th><th style="width:150px">失效价（止损）</th><th>说明</th></tr>
+<tr><td class="c">1</td><td>浪 2 结束，浪 3 启动</td><td>突破浪 1 终点后回抽不破</td><td>浪 2 终点</td><td>浪 2 终点比浪 1 起点更近；浪 1 起点是更大一级结构的<strong>最终</strong>失效位，不是本笔止损</td></tr>
+<tr><td class="c">2</td><td>浪 4 结束（三角形 E 点附近）</td><td>突破三角形边界并回抽确认</td><td>三角形外缘</td><td>止损距离即外缘宽度，通常较近；E 点本身常假突破，须等收盘确认</td></tr>
+<tr><td class="c">3</td><td>锯齿 C 浪终点</td><td>C 浪结构走完后的回抽不破 C 底</td><td>C 浪终点下方 1×ATR</td><td>必须留缓冲，结构点与入场价不能同价</td></tr>
+<tr><td class="c">4</td><td>浪 5 启动</td><td>浪 4 内部修正结构走完，次级别出现推动并突破其终点</td><td>浪 4 终点下方 1×ATR</td><td>空间有限，仅适合短线；"突破浪 4 终点"本身不构成确认——浪 5 正是从该点出发的</td></tr>
+<tr><td class="c">×</td><td>浪 3 中途、浪 5 中段</td><td>无</td><td>无结构点</td><td>止损只能靠猜，不做</td></tr>
+</table></div>
+
+<h3>三态判定与仓位</h3>
+
+<p>结构识别完成后，必须给出一个明确状态，不允许"大概看多"这种表述：</p>
+
+$$\mathcal{S}=\begin{cases}+1, & \pi\ge 0.70\\[2pt] 0, & 0.20&lt;\pi&lt;0.70\\[2pt] -1, & \pi\le 0.20\end{cases}\qquad f=f_{\max}\cdot\mathcal{S}\cdot w,\quad w=\begin{cases}\pi, & \mathcal{S}=+1\\[2pt] 1-\pi, & \mathcal{S}=-1\\[2pt] 0, & \mathcal{S}=0\end{cases}$$
+
+<p>其中 $\pi$ 为候选结构中看多者的可行度占比，$f$ 带符号（负为做空），方向由 $\mathcal{S}$ 承担、规模由 $w$ 承担。$\mathcal{S}=0$ 时不开新仓——<strong>这一条的执行力度，比前面所有形态知识加起来都更影响最终收益</strong>。原稿写成 $f=f_{\max}\cdot\mathbb{1}[\mathcal{S}\neq0]\cdot\pi$ 是错的：$\mathcal{S}=-1$ 时会得到正数，且 $\pi=0$（最强看空）反而得到零仓，空头规模与看空强度成反比。另外要说明，$\pi$ 的取法与阈值 0.70／0.20 都是本书自定义的启发式，没有统计检验支持，不能当作概率。第二处修正：$w$ 补上了 $\mathcal{S}=0$ 的分支，于是 $f=0$ 是被定义出来的，不必依赖 $0\times w$ 这种没有定义的写法。</p>
+
+<h3>失效规则</h3>
+
+<ol>
+<li><strong>结构失效</strong>：触及当前假设依赖的最后一个结构点即离场。假设"浪 3 进行中"，失效价为浪 2 终点；假设"浪 5 进行中"，失效价为浪 4 终点下方 1×ATR；假设"调整结束"，失效价为 C 浪终点下方 1×ATR。<strong>若把浪 1 起点当失效位，那是更大一级结构的最终失效，不是本笔交易的止损</strong>——两者混用，同一笔交易就会出现两个止损。1×ATR 的缓冲是本书自定义，用来避开贴着结构点的假破。</li>
+<li><strong>时间失效</strong>：超过预期时间的 1.5 倍仍未达到目标区间下沿，减仓一半。1.5 与"减半"都是自定义启发式，没有统计依据，可按自己的样本记录重设。</li>
+<li><strong>自洽失效</strong>：子浪结构与父浪假设矛盾（例如标了推动浪却只能拆出三段），立即作废，无论盈亏。</li>
+</ol>
+
+<div class="callout warn">
+<span class="lab">禁止重数条款</span>
+一旦触发失效，20 个交易日内不得对同一标的、同一方向重新提出结构假设（20 日是自定义数值；取多大不改变这条规则的性质——它要切断的是"改口—加仓—再改口"这个循环）。<b>波浪交易者的第一死因不是数错，而是数错之后改口。</b>跌破失效价 → "其实那是浪 2 延伸" → 加仓 → 再跌 → "这是更大级别的调整"。这条规则的作用是物理性切断该路径。
+</div>
+
+<h2 id="sec7"><span class="num">7</span>附录</h2>
+
+<h3>形态速查表</h3>
+
+<p style="font-size:13.5px;color:#4A4A46">先说明这张表的性质：<b>M1–M7 不是七个互斥的类</b>。M2、M3、M4 说的是"哪一浪被拉长"，M7 说的是"浪 5 没有越过浪 3 顶"，两件事可以同时成立，写作 M3+M7 这样的组合标签。表里的编号是<b>标签</b>，不是分类树的叶子；用它查特征，不要用它排除其他可能。</p>
+
+<div class="scroll"><table>
+<tr><th class="c" style="width:56px">编号</th><th style="width:170px">形态</th><th class="c" style="width:110px">结构</th><th style="width:110px">常见位置</th><th>一句话识别</th></tr>
+<tr><td class="c">M1</td><td>标准五浪</td><td class="c">5-3-5-3-5</td><td>任意推动位</td><td>浪 4 守住浪 1 顶</td></tr>
+<tr><td class="c">M2</td><td>第一浪扩展</td><td class="c">内部五浪</td><td>浪 1</td><td>浪 1 特别长，浪 2 特别深</td></tr>
+<tr><td class="c">M3</td><td>第三浪扩展</td><td class="c">内部五浪</td><td>浪 3</td><td>浪 3 最长，量能峰值</td></tr>
+<tr><td class="c">M4</td><td>第五浪扩展</td><td class="c">内部五浪</td><td>浪 5</td><td>前四浪萎缩，末段爆发</td></tr>
+<tr><td class="c">M5</td><td>引导楔形</td><td class="c">5-3-5-3-5</td><td>浪 1 / A</td><td>收敛且浪 4 侵入浪 1</td></tr>
+<tr><td class="c">M6</td><td>终结楔形</td><td class="c">3-3-3-3-3</td><td>浪 5 / C</td><td>收敛，之后急速反转</td></tr>
+<tr><td class="c">M7</td><td>失败五浪</td><td class="c">5-3-5-3-5</td><td>浪 5</td><td>浪 5 未过浪 3 顶</td></tr>
+<tr><td class="c">C1</td><td>锯齿</td><td class="c">5-3-5</td><td>浪 2</td><td>A 为五浪，C 越过 A 底（经典口径）</td></tr>
+<tr><td class="c">C2</td><td>双锯齿</td><td class="c">W-X-Y</td><td>浪 2 / 4</td><td>两个锯齿由一个 X 相连，两段等长或成 0.618；可写 7 段</td></tr>
+<tr><td class="c">—</td><td>双三</td><td class="c">W-X-Y</td><td>浪 4 / B</td><td>W、Y 至少一段为平台或三角；<b>无固定展开</b></td></tr>
+<tr><td class="c">C3</td><td>三锯齿</td><td class="c">W-X-Y-X-Z</td><td>浪 2</td><td>连续两次"看似结束"；可写 11 段</td></tr>
+<tr><td class="c">—</td><td>三三</td><td class="c">W-X-Y-X-Z</td><td>浪 2 / 4</td><td>三段中至少一段为平台或三角；<b>无固定展开</b></td></tr>
+<tr><td class="c">C4</td><td>规则平台</td><td class="c">3-3-5</td><td>浪 4</td><td>B 回到起点，C 到 A 底</td></tr>
+<tr><td class="c">C5</td><td>扩张平台</td><td class="c">3-3-5</td><td>浪 4</td><td>B 破起点，C 破 A 底</td></tr>
+<tr><td class="c">C6</td><td>强势平台</td><td class="c">3-3-5</td><td>浪 4</td><td>B 破起点，C 不到 A 底</td></tr>
+<tr><td class="c">C7</td><td>收敛三角形</td><td class="c">3-3-3-3-3</td><td>浪 4 / B</td><td>五段收敛，E 点是机会</td></tr>
+<tr><td class="c">C8</td><td>扩散三角形</td><td class="c">3-3-3-3-3</td><td>浪 4 / B</td><td>五段扩散，之后急速</td></tr>
+</table></div>
+
+<p style="font-size:13px;color:#5F5E5A">结构列里 M1 / M5 / M7 写的是<b>下一级读法</b>（5-3-5-3-5），C2 / C3 写的是<b>顶层字母</b>（W-X-Y、W-X-Y-X-Z）——它们的顶层就是这几个字母。但要注意：<b>只有在 W、Y、Z 全为锯齿、且每个 X 都为三浪时，展开才是 7 段 / 11 段</b>；双三与三三的组成可以含平台或三角，<b>没有固定展开式</b>，所以本书不给它们编号（表中以 — 标注），只在 §3 C3 一并讨论。</p>
+
+<h3>十种常见误判</h3>
+
+<ol>
+<li><strong>把浪 4 的复杂调整当成顶部。</strong>平台形的 B 浪会创出新高，看起来像新趋势启动，实际是调整的一部分。</li>
+<li><strong>用比例确认结构。</strong>价格到了 1.618 就认定浪 3 结束——比例只能估目标，不能作判据。</li>
+<li><strong>浪 3 太短仍坚持推动浪假设。</strong>违反铁律，应判定标注错误而不是"也许是特殊形态"。</li>
+<li><strong>把扩散平台当突破。</strong>B 浪创新高后不是趋势延续，而是 C 浪破底的前奏。</li>
+<li><strong>三角形内部数出五浪。</strong>三角形五段都是三浪，出现五浪说明你标错了层级。</li>
+<li><strong>把双锯齿当单锯齿提前抄底。</strong>只看到"第一段反弹像三浪"就断定还有一段是错的——那段反弹可能只是 B 浪。要等第一组 5-3-5 走完，再由 X 与第二组 5-3-5 确认，且始终只是候选，可能被更大一级结构吸收。</li>
+<li><strong>级别漂移。</strong>用日线标结构，却在 5 分钟图上随手找止损。<strong>计数层级必须一致</strong>（父浪与子浪的级别差受约束），但<strong>执行周期可以更小</strong>——条件是止损依据的结构点必须来自你标注的那一级，而不是小周期上一个偶然的低点。</li>
+<li><strong>预期失败浪而提前做空。</strong>失败要用条件确认（本书采用"跌破浪 4 底"作为交易确认），不能预期；但这条是交易纪律，不是计数正确的普遍证明。</li>
+<li><strong>楔形靠形状判断。</strong>引导与终结外形相同，只能靠位置与子浪结构区分。</li>
+<li><strong>拿量能当判据。</strong>浪 3 量能通常最大、浪 5 常见量价背离，但这是<strong>辅助指引</strong>：量能不满足不能否决结构，满足了也不能确认结构。</li>
+</ol>
+
+<h3>局限</h3>
+
+<ul>
+<li>本文所有图示为<b>原型示意</b>，真实行情的形态永远不标准。图谱的作用是提供比对基准，不是模板匹配。</li>
+<li>形态识别<b>不产生正期望</b>。它能提高的是"知道自己在赌什么"的程度，而非胜率本身。</li>
+<li>所有比例参数（0.382、0.618、1.618）为统计倾向。据经验，样本外表现通常弱于教科书描述，但本书没有做统计检验，这句话本身也是未经检验的。</li>
+<li>真正的收益差异来自仓位与纪律，不是形态识别的精度。</li>
+</ul>
+
+<p class="foot">本文为方法论整理，不构成投资建议。形态判定的价值只能由使用者自己的样本外记录来验证。</p>
+
+
+
+</div>
+<script>
+(function(){
+  function rendered(){ return document.querySelector('.katex') !== null; }
+  var tries = 0, warn = null;
+  function show(msg){
+    if(warn) return;
+    warn = document.createElement('div');
+    warn.className = 'callout warn';
+    warn.innerHTML = '<span class="lab">' + msg + '</span>页面里的公式由 KaTeX 渲染，需要联网加载。若这里一直显示不出来，公式会退化为源码，图形、表格与正文不受影响。';
+    var w = document.querySelector('.wrap');
+    if(w && w.firstChild) w.insertBefore(warn, w.firstChild.nextSibling);
+  }
+  var timer = setInterval(function(){
+    tries++;
+    if(rendered()){                      // 以实际渲染结果为准，不以脚本是否存在为准
+      if(warn){ warn.parentNode.removeChild(warn); warn = null; }
+      clearInterval(timer); return;
+    }
+    if(tries === 6){                     // 约 2.4 秒后仍无渲染结果，提示"慢或失败"
+      show(window.katex && window.renderMathInElement ? '公式渲染未完成' : '公式加载较慢或失败');
+    }
+    if(tries > 30) clearInterval(timer);  // 12 秒后停止轮询，避免长期占用
+  }, 400);
+})();
+</script>
+</body>
+</html>
